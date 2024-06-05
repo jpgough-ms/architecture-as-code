@@ -43,10 +43,14 @@
       "unique-id": "idp",
       "node-type": "system",
       "name": "Identity Provider",
-      "description": "The Identity Provider used to verify the bearer token",
+      "description": "The Identity Provider is used to issue and verify OAuth2 bearer tokens",
       "interfaces": [
         {
           "unique-id": "well-known-endpoint",
+          "url": "{{ URL }}"
+        },
+        {
+          "unique-id": "token-endpoint",
           "url": "{{ URL }}"
         }
       ]
@@ -63,7 +67,7 @@
           "destination": {
             "node": "idp",
             "interfaces": [
-              "well-known-endpoint"
+              "token-endpoint"
             ]
           }
         }
@@ -93,7 +97,10 @@
             "node": "api-gateway"
           },
           "destination": {
-            "node": "idp"
+            "node": "idp",
+            "interfaces": [
+              "well-known-endpoint"
+            ]
           }
         }
       }
