@@ -106,6 +106,9 @@
             },
             "composed-of": {
               "$ref": "#/defs/composed-of-type"
+            },
+            "option-group": {
+              "$ref": "#/defs/option-group-type"
             }
           },
           "oneOf": [
@@ -265,34 +268,10 @@
         }
       }
     },
-    "metadata": {
-      "type": "array",
-      "items": {
-        "type": "object"
-      }
-    },
-    "pattern-option": {
+    "option-group-type": {
       "type": "object",
       "properties": {
-        "user-prompt": {
-          "type": "string"
-        },
-        "choices": {
-          "type": "array",
-          "items": {
-            "$ref": "#/defs/choice"
-          }
-        }
-      },
-      "required": [
-        "user-prompt",
-        "choices"
-      ]
-    },
-    "choice": {
-      "type": "object",
-      "properties": {
-        "user-prompt": {
+        "description": {
           "type": "string"
         },
         "nodes": {
@@ -301,7 +280,7 @@
             "type" : "string"
           }
         },
-        "relationship": {
+        "relationships": {
           "type": "array",
           "items": {
             "type" : "string"
@@ -309,10 +288,16 @@
         }
       },
       "required": [
-        "user-prompt",
+        "description",
         "nodes",
-        "relationship"
+        "relationships"
       ]
+    },
+    "metadata": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
     }
   }
 }

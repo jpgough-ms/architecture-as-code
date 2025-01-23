@@ -4,67 +4,6 @@
   "title": "One of Example Prototype Pattern",
   "type": "object",
   "properties": {
-    "pattern-options": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 1,
-      "prefixItems": [
-        {
-          "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/pattern-option",
-          "type": "object",
-          "properties": {
-            "user-prompt": {
-              "const": "Select the option for pattern connecting to Application C"
-            },
-            "choices": {
-              "type": "array",
-              "minItems": 2,
-              "maxItems": 2,
-              "prefixItems": [
-                {
-                  "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/choice",
-                  "type": "object",
-                  "properties": {
-                    "user-prompt": {
-                      "const": "Application A connects to Application C"
-                    },
-                    "nodes": {
-                      "const": [
-                        "application-a"
-                      ]
-                    },
-                    "relationships": {
-                      "const": [
-                        "application-a-application-c"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/choice",
-                  "type": "object",
-                  "properties": {
-                    "user-prompt": {
-                      "const": "Application B connects to Application C"
-                    },
-                    "nodes": {
-                      "const": [
-                        "application-b"
-                      ]
-                    },
-                    "relationships": {
-                      "const": [
-                        "application-b-application-c"
-                      ]
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
     "nodes": {
       "type": "array",
       "minItems": 3,
@@ -148,8 +87,8 @@
     },
     "relationships": {
       "type": "array",
-        "minItems": 2,
-        "maxItems": 2,
+        "minItems": 4,
+        "maxItems": 4,
       "prefixItems": [
         {
           "oneOf": [
@@ -230,6 +169,42 @@
             },
             "protocol": {
               "const": "HTTPS"
+            }
+          }
+        },
+        {
+          "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/relationship",
+          "properties": {
+            "description": {
+              "const": "Application A is used to connect to application C"
+            },
+            "nodes": {
+              "cost": [
+                "application-a"
+              ]
+            },
+            "relationships" : {
+                "cost": [
+                    "application-a-application-c"
+                ]
+            }
+          }
+        },
+        {
+          "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/relationship",
+          "properties": {
+            "description": {
+              "const": "Application B is used to connect to application C"
+            },
+            "nodes": {
+              "cost": [
+                "application-b"
+              ]
+            },
+            "relationships" : {
+              "cost": [
+                "application-b-application-c"
+              ]
             }
           }
         }
