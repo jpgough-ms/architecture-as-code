@@ -26,12 +26,6 @@
       "items": {
         "$ref": "flow.json#/defs/flow"
       }
-    },
-    "pattern-options": {
-      "type": "array",
-        "items": {
-            "$ref": "#/defs/pattern-option"
-        }
     }
   },
   "defs": {
