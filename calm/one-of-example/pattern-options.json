@@ -10,9 +10,9 @@
       "maxItems": 3,
       "prefixItems": [
         {
+          "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/node",
           "oneOf": [
             {
-              "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/node",
               "type": "object",
               "properties": {
                 "description": {
@@ -30,7 +30,6 @@
               }
             },
             {
-              "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/node",
               "type": "object",
               "properties": {
                 "description": {
@@ -40,7 +39,7 @@
                   "const": "system"
                 },
                 "name": {
-                  "const": "Application b"
+                  "const": "Application B"
                 },
                 "unique-id": {
                   "const": "application-b"
@@ -87,13 +86,13 @@
     },
     "relationships": {
       "type": "array",
-        "minItems": 4,
-        "maxItems": 4,
+      "minItems": 3,
+      "maxItems": 3,
       "prefixItems": [
         {
+          "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/relationship",
           "oneOf": [
             {
-              "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/relationship",
               "properties": {
                 "unique-id": {
                   "const": "application-a-application-c"
@@ -119,7 +118,6 @@
               }
             },
             {
-              "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/relationship",
               "properties": {
                 "unique-id": {
                   "const": "application-b-application-c"
@@ -175,36 +173,40 @@
         {
           "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/relationship",
           "properties": {
-            "description": {
-              "const": "Application A is used to connect to application C"
-            },
-            "nodes": {
-              "cost": [
-                "application-a"
-              ]
-            },
-            "relationships" : {
-                "cost": [
-                    "application-a-application-c"
+            "relationship-type": {
+              "options": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1,
+                "oneOf": [
+                  {
+                    "description": "Application A is used to connect to application C",
+                    "nodes": {
+                      "cost": [
+                        "application-a"
+                      ]
+                    },
+                    "relationships": {
+                      "cost": [
+                        "application-a-application-c"
+                      ]
+                    }
+                  },
+                  {
+                    "description": "Application B is used to connect to application C",
+                    "nodes": {
+                      "cost": [
+                        "application-b"
+                      ]
+                    },
+                    "relationships": {
+                      "cost": [
+                        "application-b-application-c"
+                      ]
+                    }
+                  }
                 ]
-            }
-          }
-        },
-        {
-          "$ref": "https://calm.finos.org/draft/2024-12/meta/core.json#/defs/relationship",
-          "properties": {
-            "description": {
-              "const": "Application B is used to connect to application C"
-            },
-            "nodes": {
-              "cost": [
-                "application-b"
-              ]
-            },
-            "relationships" : {
-              "cost": [
-                "application-b-application-c"
-              ]
+              }
             }
           }
         }
