@@ -100,6 +100,9 @@
             },
             "composed-of": {
               "$ref": "#/defs/composed-of-type"
+            },
+            "options": {
+              "$ref": "#/defs/option-type"
             }
           },
           "oneOf": [
@@ -121,6 +124,11 @@
             {
               "required": [
                 "connects"
+              ]
+            },
+            {
+              "required": [
+                "options"
               ]
             }
           ]
@@ -258,6 +266,35 @@
           }
         }
       }
+    },
+    "option-type": {
+      "type": "array",
+      "mintItems": 1,
+      "items": {
+        "$ref": "#/defs/decision"
+      }
+    },
+    "decision": {
+      "description": {
+        "type": "string"
+      },
+      "nodes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "relationships": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "nodes",
+        "relationships"
+      ]
     },
     "metadata": {
       "type": "array",
