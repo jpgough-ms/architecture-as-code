@@ -248,7 +248,10 @@
                 }
               }
             }
-          }
+          },
+          "required": [
+            "description"
+          ]
         },
         {
           "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/relationship",
@@ -275,7 +278,10 @@
                 }
               }
             }
-          }
+          },
+          "required": [
+            "description"
+          ]
         },
         {
           "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/relationship",
@@ -302,7 +308,10 @@
                 }
               }
             }
-          }
+          },
+          "required": [
+            "description"
+          ]
         },
         {
           "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/relationship",
@@ -329,7 +338,10 @@
                 }
               }
             }
-          }
+          },
+          "required": [
+            "description"
+          ]
         },
         {
           "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/relationship",
@@ -353,7 +365,10 @@
                 }
               }
             }
-          }
+          },
+          "required": [
+            "description"
+          ]
         }
       ]
     }
