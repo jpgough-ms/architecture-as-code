@@ -9,7 +9,7 @@ services:
     networks:
       - calm-net
   calmhub:
-    image: finos/calm-hub:latest
+    image: jpgough/calm-hub
     container_name: calm-hub
     ports:
       - "8080:8080"

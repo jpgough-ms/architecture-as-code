@@ -278,6 +278,37 @@
                   }
                 }
               }
+            },
+            "controls": {
+              "$ref": "https://calm.finos.org/draft/2025-03/meta/control.json#/defs/controls",
+              "properties": {
+                "security": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "const": "Security Controls for the connection"
+                    },
+                    "requirements": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "prefixItems": [
+                        {
+                          "$ref": "https://calm.finos.org/draft/2025-03/meta/control.json#/defs/control-detail",
+                          "properties": {
+                            "control-requirement-url": {
+                              "const": "https://calm.finos.org/workshop/controls/permitted-connection.requirement.json"
+                            }
+                          },
+                          "required": [
+                            "control-config-url"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
             }
           },
           "required": [
@@ -305,6 +336,37 @@
                   },
                   "destination": {
                     "node": "attendees-service"
+                  }
+                }
+              }
+            },
+            "controls": {
+              "$ref": "https://calm.finos.org/draft/2025-03/meta/control.json#/defs/controls",
+              "properties": {
+                "security": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "const": "Security Controls for the connection"
+                    },
+                    "requirements": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "prefixItems": [
+                        {
+                          "$ref": "https://calm.finos.org/draft/2025-03/meta/control.json#/defs/control-detail",
+                          "properties": {
+                            "control-requirement-url": {
+                              "const": "https://calm.finos.org/workshop/controls/permitted-connection.requirement.json"
+                            }
+                          },
+                          "required": [
+                            "control-config-url"
+                          ]
+                        }
+                      ]
+                    }
                   }
                 }
               }
