@@ -7,7 +7,7 @@
   "properties": {
     "nodes": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 6,
       "maxItems": 6,
       "prefixItems": [
         {
@@ -29,6 +29,7 @@
             "interfaces": {
               "type": "array",
               "minItems": 1,
+              "maxItems": 1,
               "prefixItems": [
                 {
                   "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/url-interface",
@@ -57,6 +58,21 @@
             },
             "node-type": {
               "const": "network"
+            },
+            "interfaces": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1,
+              "prefixItems": [
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/host-port-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "load-balancer-host-port"
+                    }
+                  }
+                }
+              ]
             }
           }
         },
@@ -75,6 +91,29 @@
             },
             "node-type": {
               "const": "service"
+            },
+            "interfaces": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "prefixItems": [
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/container-image-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "attendees-image"
+                    }
+                  }
+                },
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/port-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "attendees-port"
+                    }
+                  }
+                }
+              ]
             }
           }
         },
@@ -93,6 +132,29 @@
             },
             "node-type": {
               "const": "service"
+            },
+            "interfaces": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "prefixItems": [
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/container-image-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "advertising-image"
+                    }
+                  }
+                },
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/port-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "advertising-port"
+                    }
+                  }
+                }
+              ]
             }
           }
         },
@@ -111,6 +173,29 @@
             },
             "node-type": {
               "const": "database"
+            },
+            "interfaces": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "prefixItems": [
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/container-image-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "database-image"
+                    }
+                  }
+                },
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/port-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "database-port"
+                    }
+                  }
+                }
+              ]
             }
           }
         },
@@ -146,7 +231,7 @@
               "const": "conference-website-load-balancer"
             },
             "description": {
-              "const": "Request Attendee Details"
+              "const": "Request attendee details"
             },
             "protocol": {
               "const": "HTTPS"
@@ -163,10 +248,7 @@
                 }
               }
             }
-          },
-          "required": [
-            "description"
-          ]
+          }
         },
         {
           "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/relationship",
