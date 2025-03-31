@@ -8,7 +8,7 @@
     "nodes": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 5,
+      "maxItems": 6,
       "prefixItems": [
         {
           "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/node",
@@ -25,6 +25,20 @@
             },
             "node-type": {
               "const": "webclient"
+            },
+            "interfaces": {
+              "type": "array",
+              "minItems": 1,
+              "prefixItems": [
+                {
+                  "$ref": "https://calm.finos.org/draft/2025-03/meta/interface.json#/defs/url-interface",
+                  "properties": {
+                    "unique-id": {
+                      "const": "conference-website-url"
+                    }
+                  }
+                }
+              ]
             }
           }
         },
@@ -60,7 +74,7 @@
               "const": "Ingress for the Kubernetes cluster"
             },
             "node-type": {
-              "const": "network"
+              "const": "service"
             }
           }
         },
@@ -99,6 +113,24 @@
               "const": "database"
             }
           }
+        },
+        {
+          "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/node",
+          "type": "object",
+          "properties": {
+            "unique-id": {
+              "const": "k8s-cluster"
+            },
+            "name": {
+              "const": "Kubernetes Cluster"
+            },
+            "description": {
+              "const": "Kubernetes Cluster with network policy rules enabled"
+            },
+            "node-type": {
+              "const": "system"
+            }
+          }
         }
       ]
     },
@@ -131,7 +163,10 @@
                 }
               }
             }
-          }
+          },
+          "required": [
+            "description"
+          ]
         },
         {
           "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/relationship",
@@ -209,6 +244,30 @@
                   "destination": {
                     "node": "attendees-store"
                   }
+                }
+              }
+            }
+          }
+        },
+        {
+          "$ref": "https://calm.finos.org/draft/2025-03/meta/core.json#/defs/relationship",
+          "properties": {
+            "unique-id": {
+              "const": "deployed-in-k8s-cluster"
+            },
+            "description": {
+              "const": "Components deployed on the k8s cluster"
+            },
+            "relationship-type": {
+              "const": {
+                "deployed-in": {
+                  "container": "k8s-cluster",
+                  "nodes": [
+                    "load-balancer",
+                    "advertising",
+                    "attendees-service",
+                    "attendees-store"
+                  ]
                 }
               }
             }
