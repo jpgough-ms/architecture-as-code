@@ -16,7 +16,7 @@ spec:
         - name: db
           image: postgres
           ports:
-            - containerPort: {{ database-port }}
+            - containerPort: {{ databasePort }}
           env:
             - name: POSTGRES_DB
               value: conference
