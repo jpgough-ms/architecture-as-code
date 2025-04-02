@@ -424,10 +424,30 @@
           ]
         }
       ]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "kubernetes": {
+          "type": "object",
+          "properties": {
+            "namespace": {
+              "const": "conference"
+            }
+          },
+          "required": [
+            "namespace"
+          ]
+        }
+      },
+      "required": [
+        "kubernetes"
+      ]
     }
   },
   "required": [
     "nodes",
-    "relationships"
+    "relationships",
+    "metadata"
   ]
 }
