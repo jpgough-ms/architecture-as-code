@@ -81,7 +81,7 @@
           "type": "object",
           "properties": {
             "unique-id": {
-              "const": "attendees-service"
+              "const": "attendees"
             },
             "name": {
               "const": "Attendees Service"
@@ -279,7 +279,7 @@
           "type": "object",
           "properties": {
             "unique-id": {
-              "const": "load-balancer-attendees-service"
+              "const": "load-balancer-attendees"
             },
             "description": {
               "const": "Forward"
@@ -294,7 +294,7 @@
                     "node": "load-balancer"
                   },
                   "destination": {
-                    "node": "attendees-service"
+                    "node": "attendees"
                   }
                 }
               }
@@ -340,7 +340,7 @@
           "type": "object",
           "properties": {
             "unique-id": {
-              "const": "attendees-service-attendees-store"
+              "const": "attendees-attendees-store"
             },
             "description": {
               "const": "Store or request attendee details"
@@ -352,7 +352,7 @@
               "const": {
                 "connects": {
                   "source": {
-                    "node": "attendees-service"
+                    "node": "attendees"
                   },
                   "destination": {
                     "node": "attendees-store"
@@ -412,7 +412,7 @@
                   "container": "k8s-cluster",
                   "nodes": [
                     "load-balancer",
-                    "attendees-service",
+                    "attendees",
                     "attendees-store"
                   ]
                 }
