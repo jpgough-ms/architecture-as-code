@@ -193,11 +193,11 @@
                           "properties": {
                             "control-requirement-url": {
                               "const": "https://calm.finos.org/workshop/controls/micro-segmentation.requirement.json"
+                            },
+                            "control-config-url": {
+                              "const": "https://calm.finos.org/workshop/controls/micro-segmentation.config.json"
                             }
-                          },
-                          "required": [
-                            "control-config-url"
-                          ]
+                          }
                         }
                       ]
                     }
@@ -257,11 +257,11 @@
                           "properties": {
                             "control-requirement-url": {
                               "const": "https://calm.finos.org/workshop/controls/permitted-connection.requirement.json"
+                            },
+                            "control-config-url": {
+                              "const": "https://calm.finos.org/workshop/controls/permitted-connection-http.config.json"
                             }
-                          },
-                          "required": [
-                            "control-config-url"
-                          ]
+                          }
                         }
                       ]
                     }
@@ -318,6 +318,9 @@
                           "properties": {
                             "control-requirement-url": {
                               "const": "https://calm.finos.org/workshop/controls/permitted-connection.requirement.json"
+                            },
+                            "control-config-url": {
+                              "const": "https://calm.finos.org/workshop/controls/permitted-connection-http.config.json"
                             }
                           },
                           "required": [
@@ -379,11 +382,11 @@
                           "properties": {
                             "control-requirement-url": {
                               "const": "https://calm.finos.org/workshop/controls/permitted-connection.requirement.json"
+                            },
+                            "control-config-url": {
+                              "const": "https://calm.finos.org/workshop/controls/permitted-connection-jdbc.config.json"
                             }
-                          },
-                          "required": [
-                            "control-config-url"
-                          ]
+                          }
                         }
                       ]
                     }
