@@ -33,14 +33,17 @@ export async function setupAiTools(targetDirectory: string, verbose: boolean): P
         await mkdir(chatmodesDir, { recursive: true });
         logger.info('Created .github/chatmodes directory following GitHub Copilot conventions');
 
-        // Create chatmode configuration
+        // Create chatmode configurations
         await createChatmodeConfig(chatmodesDir, logger);
+        await createStriderChatmode(chatmodesDir, logger);
 
         // Create tool prompt files
         await createToolPrompts(chatmodesDir, logger);
+        await createStriderPrompts(chatmodesDir, logger);
 
         logger.info('✅ CALM AI tools setup completed successfully!');
         logger.info('🚀 To use: Open this repository in VS Code and start a chat with the CALM chatmode');
+        logger.info('🔐 STRIDER threat modeling chatmode is also available for security analysis');
         logger.info('📁 Files created in .github/chatmodes/ directory following GitHub Copilot conventions');
 
     } catch (error) {
@@ -54,6 +57,7 @@ async function validateBundledResources(logger: Logger): Promise<void> {
 
     const requiredFiles = [
         'CALM.chatmode.md',
+        'STRIDER.chatmode.md',
         'tools/architecture-creation.md',
         'tools/node-creation.md',
         'tools/relationship-creation.md',
@@ -64,7 +68,13 @@ async function validateBundledResources(logger: Logger): Promise<void> {
         'tools/pattern-creation.md',
         'tools/documentation-creation.md',
         'tools/standards-creation.md',
-        'tools/calm-cli-instructions.md'
+        'tools/calm-cli-instructions.md',
+        'tools/strider-prompts/stride-overview.md',
+        'tools/strider-prompts/trust-boundary-identification.md',
+        'tools/strider-prompts/dataflow-diagram.md',
+        'tools/strider-prompts/threat-table-template.md',
+        'tools/strider-prompts/ai-governance-integration.md',
+        'tools/strider-prompts/threat-model-output.md'
     ];
 
     const missingFiles: string[] = [];
@@ -202,6 +212,104 @@ async function createToolPrompts(chatmodesDir: string, logger: Logger): Promise<
             throw new Error(`Tool prompt setup failed: ${failureCount}/${toolFiles.length} files failed`);
         } else {
             logger.warn('⚠️  Some tool prompts failed - AI functionality may be limited');
+        }
+    }
+}
+
+async function createStriderChatmode(chatmodesDir: string, logger: Logger): Promise<void> {
+    const striderFile = join(chatmodesDir, 'STRIDER.chatmode.md');
+
+    try {
+        const bundledConfigPath = getBundledResourcePath('STRIDER.chatmode.md');
+        const striderContent = await readFile(bundledConfigPath, 'utf8');
+
+        if (!striderContent.trim()) {
+            throw new Error('Bundled STRIDER chatmode file is empty');
+        }
+
+        const MIN_CHATMODE_CONTENT_LENGTH = 500;
+        if (
+            !striderContent.includes('STRIDE') ||
+            striderContent.length < MIN_CHATMODE_CONTENT_LENGTH
+        ) {
+            logger.warn(
+                `Bundled STRIDER chatmode file appears incomplete (length: ${striderContent.length} < ${MIN_CHATMODE_CONTENT_LENGTH})`
+            );
+        }
+
+        await writeFile(striderFile, striderContent, 'utf8');
+        logger.info('✅ Created STRIDER chatmode configuration from bundled resource');
+    } catch (error) {
+        logger.error(`⚠️  Could not load bundled STRIDER chatmode config: ${error}`);
+    }
+
+    try {
+        const createdStat = await stat(striderFile);
+        if (createdStat.size === 0) {
+            throw new Error('Created STRIDER chatmode file is empty');
+        }
+    } catch (verifyError) {
+        logger.error(`❌ Failed to verify STRIDER chatmode file creation: ${verifyError}`);
+        throw new Error(`STRIDER chatmode configuration setup failed: ${verifyError}`);
+    }
+}
+
+async function createStriderPrompts(chatmodesDir: string, logger: Logger): Promise<void> {
+    const striderPromptsDir = join(chatmodesDir, 'strider-prompts');
+    await mkdir(striderPromptsDir, { recursive: true });
+    logger.info('📁 Created strider-prompts directory');
+
+    const striderToolFiles = [
+        'stride-overview.md',
+        'trust-boundary-identification.md',
+        'dataflow-diagram.md',
+        'threat-table-template.md',
+        'ai-governance-integration.md',
+        'threat-model-output.md'
+    ];
+
+    let successCount = 0;
+    let failureCount = 0;
+    const failedFiles: string[] = [];
+
+    for (const fileName of striderToolFiles) {
+        try {
+            const bundledFilePath = getBundledResourcePath(`tools/strider-prompts/${fileName}`);
+            const targetFilePath = join(striderPromptsDir, fileName);
+
+            const content = await readFile(bundledFilePath, 'utf8');
+
+            if (!content.trim()) {
+                throw new Error('File is empty');
+            }
+
+            const MIN_TOOL_FILE_LENGTH = 100;
+            if (!content.includes('#') || content.length < MIN_TOOL_FILE_LENGTH) {
+                logger.warn(`⚠️  STRIDER tool file ${fileName} appears incomplete (${content.length} chars)`);
+            }
+
+            await writeFile(targetFilePath, content, 'utf8');
+
+            const writtenStat = await stat(targetFilePath);
+            if (writtenStat.size === 0) {
+                throw new Error('Written file is empty');
+            }
+
+            successCount++;
+            logger.debug(`✅ Created STRIDER prompt: ${fileName}`);
+        } catch (error) {
+            failureCount++;
+            failedFiles.push(fileName);
+            logger.warn(`❌ Failed to create STRIDER prompt ${fileName}: ${error}`);
+        }
+    }
+
+    if (failureCount === 0) {
+        logger.info(`✅ Successfully created all ${successCount} STRIDER prompt files`);
+    } else {
+        logger.warn(`⚠️  STRIDER prompts summary: ${successCount} succeeded, ${failureCount} failed`);
+        if (failedFiles.length > 0) {
+            logger.warn(`   Failed files: ${failedFiles.join(', ')}`);
         }
     }
 }

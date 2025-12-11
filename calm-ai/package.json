@@ -5,6 +5,8 @@
     "private": true,
     "main": "index.js",
     "files": [
+        "CALM.chatmode.md",
+        "STRIDER.chatmode.md",
         "tools/"
     ],
     "scripts": {
