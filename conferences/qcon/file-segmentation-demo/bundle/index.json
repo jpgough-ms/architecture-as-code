@@ -1,0 +1,12 @@
+{
+  "name": "Infra as Code MCP Bundle",
+  "transformer": "mcp-transformer",
+  "templates": [
+    { "template": "details-api.yaml", "from": "document", "output": "kubernetes/details-api.yaml", "output-type": "single" },
+    { "template": "internal-api.yaml", "from": "document", "output": "kubernetes/internal-api.yaml", "output-type": "single" },
+    { "template": "kustomization.yaml", "from": "document", "output": "kubernetes/kustomization.yaml", "output-type": "single" },
+    { "template": "mcp-server.yaml", "from": "document", "output": "kubernetes/mcp-server.yaml", "output-type": "single" },
+    { "template": "namespace.yaml", "from": "document", "output": "kubernetes/namespace.yaml", "output-type": "single" },
+    { "template": "secret-lockdown.yaml", "from": "document", "output": "kubernetes/secret-lockdown.yaml", "output-type": "single" }
+  ]
+}

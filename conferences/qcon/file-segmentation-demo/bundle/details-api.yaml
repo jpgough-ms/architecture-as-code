@@ -1,0 +1,31 @@
+# (the “secret” server)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: details-api
+  namespace: mcp-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: details-api }
+  template:
+    metadata:
+      labels: { app: details-api }
+    spec:
+      containers:
+        - name: details-api
+          image: {{ reports-api-image }}
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: {{ reports-api-port }} }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: details-api
+  namespace: mcp-demo
+spec:
+  selector: { app: details-api }
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

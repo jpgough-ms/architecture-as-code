@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: internal-api
+  namespace: mcp-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: internal-api }
+  template:
+    metadata:
+      labels: { app: internal-api }
+    spec:
+      containers:
+        - name: internal-api
+          image: {{ secret-api-image }}
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: {{ secret-api-port }} }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: internal-api
+  namespace: mcp-demo
+spec:
+  selector: { app: internal-api }
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
