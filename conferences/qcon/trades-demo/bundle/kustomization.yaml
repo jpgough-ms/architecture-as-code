@@ -6,4 +6,3 @@ resources:
   - trades-service.yaml
   - mcp-deployment.yaml
   - mcp-service.yaml
-  - network-policy.yaml
