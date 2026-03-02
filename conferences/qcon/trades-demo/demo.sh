@@ -129,7 +129,6 @@ sleep 2
 # ============================================================================
 
 heading() {
-    clear
     local text=$1
     echo -e "${YELLOW_BOLD}${text}${NC}\n"
 }
@@ -160,8 +159,8 @@ command() {
 
 heading "Starting the Kubernetes Cluster"
 info "Starting Minikube..."
-command "minikube start --profile insecure"
-minikube start --profile insecure
+command "minikube start --profile secure --cni calico"
+minikube start --profile secure --cni calico
 read
 
 # ============================================================================
@@ -169,152 +168,63 @@ read
 # ============================================================================
 
 heading "Preparing Docker Images"
-info "Loading images into Minikube's daemon — imagePullPolicy: Never means images must be available locally"
-# needs images to be in the local docker daemon for minikube to load them
+info "Pulling latest images from DockerHub..."
 
-minikube image load jpgough/trades-mcp-server:latest --profile insecure
-minikube image load jpgough/trades-rest-server:latest --profile insecure
+info "Loading images into Minikube's daemon — imagePullPolicy: Never means images must be available locally"
+
+minikube image load jpgough/trades-mcp-server:latest --profile secure
+minikube image load jpgough/trades-rest-server:latest --profile secure
  
 echo ""
 success "Images ready in Minikube's daemon"
 read
 
 # ============================================================================
-# STEP 3: Trades API Pattern
+# STEP 3: Generate Infrastructure via calm template
 # ============================================================================
-
-heading "The Trades API Pattern"
-info "We start with a focused base pattern — a REST API service deployed in a Kubernetes cluster"
-info "Patterns are JSON Schema: they use 'const' to lock down node IDs and types"
-info "The interface placeholders (image, port) are left open for the architecture to fill in"
-command "bat calm/trades-api.pattern.json"
-bat calm/trades-api.pattern.json --line-range 1:50 --highlight-line 20:39
-read
-
-# ============================================================================
-# STEP 4: Trades API Architecture
-# ============================================================================
-
-heading "The Trades API Architecture"
-info "The architecture is a concrete instantiation — placeholders filled with real values"
-info "The interface block now has the actual image name and port number"
-command "bat calm/trades-api.architecture.json"
-bat calm/trades-api.architecture.json --highlight-line 12:20
-read
-
-# ============================================================================
-# STEP 5: MCP + Trades Pattern
-# ============================================================================
-
-heading "The MCP + Trades Pattern"
-info "Now we extend: the MCP pattern adds an AI client and MCP server on top of the Trades API"
-info "The trades-api node declares a 'required-pattern' link — it must conform to the Trades API pattern"
-info "This is CALM's way of composing patterns hierarchically"
-command "bat calm/trades-api-and-mcp.pattern.json"
-bat calm/trades-api-and-mcp.pattern.json --line-range 55:95 --highlight-line 61:69 --highlight-line 70:91
-read
-
-# ============================================================================
-# STEP 6: MCP + Trades Architecture
-# ============================================================================
-
-heading "The MCP + Trades Architecture"
-info "The trades-api node carries a 'detailed-architecture' link"
-info "This connects two architectures — you can drill down into the Trades API from here"
-command "bat calm/trades-api-and-mcp.architecture.json"
-bat calm/trades-api-and-mcp.architecture.json --highlight-line 18:26 --highlight-line 34:46
-read
-
-# # ============================================================================
-# # STEP 7: Validate
-# # ============================================================================
-
-heading "Validating the Architectures"
-info "calm validate checks each architecture against its pattern — catching drift early"
-
-command "calm validate -p calm/trades-api.pattern.json -a calm/trades-api.architecture.json"
-calm validate -p calm/trades-api.pattern.json -a calm/trades-api.architecture.json
-read
-
-command "calm validate -p calm/trades-api-and-mcp.pattern.json -a calm/trades-api-and-mcp.architecture.json"
-calm validate -p calm/trades-api-and-mcp.pattern.json -a calm/trades-api-and-mcp.architecture.json
-read
-
-# ============================================================================
-# STEP 8: Show the Template Bundle
-# ============================================================================
-
-heading "The Template Bundle"
-info "The bundle transforms the CALM architecture into Kubernetes manifests using Handlebars templates"
-info "A transformer extracts values from the architecture JSON and passes them to the templates"
-command "tree bundle"
-tree bundle
-read
-
-info "The image and port are injected directly from the CALM architecture node interfaces"
-command "bat bundle/trades-deployment.yaml --highlight-line 19:22"
-bat bundle/trades-deployment.yaml --highlight-line 19:22
-read
-
-# ============================================================================
-# STEP 9: Generate Infrastructure
-# ============================================================================
-
-heading "Generating Infrastructure from Architecture"
-info "calm template reads the architecture, runs the transformer, and renders all templates"
-command "calm template \\
-  --architecture calm/trades-api-and-mcp.architecture.json \\
-  --output infrastructure \\
-  --bundle bundle \\
-  --clear-output-directory"
 
 calm template \
   --architecture calm/trades-api-and-mcp.architecture.json \
   --output infrastructure \
   --bundle bundle \
-  --clear-output-directory
-read
+  --clear-output-directory 
 
 # ============================================================================
-# STEP 10: Show Generated Output
-# ============================================================================
-
-heading "Generated Infrastructure"
-info "From a single CALM architecture file, we have a complete set of Kubernetes manifests"
-command "tree infrastructure"
-tree infrastructure
-read
-
-info "The image name was injected from the CALM architecture — no manual editing required"
-command "bat infrastructure/kubernetes/trades-deployment.yaml"
-bat infrastructure/kubernetes/trades-deployment.yaml --highlight-line 19:22
-read
-
-# ============================================================================
-# STEP 11: Deploy
+# STEP 4: Deploy
 # ============================================================================
 
 heading "Deploying to Kubernetes"
-info "Apply all generated manifests using Kustomize"
-command "kubectl apply -k infrastructure/kubernetes"
 kubectl apply -k infrastructure/kubernetes
-read
 
-info "Waiting for pods to come up..."
-command "kubectl get pods"
-kubectl get pods
+# ============================================================================
+# STEP 6: Generated Artifacts
+# ============================================================================
+
+heading "Generated InfrastructureArtifacts"
+tree infrastructure
 read
 
 # ============================================================================
-# STEP 12: Cleanup
+# STEP 7: Active Pods
 # ============================================================================
 
-heading "Cleanup"
-command "kubectl delete -k infrastructure/kubernetes"
-kubectl delete -k infrastructure/kubernetes
-rm -rf infrastructure
+heading "Active Pods"
+kubectl wait --for=condition=ready pod --all --timeout=60s
+kubectl get pods -o wide
+read
 
-eval $(minikube docker-env --unset) > /dev/null 2>&1
-minikube stop --profile insecure
+# ============================================================================
+# STEP 8: Cleanup
+# ============================================================================
 
-success "Demo complete!"
+echo -e "${YELLOW_BOLD}Cleanup: would you like to tear down the deployment? (y/n)${NC}"
+read -r CLEANUP
+if [[ "$CLEANUP" == "y" || "$CLEANUP" == "Y" ]]; then
+    kubectl delete -k infrastructure/kubernetes
+    rm -rf infrastructure
+    eval $(minikube docker-env --unset) > /dev/null 2>&1
+    minikube stop --profile secure
+    success "Demo complete — cluster stopped."
+else
+    success "Demo complete — cluster still running."
+fi

@@ -27,6 +27,12 @@
       "output-type": "single"
     },
     {
+      "template": "network-policy.yaml",
+      "from": "document",
+      "output": "kubernetes/network-policy.yaml",
+      "output-type": "single"
+    },
+    {
       "template": "kustomization.yaml",
       "from": "document",
       "output": "kubernetes/kustomization.yaml",
