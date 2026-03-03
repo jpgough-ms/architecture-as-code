@@ -16,19 +16,19 @@ spec:
     spec:
       containers:
         - name: trades
-          image: jpgough/trades-rest-server:latest
+          image: {{ trades-api-image }}
           imagePullPolicy: Never
           ports:
-            - containerPort: 8080
+            - containerPort: {{ trades-api-port }}
           readinessProbe:
             httpGet:
               path: /trades
-              port: 8080
+              port: {{ trades-api-port }}
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /trades
-              port: 8080
+              port: {{ trades-api-port }}
             initialDelaySeconds: 10
             periodSeconds: 30
