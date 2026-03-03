@@ -214,17 +214,11 @@ kubectl get pods -o wide
 read
 
 # ============================================================================
-# STEP 8: Cleanup
+# DEPLOYMENT COMPLETE
 # ============================================================================
 
-echo -e "${YELLOW_BOLD}Cleanup: would you like to tear down the deployment? (y/n)${NC}"
-read -r CLEANUP
-if [[ "$CLEANUP" == "y" || "$CLEANUP" == "Y" ]]; then
-    kubectl delete -k infrastructure/kubernetes
-    rm -rf infrastructures
-    eval $(minikube docker-env --unset) > /dev/null 2>&1
-    minikube stop --profile secure
-    success "Demo complete — cluster stopped."
-else
-    success "Demo complete — cluster still running."
-fi
+heading "Scenario 1 Deployment Complete!"
+success "✓ Minikube cluster running with Calico CNI"
+success "✓ Trades API and MCP server deployed"
+success "✓ Network policies applied"
+echo ""

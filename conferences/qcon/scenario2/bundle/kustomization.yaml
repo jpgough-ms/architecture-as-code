@@ -8,3 +8,4 @@ resources:
   - mcp-service.yaml
   - default-deny.yaml
   - network-policy.yaml
+  - denied-symbols-configmap.yaml
