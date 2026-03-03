@@ -1,0 +1,5 @@
+{
+    "$schema": "https://calm.finos.org/qcon/controls/permitted-connection.requirement.json",
+    "reason": "MCP client and Trades API require HTTP access to MCP server for querying trade data",
+    "protocol": "HTTP"
+}

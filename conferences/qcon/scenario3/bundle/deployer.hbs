@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo "============================================================"
+echo " Infrastructure Pre-requisite Checks"
+echo "============================================================"
+echo ""
+
+{{#if isMinikube}}
+echo "[CHECK] Cluster type: minikube. Verifying profile '{{secureProfile}}' is active and running..."
+echo ""
+
+{{#unless secureProfileRunning}}
+echo "[FAILED] Minikube profile '{{secureProfile}}' is not running."
+echo "         Deployment cannot proceed until the infrastructure is confirmed."
+echo ""
+echo "         To resolve: minikube start --profile {{secureProfile}} --cni calico"
+echo ""
+exit 1
+{{/unless}}
+
+echo "[OK]    Minikube profile '{{secureProfile}}' is running."
+echo ""
+
+echo "============================================================"
+echo " Infrastructure checks passed. Ready for deployment."
+echo "============================================================"
+echo ""
+exit 0
+
+{{else}}
+echo "[SKIP]  Cluster type is not minikube — no pre-requisite checks required."
+exit 0
+{{/if}}
