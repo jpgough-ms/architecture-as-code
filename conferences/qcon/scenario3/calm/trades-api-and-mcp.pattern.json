@@ -97,10 +97,10 @@
                           "type": "object",
                           "properties": {
                             "requirement-url": {
-                              "const": "https://calm.finos.org/qcon/scenario3/calm/controls/mcp-guardrail.requirement.json"
+                              "const": "controls/mcp-guardrail.requirement.json"
                             },
                             "config-url": {
-                              "const": "https://calm.finos.org/qcon/scenario3/calm/controls/mcp-guardrail.config.json"
+                              "const": "controls/mcp-guardrail.config.json"
                             }
                           },
                           "required": [
@@ -149,7 +149,7 @@
               "type": "object",
               "properties": {
                 "required-pattern": {
-                  "const": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.pattern.json"
+                  "const": "../../trades-demo/calm/trades-api.pattern.json"
                 }
               },
               "required": [
@@ -248,10 +248,10 @@
                           "$ref": "https://calm.finos.org/release/1.0/meta/control.json#/defs/control-detail",
                           "properties": {
                             "requirement-url": {
-                              "const": "https://calm.finos.org/qcon/scenario3/calm/controls/micro-segmentation.requirement.json"
+                              "const": "controls/micro-segmentation.requirement.json"
                             },
                             "config-url": {
-                              "const": "https://calm.finos.org/qcon/scenario3/calm/controls/micro-segmentation.config.json"
+                              "const": "controls/micro-segmentation.config.json"
                             }
                           },
                           "required": [
@@ -334,10 +334,10 @@
                           "type": "object",
                           "properties": {
                             "requirement-url": {
-                              "const": "https://calm.finos.org/qcon/controls/permitted-connection.requirement.json"
+                              "const": "controls/permitted-connection.requirement.json"
                             },
                             "config-url": {
-                              "const": "https://calm.finos.org/qcon/controls/permitted-connection-http.config.json"
+                              "const": "controls/permitted-connection-http.config.json"
                             }
                           }
                         }
@@ -408,10 +408,10 @@
                           "type": "object",
                           "properties": {
                             "requirement-url": {
-                              "const": "https://calm.finos.org/qcon/controls/permitted-connection.requirement.json"
+                              "const": "controls/permitted-connection.requirement.json"
                             },
                             "config-url": {
-                              "const": "https://calm.finos.org/qcon/controls/permitted-connection-http.config.json"
+                              "const": "controls/permitted-connection-http.config.json"
                             }
                           }
                         }

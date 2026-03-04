@@ -32,8 +32,8 @@
       "name": "Trades API",
       "description": "REST API for accessing and managing trade data",
       "details": {
-        "detailed-architecture": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.architecture.json",
-        "required-pattern": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.pattern.json"
+        "detailed-architecture": "../../trades-demo/calm/trades-api.architecture.json",
+        "required-pattern": "../../trades-demo/calm/trades-api.pattern.json"
       },
       "interfaces": [
         {

@@ -107,7 +107,7 @@
               "type": "object",
               "properties": {
                 "required-pattern": {
-                  "const": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.pattern.json"
+                  "const": "../../trades-demo/calm/trades-api.pattern.json"
                 }
               },
               "required": [

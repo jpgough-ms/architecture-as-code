@@ -30,8 +30,8 @@
           "description": "Enforces restrictions on trading symbols that the MCP server cannot access",
           "requirements": [
             {
-              "requirement-url": "https://calm.finos.org/qcon/scenario3/calm/controls/mcp-guardrail.requirement.json",
-              "config-url": "https://calm.finos.org/qcon/scenario3/calm/controls/mcp-guardrail.config.json"
+              "requirement-url": "controls/mcp-guardrail.requirement.json",
+              "config-url": "controls/mcp-guardrail.config.json"
             }
           ]
         }
@@ -43,7 +43,7 @@
       "name": "Trades API",
       "description": "REST API for accessing and managing trade data",
       "details": {
-        "required-pattern": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.pattern.json"
+        "required-pattern": "../../trades-demo/calm/trades-api.pattern.json"
       },
       "interfaces": [
         {
@@ -72,8 +72,8 @@
           "description": "Security requirements for the Kubernetes cluster",
           "requirements": [
             {
-              "requirement-url": "https://calm.finos.org/qcon/scenario3/calm/controls/micro-segmentation.requirement.json",
-              "config-url": "https://calm.finos.org/qcon/scenario3/calm/controls/micro-segmentation.config.json"
+              "requirement-url": "controls/micro-segmentation.requirement.json",
+              "config-url": "controls/micro-segmentation.config.json"
             }
           ]
         }
@@ -121,8 +121,8 @@
           "description": "Connection authorization for Trades API to MCP server",
           "requirements": [
             {
-              "requirement-url": "https://calm.finos.org/qcon/controls/permitted-connection.requirement.json",
-              "config-url": "https://calm.finos.org/qcon/controls/permitted-connection-http.config.json"
+              "requirement-url": "controls/permitted-connection.requirement.json",
+              "config-url": "controls/permitted-connection-http.config.json"
             }
           ]
         }

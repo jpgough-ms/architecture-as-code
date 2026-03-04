@@ -30,8 +30,8 @@
           "description": "Enforces restrictions on trading symbols that the MCP server cannot access",
           "requirements": [
             {
-              "requirement-url": "https://calm.finos.org/qcon/scenario2/calm/controls/mcp-guardrail.requirement.json",
-              "config-url": "https://calm.finos.org/qcon/scenario2/calm/controls/mcp-guardrail.config.json"
+              "requirement-url": "controls/mcp-guardrail.requirement.json",
+              "config-url": "controls/mcp-guardrail.config.json"
             }
           ]
         }
@@ -43,8 +43,8 @@
       "name": "Trades API",
       "description": "REST API for accessing and managing trade data",
       "details": {
-        "detailed-architecture": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.architecture.json",
-        "required-pattern": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.pattern.json"
+        "detailed-architecture": "../../trades-demo/calm/trades-api.architecture.json",
+        "required-pattern": "../../trades-demo/calm/trades-api.pattern.json"
       },
       "interfaces": [
         {

@@ -40,35 +40,90 @@ section() {
 
 clear
 
+# ============================================================================
+# MODE SELECTION
+# ============================================================================
+
+echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║                   Select Demo Mode                               ║${NC}"
+echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${CYAN}Choose your experience:${NC}"
+echo ""
+echo -e "  ${GREEN}1${NC} - ${YELLOW}Concise Mode${NC} (Recommended for presentations)"
+echo "      • Focus on key outcomes and decisions"
+echo "      • Hide infrastructure setup details"
+echo "      • Faster, streamlined experience"
+echo ""
+echo -e "  ${GREEN}2${NC} - ${YELLOW}Verbose Mode${NC} (Recommended for learning/debugging)"
+echo "      • Show all commands and output"
+echo "      • See every step of the process"
+echo "      • Full visibility into operations"
+echo ""
+read -p "Enter your choice (1 or 2) [default: 1]: " MODE_CHOICE
+
+# Default to concise mode
+MODE_CHOICE=${MODE_CHOICE:-1}
+
+if [ "$MODE_CHOICE" == "2" ]; then
+    export VERBOSE_MODE="true"
+    echo -e "${GREEN}✓ Verbose mode enabled${NC}"
+else
+    export VERBOSE_MODE="false"
+    echo -e "${GREEN}✓ Concise mode enabled${NC}"
+fi
+echo ""
+sleep 1
+
+clear
+
 echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
-echo -e "${BLUE}║         QCon CALM Demo                                           ║${NC}"
+echo -e "${BLUE}║      APIs for Agents                                             ║${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
-echo -e "${BLUE}║  Scenario 1: Basic MCP Deployment with Network Policies          ║${NC}"
-echo -e "${BLUE}║  Scenario 2: Add CALM Control-Based Guardrails                   ║${NC}"
+echo -e "${BLUE}║  Scenario 1: Deploy API Infrastructure                           ║${NC}"
+echo -e "${BLUE}║  Scenario 2: Self-Service Agent Guardrails                       ║${NC}"
+echo -e "${BLUE}║  Scenario 3: Automated Governance Gates                          ║${NC}"
+echo -e "${BLUE}║  Scenario 4: Platform Evolution Without Architecture Changes     ║${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 sleep 2
 
-info "This demo will guide you through two scenarios:"
-echo "  1️⃣  Deploy a basic MCP server and Trades API to Kubernetes"
-echo "  2️⃣  Add CALM control-based guardrails to restrict trading symbols"
+info "APIs aren't just consumed by human developers anymore —"
+info "they're consumed by tools and autonomous agents."
 echo ""
-echo -e "${YELLOW}The demo will run continuously. The cluster will stay running between scenarios.${NC}"
+info "This demo shows how Architecture as Code enables:"
+echo "  1️⃣  Deploy standardized API infrastructure"
+echo "  2️⃣  Self-service guardrails for agent-safe APIs (MCP compliance)"
+echo "  3️⃣  Automated governance without central gatekeeping"
+echo "  4️⃣  Platform evolution through bundle versioning"
 echo ""
-echo -e "${CYAN}Note: Port-forwarding is handled by a separate script (./port-forward.sh)${NC}"
+info "The Challenge:"
+echo "   • 200+ APIs need consistent security controls"
+echo "   • Agent consumers require runtime guardrails"
+echo "   • Teams must move fast without creating drift"
+echo ""
+info "The Solution:"
+echo "   • Codify architectural patterns in CALM"
+echo "   • Self-service controls teams can apply immediately"
+echo "   • Automated validation gates that scale"
+echo ""
+echo -e "${YELLOW}The demos run continuously. Clusters stay active between scenarios.${NC}"
+echo ""
+echo -e "${CYAN}Note: Port-forwarding is handled by ./port-forward.sh${NC}"
 echo -e "${CYAN}Start it in a separate terminal after Scenario 1 completes.${NC}"
 echo ""
-read -p "Press Enter to begin with Scenario 1..."
+read -p "Press Enter to begin..."
 
 # ============================================================================
 # SCENARIO 1: Basic Deployment
 # ============================================================================
 
-section "SCENARIO 1: Basic MCP Deployment"
+section "SCENARIO 1: Deploy API Infrastructure"
 
-info "Starting Scenario 1..."
+info "Starting Scenario 1: The Foundation"
+info "Deploying a Trades API with MCP server for agent consumption"
 echo ""
 
 cd scenario1
@@ -96,37 +151,21 @@ cd ..
 echo ""
 success "✅ Scenario 1 Complete!"
 echo ""
-echo -e "${YELLOW}The basic MCP deployment is now running in Kubernetes.${NC}"
-echo -e "${YELLOW}The cluster will remain active for Scenario 2.${NC}"
+echo -e "${GREEN}Achievement: API infrastructure deployed from architecture definition${NC}"
 echo ""
-sleep 3
+echo -e "${CYAN}Reminder: Start port-forwarding in separate terminal if you haven't already:${NC}"
+echo -e "${GREEN}  ./port-forward.sh${NC}"
+echo ""
+echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 2...${NC}"
+read
 
 # ============================================================================
 # TRANSITION
 # ============================================================================
 
-section "TRANSITION: Moving to Scenario 2"
+section "SCENARIO 2: Self-Service Agent Guardrails"
 
-info "Next, we'll add CALM control-based guardrails to the deployment."
-echo ""
-echo -e "${CYAN}What we'll do in Scenario 2:${NC}"
-echo "  • Display the MCP Guardrail control configuration"
-echo "  • Show how the architecture links to the control"
-echo "  • Generate a ConfigMap from the control (denied symbols: VOD, GME, AMC)"
-echo "  • Re-deploy with the guardrail enforcement"
-echo ""
-echo -e "${YELLOW}Reminder: Start port-forwarding if you haven't already:${NC}"
-echo -e "${GREEN}  ./port-forward.sh${NC}"
-echo ""
-read -p "Press Enter to continue to Scenario 2..."
-
-# ============================================================================
-# SCENARIO 2: Control-Based Guardrails
-# ============================================================================
-
-section "SCENARIO 2: CALM Control-Based Guardrails"
-
-info "Starting Scenario 2..."
+info "Starting Scenario 2: MCP Guardrails Without Gatekeeping"
 echo ""
 
 cd scenario2
@@ -152,4 +191,88 @@ fi
 cd ..
 
 echo ""
-section "DEMO COMPLETE"
+success "✅ Scenario 2 Complete!"
+echo ""
+echo -e "${GREEN}Achievement: Self-service guardrails protecting agent interactions${NC}"
+echo -e "${GREEN}Agents calling this API now respect compliance rules — no central review needed${NC}"
+echo ""
+echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 3...${NC}"
+read
+
+# ============================================================================
+# TRANSITION TO SCENARIO 3
+# ============================================================================
+
+section "SCENARIO 3: Automated Governance at Scale"
+
+info "Starting Scenario 3: Governance Without Bureaucracy"
+echo ""
+
+cd scenario3
+
+# Check if demo.sh exists
+if [ ! -f "demo.sh" ]; then
+    error "Error: scenario3/demo.sh not found!"
+    exit 1
+fi
+
+# Make sure it's executable
+chmod +x demo.sh
+
+# Run scenario 3
+./demo.sh
+
+# Check if scenario 3 completed successfully
+if [ $? -ne 0 ]; then
+    error "Scenario 3 failed."
+    exit 1
+fi
+
+cd ..
+
+echo ""
+success "✅ Scenario 3 Complete!"
+echo ""
+echo -e "${GREEN}Achievement: Governance that scales without central gatekeeping${NC}"
+echo -e "${YELLOW}Non-compliant architectures blocked automatically — no tickets, no delays${NC}"
+echo ""
+read -p "Press Enter to continue to Scenario 4..."
+
+# ============================================================================
+# TRANSITION TO SCENARIO 4
+# ============================================================================
+
+section "SCENARIO 4: Platform Evolution Without Architecture Changes"
+
+info "Starting Scenario 4: Bundle-as-Platform-Opinion"
+echo ""
+
+cd scenario4
+
+# Check if demo.sh exists
+if [ ! -f "demo.sh" ]; then
+    error "Error: scenario4/demo.sh not found!"
+    exit 1
+fi
+
+# Make sure it's executable
+chmod +x demo.sh
+
+# Run scenario 4
+./demo.sh
+
+# Check if scenario 4 completed successfully
+if [ $? -ne 0 ]; then
+    error "Scenario 4 failed."
+    exit 1
+fi
+
+cd ..
+
+echo ""
+success "✅ Scenario 4 Complete!"
+echo ""
+echo -e "${GREEN}Achievement: Platform pushes changes without teams modifying architectures${NC}"
+echo -e "${YELLOW}Bundle evolution (HOW) independent from architecture (WHAT)${NC}"
+echo ""
+sleep 3
