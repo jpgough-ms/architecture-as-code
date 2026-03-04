@@ -97,7 +97,7 @@ The flood command books a burst of trades to create a portfolio imbalance that t
 ```bash
 docker run --rm \
   -e A2A_URL=http://host.docker.internal:9103 \
-  jpgough/rebalancer-agent:latest flood NVDA 20 5000
+  jpgough/rebalancer-agent:latest flood NVDA 5 5000
 ```
 
 This books 20 trades of 5,000 NVDA shares each (100k total), creating an imbalance that the rebalancer agent will detect and correct.
