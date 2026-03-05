@@ -134,13 +134,14 @@ read
 
 heading "Step 6: Wait for pods to be ready"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Waiting for all pods to be ready..."
+    info "Waiting for deployments to complete rollout..."
     info "Why: Deployments need time to mount new ConfigMaps and pass readiness checks"
 fi
-command "kubectl wait --for=condition=ready pod --all --timeout=90s"
-kubectl wait --for=condition=ready pod --all --timeout=90s
+command "kubectl rollout status deployment/trades deployment/trades-mcp-server"
+kubectl rollout status deployment/trades --timeout=90s
+kubectl rollout status deployment/trades-mcp-server --timeout=90s
 echo ""
-success "✓ All pods ready"
+success "✓ All deployments rolled out successfully"
 echo ""
 echo "Press Enter to continue..."
 read
@@ -157,4 +158,80 @@ echo ""
 echo "Press Enter to continue..."
 read
 
+# ============================================================================
+# STEP 8: Verify Port Forwarding After Restart
+# ============================================================================
+
+heading "Step 8: Verify Port Forwarding"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "After restarting deployments, we need to ensure port-forwards are still active..."
+    info "Why: Pod restarts may require re-establishing port-forward connections"
+fi
+echo ""
+info "Checking port-forwards from ./port-forward.sh..."
+echo ""
+MCP_OK=false
+TRADES_OK=false
+
+if curl -s http://localhost:8080/health > /dev/null 2>&1 || curl -s http://localhost:8080/ > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ MCP Server accessible at localhost:8080${NC}"
+    MCP_OK=true
+else
+    echo -e "${RED}✗ MCP Server NOT accessible at localhost:8080${NC}"
+fi
+
+if curl -s http://localhost:8081/health > /dev/null 2>&1 || curl -s http://localhost:8081/ > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Trades API accessible at localhost:8081${NC}"
+    TRADES_OK=true
+else
+    echo -e "${RED}✗ Trades API NOT accessible at localhost:8081${NC}"
+fi
+
+echo ""
+if [ "$MCP_OK" = false ] || [ "$TRADES_OK" = false ]; then
+    echo -e "${YELLOW}REMINDER: You may need to restart port-forward.sh in a separate terminal:${NC}"
+    echo -e "  ${CYAN}./port-forward.sh${NC}"
+    echo ""
+    echo "Press Enter once port-forwarding is running..."
+    read
+    
+    # Re-check after user confirmation
+    if curl -s http://localhost:8080/ > /dev/null 2>&1 && curl -s http://localhost:8081/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Port-forwards are now active${NC}"
+    else
+        echo -e "${RED}✗ Still cannot reach services. Please verify ./port-forward.sh is running.${NC}"
+        echo "Press Enter to continue anyway..."
+        read
+    fi
+else
+    success "✓ All port-forwards active"
+fi
+echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
+    read
+else
+    sleep 2
+fi
+
 success "Scenario 2 Complete!"
+echo ""
+
+# ============================================================================
+# Preparing for Scenario 3
+# ============================================================================
+
+heading "🔧 Preparing for Scenario 3"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Setting up insecure cluster for next scenario..."
+    info "Why: Scenario 3 demonstrates governance gates starting with non-compliant infrastructure"
+fi
+
+command_verbose "minikube start --profile insecure"
+minikube start --profile insecure > /dev/null 2>&1
+minikube profile insecure > /dev/null 2>&1
+
+success "✓ Insecure cluster ready for Scenario 3"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "This cluster will be used to demonstrate infrastructure governance requirements"
+fi

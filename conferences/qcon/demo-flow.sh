@@ -82,10 +82,10 @@ echo -e "${BLUE}║                                                             
 echo -e "${BLUE}║      APIs for Agents                                             ║${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
 echo -e "${BLUE}║  Scenario 1: Deploy API & MCP Architecture                       ║${NC}"
-echo -e "${BLUE}║  Scenario 2: Self-Service Agent Guardrails                       ║${NC}"
-echo -e "${BLUE}║  Scenario 3: Automated Governance Gates                          ║${NC}"
-echo -e "${BLUE}║  Scenario 4: Platform Opinion has changed                        ║${NC}"
-echo -e "${BLUE}║  Scenario 5: Agent-to-Agent Communication                        ║${NC}"
+echo -e "${BLUE}║  Scenario 2: Introducing Controls and Governance                 ║${NC}"
+echo -e "${BLUE}║  Scenario 3: Gating Deployments                                  ║${NC}"
+echo -e "${BLUE}║  Scenario 4: Scaling Deployments and Operational Change          ║${NC}"
+echo -e "${BLUE}║  Scenario 5: Rapid Platform Adoption                             ║${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -97,9 +97,10 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo ""
     info "This demo shows how Architecture as Code enables:"
     echo "  1️⃣  Deploy standardized API infrastructure"
-    echo "  2️⃣  Self-service guardrails for agent-safe APIs (MCP compliance)"
-    echo "  3️⃣  Automated governance without central gatekeeping"
-    echo "  4️⃣  Platform evolution through bundle versioning"
+    echo "  2️⃣  Declare controls and governance requirements in architecture"
+    echo "  3️⃣  Gate deployments with automated validation"
+    echo "  4️⃣  Scale platform changes without architecture churn"
+    echo "  5️⃣  Rapidly adopt new platform capabilities (A2A protocol)"
     echo ""
     info "The Challenge:"
     echo "   • 200+ APIs need consistent security controls"
@@ -168,10 +169,10 @@ read
 # TRANSITION
 # ============================================================================
 
-section "SCENARIO 2: Self-Service Agent Guardrails"
+section "SCENARIO 2: Introducing Controls and Governance"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Starting Scenario 2: MCP Guardrails Without Gatekeeping"
+    info "Starting Scenario 2: Controls and Governance in Architecture"
     echo ""
 fi
 
@@ -201,8 +202,8 @@ echo ""
 success "✅ Scenario 2 Complete!"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${GREEN}Achievement: Self-service guardrails protecting agent interactions${NC}"
-    echo -e "${GREEN}Agents calling this API now respect compliance rules — no central review needed${NC}"
+    echo -e "${GREEN}Achievement: Controls codified and governance requirements declared${NC}"
+    echo -e "${GREEN}Architecture includes MCP guardrails and security controls${NC}"
     echo ""
 fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 3...${NC}"
@@ -212,10 +213,10 @@ read
 # TRANSITION TO SCENARIO 3
 # ============================================================================
 
-section "SCENARIO 3: Automated Governance Gates"
+section "SCENARIO 3: Gating Deployments"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Starting Scenario 3: Governance Without Bureaucracy"
+    info "Starting Scenario 3: Automated Governance Gates Block Non-Compliant Deployments"
     echo ""
 fi
 
@@ -245,8 +246,8 @@ echo ""
 success "✅ Scenario 3 Complete!"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${GREEN}Achievement: Governance that scales without central gatekeeping${NC}"
-    echo -e "${YELLOW}Non-compliant architectures blocked automatically — no tickets, no delays${NC}"
+    echo -e "${GREEN}Achievement: Deployments automatically gated by governance requirements${NC}"
+    echo -e "${YELLOW}Pattern, infrastructure, and control validations enforced before deployment${NC}"
     echo ""
 fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 4...${NC}"
@@ -256,10 +257,10 @@ read
 # TRANSITION TO SCENARIO 4
 # ============================================================================
 
-section "SCENARIO 4: Platform Opinion Has Changed"
+section "SCENARIO 4: Scaling Deployments and Operational Change"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Starting Scenario 4: Bundle-as-Platform-Opinion"
+    info "Starting Scenario 4: Platform Changes Without Architecture Modifications"
     echo ""
 fi
 
@@ -289,8 +290,8 @@ echo ""
 success "✅ Scenario 4 Complete!"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${GREEN}Achievement: Platform pushes changes without teams modifying architectures${NC}"
-    echo -e "${YELLOW}Bundle evolution (HOW) independent from architecture (WHAT)${NC}"
+    echo -e "${GREEN}Achievement: Platform operational changes scale across all teams${NC}"
+    echo -e "${YELLOW}Resource limits and platform policies updated without architecture changes${NC}"
     echo ""
 fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 5...${NC}"
@@ -300,10 +301,10 @@ read
 # TRANSITION TO SCENARIO 5
 # ============================================================================
 
-section "SCENARIO 5: Agent-to-Agent Communication"
+section "SCENARIO 5: Rapid Platform Adoption"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Starting Scenario 5: Autonomous Agent Coordination via A2A Protocol"
+    info "Starting Scenario 5: Agent-to-Agent Protocol Enables New Platform Capabilities"
     echo ""
 fi
 
@@ -333,8 +334,8 @@ echo ""
 success "✅ Scenario 5 Complete!"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${GREEN}Achievement: Agents coordinate autonomously through A2A protocol${NC}"
-    echo -e "${YELLOW}Architecture as Code captures agent actors as first-class citizens${NC}"
+    echo -e "${GREEN}Achievement: New platform capabilities (A2A protocol) adopted rapidly${NC}"
+    echo -e "${YELLOW}Autonomous agents leverage APIs with minimal integration effort${NC}"
     echo ""
 fi
 sleep 3
@@ -353,10 +354,10 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${CYAN}Summary of what we demonstrated:${NC}"
     echo ""
     echo -e "${GREEN}✓ Scenario 1:${NC} Deployed API & MCP Server architecture"
-    echo -e "${GREEN}✓ Scenario 2:${NC} Self-service agent guardrails for developers"
-    echo -e "${GREEN}✓ Scenario 3:${NC} Automated governance gates in CI/CD"
-    echo -e "${GREEN}✓ Scenario 4:${NC} Platform evolution without architecture changes"
-    echo -e "${GREEN}✓ Scenario 5:${NC} Agent-to-agent communication & autonomy"
+    echo -e "${GREEN}✓ Scenario 2:${NC} Controls and governance requirements declared"
+    echo -e "${GREEN}✓ Scenario 3:${NC} Deployments gated by automated validation"
+    echo -e "${GREEN}✓ Scenario 4:${NC} Platform changes scaled without architecture churn"
+    echo -e "${GREEN}✓ Scenario 5:${NC} New platform capability (A2A) adopted rapidly"
     echo ""
     echo -e "${YELLOW}Key Takeaways:${NC}"
     echo -e "${YELLOW}• Architecture as Code enables governance automation${NC}"

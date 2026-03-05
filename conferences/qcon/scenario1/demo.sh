@@ -119,9 +119,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 else
     echo -e "${BLUE}⚡ Mode: Concise (commands only)${NC}"
 fi
-echo ""
-sleep 2
-
 # ============================================================================
 # END DEPENDENCY VERIFICATION
 # ============================================================================
@@ -186,11 +183,14 @@ heading "Preparing Docker Images"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Loading images into Minikube's daemon..."
     info "Why: imagePullPolicy: Never requires images to be pre-loaded locally"
+    command "minikube image load jpgough/trades-mcp-server:latest --profile secure"
+    minikube image load jpgough/trades-mcp-server:latest --profile secure
+    command "minikube image load jpgough/trades-rest-server:latest --profile secure"
+    minikube image load jpgough/trades-rest-server:latest --profile secure
+# else
+    # minikube image load jpgough/trades-mcp-server:latest --profile secure > /dev/null 2>&1
+    # minikube image load jpgough/trades-rest-server:latest --profile secure > /dev/null 2>&1
 fi
-command "minikube image load jpgough/trades-mcp-server:latest --profile secure"
-minikube image load jpgough/trades-mcp-server:latest --profile secure
-command "minikube image load jpgough/trades-rest-server:latest --profile secure"
-minikube image load jpgough/trades-rest-server:latest --profile secure
 echo ""
 success "✓ Images ready in Minikube's daemon"
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -284,6 +284,68 @@ fi
 command "kubectl get pods -o wide"
 kubectl get pods -o wide
 if [ "$VERBOSE_MODE" == "true" ]; then
+    read
+else
+    sleep 2
+fi
+
+# ============================================================================
+# STEP 7: Setup Port Forwarding
+# ============================================================================
+
+heading "Setting Up Port Forwarding"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "To access the deployed services, we need to set up port forwarding..."
+    info "Why: Services run as ClusterIP and need port-forward for local access"
+fi
+echo ""
+echo -e "${YELLOW_BOLD}Run this in a separate terminal:${NC}"
+echo -e "${GREEN}  ./port-forward.sh${NC}"
+echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "This will make services available at:"
+    echo "  • MCP Server:  http://localhost:8080"
+    echo "  • Trades API:  http://localhost:8081"
+else
+    echo "Services will be available at:"
+    echo "  • MCP Server:  http://localhost:8080"
+    echo "  • Trades API:  http://localhost:8081"
+fi
+echo ""
+echo -e "${YELLOW_BOLD}Press Enter once port-forwarding is running...${NC}"
+read
+
+# Verify port-forwards
+echo "Verifying port-forwards..."
+echo ""
+MCP_OK=false
+TRADES_OK=false
+
+if curl -s http://localhost:8080/health > /dev/null 2>&1 || curl -s http://localhost:8080/ > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ MCP Server accessible at localhost:8080${NC}"
+    MCP_OK=true
+else
+    echo -e "${RED}✗ MCP Server NOT accessible at localhost:8080${NC}"
+fi
+
+if curl -s http://localhost:8081/health > /dev/null 2>&1 || curl -s http://localhost:8081/ > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Trades API accessible at localhost:8081${NC}"
+    TRADES_OK=true
+else
+    echo -e "${RED}✗ Trades API NOT accessible at localhost:8081${NC}"
+fi
+
+echo ""
+if [ "$MCP_OK" = true ] && [ "$TRADES_OK" = true ]; then
+    success "✓ Port-forwarding confirmed - all services accessible"
+else
+    error "Please ensure ./port-forward.sh is running in another terminal"
+    echo "Press Enter to continue anyway..."
+    read
+fi
+echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
     read
 else
     sleep 2

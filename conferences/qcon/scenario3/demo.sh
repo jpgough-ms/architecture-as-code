@@ -84,8 +84,8 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 fi
 echo ""
 echo -e "${YELLOW}This demo shows three governance gates:${NC}"
-echo -e "${YELLOW}   Gate 1:${NC} Infrastructure Requirements (secure cluster, network segmentation)"
-echo -e "${YELLOW}   Gate 2:${NC} Pattern Validation (architecture must follow approved patterns from CALM Hub)"
+echo -e "${YELLOW}   Gate 1:${NC} Pattern Validation (architecture must follow approved patterns from CALM Hub)"
+echo -e "${YELLOW}   Gate 2:${NC} Infrastructure Requirements (secure cluster, network segmentation)"
 echo -e "${YELLOW}   Gate 3:${NC} Architecture Controls (micro-segmentation, permitted connections, MCP guardrails)"
 echo ""
 echo ""
@@ -93,31 +93,65 @@ echo "Press Enter to begin..."
 read
 
 # ============================================================================
-# Attempt 1: Deploy without meeting infrastructure requirements
+# Attempt 1: Pattern not in CALM Hub
 # ============================================================================
 
 stage "Attempt 1 — First Deployment Try"
 
-if [ "$VERBOSE_MODE" == "true" ]; then
-    heading "🚀 Prepare Deployment"
-    info "Your team has a cluster running..."
-    run_command_verbose "minikube start --profile insecure"
-    minikube start --profile insecure > /dev/null 2>&1
-    minikube profile insecure > /dev/null 2>&1
-    success "Cluster ready (profile: insecure)"
-    echo "Press Enter to continue..."
-    read
+heading " Gate 1: Pattern Validation"
+info "Team wants to deploy with custom 'Secure Trades API and MCP Pattern'..."
+info "Checking if pattern is registered in central artifact store..."
+run_command "curl http://localhost:8080/calm/namespaces/qcon2026/patterns"
+echo ""
+
+# Check if pattern exists in CALM Hub
+EXISTING_PATTERNS=$(curl -s http://localhost:8080/calm/namespaces/qcon2026/patterns 2>/dev/null)
+if echo "$EXISTING_PATTERNS" | grep -q "Trades API and MCP Pattern"; then
+    success "✅ Pattern found in CALM Hub (namespace: qcon2026)"
+    info "Pattern is centrally managed - all 200+ teams reference the same validated pattern"    
 else
-    heading "🚀 Prepare Deployment"
-    info "⚙️  Setting up insecure cluster..."
-    minikube start --profile insecure > /dev/null 2>&1
-    minikube profile insecure > /dev/null 2>&1
-    success "✓ Cluster ready (profile: insecure)"
-    echo ""
+    error_msg "❌ GATE 1 REJECTED: Pattern 'Trades API and MCP Pattern' not found in CALM Hub"
+    if [ "$VERBOSE_MODE" == "true" ]; then
+        info "Governance requirement: All patterns must be pre-approved and registered"
+        info "Why this matters: Prevents teams from creating one-off architectures that bypass platform standards"
+    fi
 fi
+echo ""
+echo "Press Enter to continue..."
+read
+
+# ============================================================================
+# Attempt 2: Use approved pattern from CALM Hub
+# ============================================================================
+
+stage "Attempt 2 — Use Approved Pattern"
+
+heading "🔄 Switch to Approved Pattern"
+info "Team reviews available patterns in CALM Hub..."
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Found approved pattern: ID=2, version=1.0.0 (Trades API & MCP Pattern)"
+else
+    info "Found: 'Trades API & MCP Pattern' (ID=2, v1.0.0)"
+fi
+echo ""
+run_command "curl http://localhost:8080/calm/namespaces/qcon2026/patterns/2/versions/1.0.0"
+echo ""
+
+# Fetch pattern from CALM Hub
+PATTERN_RESPONSE=$(curl -s http://localhost:8080/calm/namespaces/qcon2026/patterns/2/versions/1.0.0 2>/dev/null)
+if [ -n "$PATTERN_RESPONSE" ] && echo "$PATTERN_RESPONSE" | grep -q "patternId"; then
+    success "✅ GATE 1 PASSED: Pattern retrieved from CALM Hub"
+    if [ "$VERBOSE_MODE" == "true" ]; then
+        info "This architecture follows an approved pattern (namespace: qcon2026, patternId: 2)"
+        info "Team can proceed to infrastructure validation"
+    fi
+fi
+echo ""
+echo "Press Enter to continue..."
+read
 
 heading "📦 Generate Deployment Scripts"
-info "Using CALM to generate deployer from architecture..."
+info "Pattern approved - generating deployment resources..."
 run_command "calm template --architecture calm/trades-api-and-mcp-conforming.architecture.json --bundle bundle --output generated"
 calm template \
   --architecture calm/trades-api-and-mcp-conforming.architecture.json \
@@ -133,7 +167,13 @@ echo ""
 echo "Press Enter to continue..."
 read
 
-heading "🚦 Gate 1: Infrastructure Requirements"
+# ============================================================================
+# Attempt 3: Deploy without meeting infrastructure requirements
+# ============================================================================
+
+stage "Attempt 3 — Infrastructure Validation"
+
+heading "🚦 Gate 2: Infrastructure Requirements"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Checking if cluster meets security requirements..."
     run_command_verbose "bash deployer.sh"
@@ -141,7 +181,7 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 fi
 bash deployer.sh || true
 echo ""
-error_msg "❌ GATE 1 REJECTED: Secure cluster profile required"
+error_msg "❌ GATE 2 REJECTED: Secure cluster profile required"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Why it failed: Cluster must have network segmentation enabled (Calico CNI)"
     info "Impact: Without automated gates, this would slip through to production"
@@ -150,10 +190,10 @@ echo "Press Enter to continue..."
 read
 
 # ============================================================================
-# Attempt 2: Fix infrastructure, proceed to architecture validation
+# Attempt 4: Fix infrastructure
 # ============================================================================
 
-stage "Attempt 2 — Fix Infrastructure"
+stage "Attempt 4 — Fix Infrastructure"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     heading "🔧 Remediate Infrastructure"
@@ -191,14 +231,14 @@ echo ""
 echo "Press Enter to continue..."
 read
 
-heading "🚦 Gate 1: Infrastructure Requirements - Retry"
+heading "🚦 Gate 2: Infrastructure Requirements - Retry"
 if [ "$VERBOSE_MODE" == "true" ]; then
     run_command_verbose "bash deployer.sh"
     echo ""
 fi
 bash deployer.sh
 echo ""
-success "✅ GATE 1 PASSED: Infrastructure approved"
+success "✅ GATE 2 PASSED: Infrastructure approved"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Team fixed infrastructure in minutes with instant feedback"
     info "No waiting for architecture review meeting"
@@ -207,60 +247,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 else
     sleep 2
 fi
-
-# ============================================================================
-# Attempt 3: Pattern not in CALM Hub
-# ============================================================================
-
-stage "Attempt 3 — Pattern Validation"
-
-heading "📚 Verify Pattern in CALM Hub"
-info "Team wants to deploy with custom 'Secure Trades API and MCP Pattern'..."
-info "Checking if pattern is registered in central artifact store..."
-run_command "curl http://localhost:8080/calm/namespaces/qcon2026/patterns"
-echo ""
-
-# Check if pattern exists in CALM Hub
-EXISTING_PATTERNS=$(curl -s http://localhost:8080/calm/namespaces/qcon2026/patterns 2>/dev/null)
-if echo "$EXISTING_PATTERNS" | grep -q "Trades API and MCP Pattern"; then
-    success "✅ Pattern found in CALM Hub (namespace: qcon2026)"
-    info "Pattern is centrally managed - all 200+ teams reference the same validated pattern"    
-else
-    error_msg "❌ Pattern 'Trades API and MCP Pattern' not found in CALM Hub"
-    info "Governance requirement: All patterns must be pre-approved and registered"
-    info "Why this matters: Prevents teams from creating one-off architectues that bypass platform standards and opinions"
-    
-fi
-echo ""
-echo "Press Enter to continue..."
-read
-
-# ============================================================================
-# Attempt 4: Use approved pattern from CALM Hub
-# ============================================================================
-
-stage "Attempt 4 — Use Approved Pattern"
-
-heading "🔄 Switch to Approved Pattern"
-info "Team reviews available patterns in CALM Hub..."
-if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Found approved pattern: ID=2, version=1.0.0 (Trades API & MCP Pattern)"
-else
-    info "Found: 'Trades API & MCP Pattern' (ID=2, v1.0.0)"
-fi
-echo ""
-run_command "curl http://localhost:8080/calm/namespaces/qcon2026/patterns/2/versions/1.0.0"
-echo ""
-
-# Fetch pattern from CALM Hub
-PATTERN_RESPONSE=$(curl -s http://localhost:8080/calm/namespaces/qcon2026/patterns/2/versions/1.0.0 2>/dev/null)
-if [ -n "$PATTERN_RESPONSE" ] && echo "$PATTERN_RESPONSE" | grep -q "patternId"; then
-    success "✅ Pattern retrieved from CALM Hub (namespace: qcon2026, patternId: 2)"
-    info "This architecture is generated off an approved pattern, deployment can proceed"
-fi
-echo ""
-echo "Press Enter to continue to controls validation..."
-read
 
 # ============================================================================
 # Attempt 5: Architecture missing required controls
@@ -343,6 +329,26 @@ echo -e "  • micro-segmentation on k8s-cluster ✓"
 echo -e "  • permitted-connection on both connect relationships ✓"
 echo -e "  • mcp-guardrail on mcp-server ✓"
 echo ""
+echo "Press Enter to see the conforming architecture..."
+read
+
+heading "📋 Conforming Architecture - Controls Highlighted"
+info "Let's examine where controls are declared in the architecture..."
+echo ""
+echo -e "${CYAN}═══ Controls on k8s-cluster node ═══${NC}"
+sed -n '/"unique-id": "k8s-cluster"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
+echo ""
+echo -e "${CYAN}═══ Controls on mcp-server node ═══${NC}"
+sed -n '/"unique-id": "mcp-server"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
+echo ""
+echo -e "${CYAN}═══ Controls on relationships ═══${NC}"
+echo -e "${YELLOW}Relationship 1: mcp-client-to-mcp-server${NC}"
+sed -n '/"unique-id": "mcp-client-to-mcp-server"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
+echo ""
+echo -e "${YELLOW}Relationship 2: mcp-server-to-trades-api${NC}"
+sed -n '/"unique-id": "mcp-server-to-trades-api"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
+echo ""
+info "All controls are now present in the architecture"
 echo "Press Enter to validate..."
 read
 
@@ -379,18 +385,18 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo ""
     echo -e "${GREEN}The Journey Through Three Governance Gates:${NC}"
     echo ""
-    echo -e "${CYAN}  Attempt 1${NC} → ❌ Gate 1: Infrastructure not secure (standard cluster)"
-    echo -e "${CYAN}  Attempt 2${NC} → ✅ Gate 1: Team added Calico CNI — INSTANT FEEDBACK"
+    echo -e "${CYAN}  Attempt 1${NC} → ❌ Gate 1: Custom pattern not in CALM Hub"
+    echo -e "${CYAN}  Attempt 2${NC} → ✅ Gate 1: Switched to approved 'Trades API & MCP Pattern' — INSTANT FEEDBACK"
     echo ""
-    echo -e "${CYAN}  Attempt 3${NC} → ❌ Pattern Gate: Custom pattern not in CALM Hub"
-    echo -e "${CYAN}  Attempt 4${NC} → ✅ Pattern Gate: Switched to approved 'Basic Trades API Pattern'"
+    echo -e "${CYAN}  Attempt 3${NC} → ❌ Gate 2: Infrastructure not secure (standard cluster)"
+    echo -e "${CYAN}  Attempt 4${NC} → ✅ Gate 2: Team added Calico CNI — INSTANT FEEDBACK"
     echo ""
     echo -e "${CYAN}  Attempt 5${NC} → ❌ Gate 3: Missing required controls (permitted-connection)"
     echo -e "${CYAN}  Attempt 6${NC} → ✅ Gate 3: All controls declared — DEPLOYMENT APPROVED"
     echo ""
     echo -e "${GREEN}Three Governance Checkpoints:${NC}"
-    echo "   1. Gate 1 - Infrastructure: Secure cluster with network segmentation"
-    echo "   2. Gate 2 - Pattern: Architecture must follow approved patterns from CALM Hub"
+    echo "   1. Gate 1 - Pattern: Architecture must follow approved patterns from CALM Hub"
+    echo "   2. Gate 2 - Infrastructure: Secure cluster with network segmentation"
     echo "   3. Gate 3 - Controls: All required security controls must be declared"
     echo ""
     echo -e "${YELLOW}The Impact at Scale:${NC}"

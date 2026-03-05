@@ -265,5 +265,3 @@ echo ""
 echo -e "${GREEN}Bundle-as-Platform-Opinion:${NC}"
 echo "   The platform's HOW evolves independently from the team's WHAT"
 echo ""
-
-success "Scenario 4 Complete!"

@@ -124,49 +124,26 @@ else
     echo "✓ jpgough/trades-a2a-server:latest already cached locally"
 fi
 
-echo ""
-echo "Loading images into minikube..."
-minikube image load jpgough/trades-rest-server:latest > /dev/null 2>&1
-minikube image load jpgough/trades-a2a-server:latest > /dev/null 2>&1
-
-success "✓ Images loaded into minikube"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo ""
+    echo "Loading images into minikube..."
+    minikube image load jpgough/trades-rest-server:latest > /dev/null 2>&1
+    minikube image load jpgough/trades-a2a-server:latest > /dev/null 2>&1
+    success "✓ Images loaded into minikube"
+else
+    # Load silently in concise mode
+    minikube image load jpgough/trades-rest-server:latest > /dev/null 2>&1
+    minikube image load jpgough/trades-a2a-server:latest > /dev/null 2>&1
+fi
 echo ""
 echo "Press Enter to continue..."
 read
 
 # ============================================================================
-# Step 3: Display Architecture
+# Step 3: Deploy to Kubernetes
 # ============================================================================
 
-stage "Step 3 — Agent-to-Agent Architecture"
-
-if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Examining the A2A architecture..."
-    info "Why: Shows how agents discover and coordinate through the A2A server"
-fi
-
-echo -e "${CYAN}Architecture Components:${NC}"
-echo ""
-run_command "cat calm/agent-to-agent.architecture.json | jq '.nodes[] | {\"unique-id\", name, \"node-type\"}'"
-cat calm/agent-to-agent.architecture.json | jq '.nodes[] | {"unique-id", name, "node-type"}'
-echo ""
-
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${CYAN}Key Relationships:${NC}"
-    echo "  • UI Agent → A2A Server (human-facing tool discovery)"
-    echo "  • Rebalancer Agent → A2A Server (autonomous tool invocation)"
-    echo "  • A2A Server → Trades API (backend operations)"
-    echo ""
-fi
-
-echo "Press Enter to deploy..."
-read
-
-# ============================================================================
-# Step 4: Deploy to Kubernetes
-# ============================================================================
-
-stage "Step 4 — Deploy to Kubernetes"
+stage "Step 3 — Deploy to Kubernetes"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Deploying Trades API and A2A Server..."
@@ -206,10 +183,10 @@ echo "Press Enter to continue..."
 read
 
 # ============================================================================
-# Step 5: Port Forward Instructions
+# Step 4: Port Forward Instructions
 # ============================================================================
 
-stage "Step 5 — Setup Port Forwarding"
+stage "Step 4 — Setup Port Forwarding"
 
 info "⚠️  IMPORTANT: Port forwarding required for agent communication"
 echo ""
@@ -245,10 +222,10 @@ echo "Press Enter to continue..."
 read
 
 # ============================================================================
-# Step 6: Start QCON UI Agent
+# Step 5: Start QCON UI Agent
 # ============================================================================
 
-stage "Step 6 — Start QCON UI Agent"
+stage "Step 5 — Start QCON UI Agent"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Starting the QCON Agent UI..."
@@ -274,10 +251,10 @@ echo -e "${YELLOW_BOLD}Press Enter once you've explored the UI...${NC}"
 read
 
 # ============================================================================
-# Step 7: Start Rebalancer Agent
+# Step 6: Start Rebalancer Agent
 # ============================================================================
 
-stage "Step 7 — Start Autonomous Rebalancer Agent"
+stage "Step 6 — Start Autonomous Rebalancer Agent"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Starting the Rebalancer Agent..."
@@ -303,10 +280,10 @@ echo -e "${YELLOW_BOLD}Press Enter once the rebalancer is running...${NC}"
 read
 
 echo ""# ============================================================================
-# Step 8: Flood Portfolio
+# Step 7: Flood Portfolio
 # ============================================================================
 
-stage "Step 8 — Create Portfolio Imbalance"
+stage "Step 7 — Create Portfolio Imbalance"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Now flood the portfolio to trigger the rebalancer..."
@@ -388,7 +365,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo ""
 fi
 
-success "Scenario 5 Complete!"
 echo ""
 
 # ============================================================================
