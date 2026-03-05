@@ -1,0 +1,111 @@
+# Network Policies for Scenario 5: Agent-to-Agent Communication
+# These policies define the allowed traffic between components
+
+---
+# Allow A2A Server to receive traffic from anywhere (external agents via port-forward)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-a2a-server-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: trades-a2a-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - {}  # Allow all ingress (needed for external agent access via port-forward)
+
+---
+# Allow A2A Server egress to Trades API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-a2a-egress-to-trades
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: trades-a2a-server
+  policyTypes:
+    - Egress
+  egress:
+    # Allow egress to Trades API
+    - to:
+        - podSelector:
+            matchLabels:
+              app: trades
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+
+---
+# Allow Trades API to receive traffic from A2A Server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-a2a-to-trades
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: trades
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow ingress from A2A Server
+    - from:
+        - podSelector:
+            matchLabels:
+              app: trades-a2a-server
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow ingress from MCP Server (for other scenarios)
+    - from:
+        - podSelector:
+            matchLabels:
+              app: trades-mcp-server
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# Allow Trades API egress (for external API calls if needed)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-trades-egress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: trades
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    # Allow egress to any external services (if trades needs to call external APIs)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

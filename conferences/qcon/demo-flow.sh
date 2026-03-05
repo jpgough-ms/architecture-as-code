@@ -85,6 +85,7 @@ echo -e "${BLUE}║  Scenario 1: Deploy API & MCP Architecture                  
 echo -e "${BLUE}║  Scenario 2: Self-Service Agent Guardrails                       ║${NC}"
 echo -e "${BLUE}║  Scenario 3: Automated Governance Gates                          ║${NC}"
 echo -e "${BLUE}║  Scenario 4: Platform Opinion has changed                        ║${NC}"
+echo -e "${BLUE}║  Scenario 5: Agent-to-Agent Communication                        ║${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -292,4 +293,78 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${YELLOW}Bundle evolution (HOW) independent from architecture (WHAT)${NC}"
     echo ""
 fi
+echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 5...${NC}"
+read
+
+# ============================================================================
+# TRANSITION TO SCENARIO 5
+# ============================================================================
+
+section "SCENARIO 5: Agent-to-Agent Communication"
+
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Starting Scenario 5: Autonomous Agent Coordination via A2A Protocol"
+    echo ""
+fi
+
+cd scenario5
+
+# Check if demo.sh exists
+if [ ! -f "demo.sh" ]; then
+    error "Error: scenario5/demo.sh not found!"
+    exit 1
+fi
+
+# Make sure it's executable
+chmod +x demo.sh
+
+# Run scenario 5
+./demo.sh
+
+# Check if scenario 5 completed successfully
+if [ $? -ne 0 ]; then
+    error "Scenario 5 failed."
+    exit 1
+fi
+
+cd ..
+
+echo ""
+success "✅ Scenario 5 Complete!"
+echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo -e "${GREEN}Achievement: Agents coordinate autonomously through A2A protocol${NC}"
+    echo -e "${YELLOW}Architecture as Code captures agent actors as first-class citizens${NC}"
+    echo ""
+fi
 sleep 3
+
+# ============================================================================
+# FINAL SUMMARY
+# ============================================================================
+
+section "🎉 ALL SCENARIOS COMPLETE 🎉"
+
+echo ""
+success "Congratulations! You've completed all 5 QCon scenarios!"
+echo ""
+
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo -e "${CYAN}Summary of what we demonstrated:${NC}"
+    echo ""
+    echo -e "${GREEN}✓ Scenario 1:${NC} Deployed API & MCP Server architecture"
+    echo -e "${GREEN}✓ Scenario 2:${NC} Self-service agent guardrails for developers"
+    echo -e "${GREEN}✓ Scenario 3:${NC} Automated governance gates in CI/CD"
+    echo -e "${GREEN}✓ Scenario 4:${NC} Platform evolution without architecture changes"
+    echo -e "${GREEN}✓ Scenario 5:${NC} Agent-to-agent communication & autonomy"
+    echo ""
+    echo -e "${YELLOW}Key Takeaways:${NC}"
+    echo -e "${YELLOW}• Architecture as Code enables governance automation${NC}"
+    echo -e "${YELLOW}• Patterns enforce standards across all implementations${NC}"
+    echo -e "${YELLOW}• CALM captures both human and agent actors${NC}"
+    echo -e "${YELLOW}• A2A protocol enables autonomous agent coordination${NC}"
+    echo ""
+fi
+
+echo -e "${CYAN_BOLD}Thank you for exploring FINOS Architecture as Code!${NC}"
+echo ""
