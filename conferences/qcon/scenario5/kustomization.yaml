@@ -9,3 +9,4 @@ resources:
   - a2a-deployment.yaml
   - a2a-service.yaml
   - denied-symbols-configmap.yaml
+  - network-policies.yaml

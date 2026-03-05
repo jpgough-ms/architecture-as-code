@@ -1,0 +1,53 @@
+{
+    "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
+    "unique-id": "trades-api-basic-architecture",
+    "name": "Basic Trades API Architecture",
+    "description": "Simple Trades API deployment referencing a standard approved pattern from CALM Hub",
+    "nodes": [
+        {
+            "unique-id": "trades-api",
+            "node-type": "service",
+            "name": "Trades API",
+            "description": "REST API for accessing and managing trade data",
+            "details": {
+                "required-pattern": "Basic Trades API Pattern"
+            },
+            "interfaces": [
+                {
+                    "unique-id": "trades-api-image",
+                    "image": "jpgough/trades-rest-server:latest"
+                },
+                {
+                    "unique-id": "trades-api-port",
+                    "port": 8080
+                }
+            ]
+        },
+        {
+            "unique-id": "k8s-cluster",
+            "node-type": "system",
+            "name": "Kubernetes Cluster",
+            "description": "Kubernetes cluster for deployment",
+            "interfaces": [
+                {
+                    "unique-id": "cluster-type",
+                    "value": "minikube"
+                }
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "unique-id": "deployed-in-k8s-cluster",
+            "description": "Trades API deployed on the Kubernetes cluster",
+            "relationship-type": {
+                "deployed-in": {
+                    "container": "k8s-cluster",
+                    "nodes": [
+                        "trades-api"
+                    ]
+                }
+            }
+        }
+    ]
+}

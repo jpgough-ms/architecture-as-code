@@ -1,0 +1,139 @@
+{
+    "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
+    "unique-id": "agent-to-agent-architecture",
+    "name": "Agent-to-Agent Communication Architecture",
+    "description": "Architecture demonstrating autonomous agent communication using A2A protocol. Includes trades REST API, A2A server for agent coordination, autonomous rebalancer agent, and UI agent for human interaction.",
+    "nodes": [
+        {
+            "unique-id": "ui-agent",
+            "node-type": "actor",
+            "name": "QCON UI Agent",
+            "description": "Web-based agent UI that connects to the A2A server to display portfolio status and interact with trade management tools"
+        },
+        {
+            "unique-id": "rebalancer-agent",
+            "node-type": "actor",
+            "name": "Rebalancer Agent",
+            "description": "Autonomous agent that runs in OBSERVE → DECIDE → ACT loop every 8 seconds, monitoring portfolio and rebalancing when imbalances are detected"
+        },
+        {
+            "unique-id": "a2a-server",
+            "node-type": "service",
+            "name": "Trades A2A Server",
+            "description": "Agent-to-agent communication server that exposes tools for portfolio management via A2A protocol. Acts as coordination layer between agents and backend",
+            "interfaces": [
+                {
+                    "unique-id": "a2a-server-image",
+                    "image": "jpgough/trades-a2a-server:latest"
+                },
+                {
+                    "unique-id": "a2a-server-port",
+                    "port": 80
+                },
+                {
+                    "unique-id": "a2a-agent-card",
+                    "protocol": "HTTP",
+                    "path": "/.well-known/agent.json",
+                    "description": "A2A agent card endpoint exposing available tools"
+                }
+            ]
+        },
+        {
+            "unique-id": "trades-api",
+            "node-type": "service",
+            "name": "Trades REST API",
+            "description": "REST API providing CRUD operations for trade management",
+            "interfaces": [
+                {
+                    "unique-id": "trades-api-image",
+                    "image": "jpgough/trades-rest-server:latest"
+                },
+                {
+                    "unique-id": "trades-api-port",
+                    "port": 80
+                }
+            ]
+        },
+        {
+            "unique-id": "k8s-cluster",
+            "node-type": "system",
+            "name": "Kubernetes Cluster",
+            "description": "Minikube cluster hosting the A2A server and Trades API",
+            "interfaces": [
+                {
+                    "unique-id": "cluster-type",
+                    "value": "minikube"
+                }
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "unique-id": "ui-agent-to-a2a-server",
+            "description": "UI agent connects to A2A server to discover and invoke tools for portfolio visualization and interaction",
+            "protocol": "HTTP",
+            "relationship-type": {
+                "connects": {
+                    "source": {
+                        "node": "ui-agent"
+                    },
+                    "destination": {
+                        "node": "a2a-server",
+                        "interfaces": [
+                            "a2a-agent-card"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "unique-id": "rebalancer-agent-to-a2a-server",
+            "description": "Rebalancer agent connects to A2A server to invoke portfolio management tools autonomously",
+            "protocol": "HTTP",
+            "relationship-type": {
+                "connects": {
+                    "source": {
+                        "node": "rebalancer-agent"
+                    },
+                    "destination": {
+                        "node": "a2a-server",
+                        "interfaces": [
+                            "a2a-agent-card"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "unique-id": "a2a-server-to-trades-api",
+            "description": "A2A server connects to Trades API to execute operations requested by agents",
+            "protocol": "HTTP",
+            "relationship-type": {
+                "connects": {
+                    "source": {
+                        "node": "a2a-server"
+                    },
+                    "destination": {
+                        "node": "trades-api",
+                        "interfaces": [
+                            "trades-api-port"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "unique-id": "deployed-in-k8s-cluster",
+            "description": "A2A server and Trades API deployed on the Kubernetes cluster",
+            "relationship-type": {
+                "deployed-in": {
+                    "container": "k8s-cluster",
+                    "nodes": [
+                        "a2a-server",
+                        "trades-api"
+                    ]
+                }
+            }
+        }
+    ]
+}

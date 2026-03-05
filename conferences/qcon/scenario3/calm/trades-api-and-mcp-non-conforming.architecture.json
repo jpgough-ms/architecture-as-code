@@ -1,8 +1,8 @@
 {
   "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
-  "unique-id": "trades-api-and-mcp-architecture",
-  "name": "Trades API and MCP Architecture",
-  "description": "Concrete instantiation of the Trades API and MCP pattern, deployed on a local Minikube cluster. The trades-api node links to its own detailed architecture via the detailed-architecture reference.",
+  "unique-id": "trades-api-and-mcp-non-conforming-architecture",
+  "name": "Trades API and MCP Architecture (Non-Conforming)",
+  "description": "Non-conforming architecture missing permitted-connection control on mcp-client-to-mcp-server relationship",
   "nodes": [
     {
       "unique-id": "mcp-client",
@@ -24,7 +24,18 @@
           "unique-id": "mcp-server-port",
           "port": 8080
         }
-      ]
+      ],
+      "controls": {
+        "mcp-guardrail": {
+          "description": "Enforces restrictions on trading symbols that the MCP server cannot access",
+          "requirements": [
+            {
+              "requirement-url": "controls/mcp-guardrail.requirement.json",
+              "config-url": "controls/mcp-guardrail.config.json"
+            }
+          ]
+        }
+      }
     },
     {
       "unique-id": "trades-api",
@@ -32,7 +43,6 @@
       "name": "Trades API",
       "description": "REST API for accessing and managing trade data",
       "details": {
-        "detailed-architecture": "../../trades-demo/calm/trades-api.architecture.json",
         "required-pattern": "../../trades-demo/calm/trades-api.pattern.json"
       },
       "interfaces": [
@@ -50,34 +60,48 @@
       "unique-id": "k8s-cluster",
       "node-type": "system",
       "name": "Kubernetes Cluster",
-      "description": "Kubernetes cluster hosting the trades services with network policy enforcement",
+      "description": "Kubernetes cluster with network policy enforcement",
       "interfaces": [
         {
           "unique-id": "cluster-type",
           "value": "minikube"
         }
-      ]
+      ],
+      "controls": {
+        "security": {
+          "description": "Security requirements for the Kubernetes cluster",
+          "requirements": [
+            {
+              "requirement-url": "controls/micro-segmentation.requirement.json",
+              "config-url": "controls/micro-segmentation.config.json"
+            }
+          ]
+        }
+      }
     }
   ],
   "relationships": [
     {
       "unique-id": "mcp-client-to-mcp-server",
-      "description": "MCP client sends tool calls to the MCP server over SSE",
-      "protocol": "HTTPS",
+      "description": "MCP client connects to MCP server to query trade data",
+      "protocol": "HTTP",
       "relationship-type": {
         "connects": {
           "source": {
             "node": "mcp-client"
           },
           "destination": {
-            "node": "mcp-server"
+            "node": "mcp-server",
+            "interfaces": [
+              "mcp-server-port"
+            ]
           }
         }
       }
     },
     {
       "unique-id": "mcp-server-to-trades-api",
-      "description": "MCP server fetches trade data from the Trades API on behalf of tool calls",
+      "description": "MCP server connects to Trades API to fetch trade data",
       "protocol": "HTTP",
       "relationship-type": {
         "connects": {
@@ -85,8 +109,22 @@
             "node": "mcp-server"
           },
           "destination": {
-            "node": "trades-api"
+            "node": "trades-api",
+            "interfaces": [
+              "trades-api-port"
+            ]
           }
+        }
+      },
+      "controls": {
+        "security": {
+          "description": "Connection authorization for MCP server to Trades API",
+          "requirements": [
+            {
+              "requirement-url": "controls/permitted-connection.requirement.json",
+              "config-url": "controls/permitted-connection-http.config.json"
+            }
+          ]
         }
       }
     },

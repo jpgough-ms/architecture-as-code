@@ -1,0 +1,14 @@
+# Generated files from CALM template command
+generated/
+deployer.sh
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
