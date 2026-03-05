@@ -111,25 +111,25 @@
             }
         },
         {
-            "unique-id": "trades-api-to-mcp-server",
-            "description": "Trades API connects to MCP server to expose trade data",
+            "unique-id": "mcp-server-to-trades-api",
+            "description": "MCP server connects to Trades API to fetch trade data",
             "protocol": "HTTP",
             "relationship-type": {
                 "connects": {
                     "source": {
-                        "node": "trades-api"
+                        "node": "mcp-server"
                     },
                     "destination": {
-                        "node": "mcp-server",
+                        "node": "trades-api",
                         "interfaces": [
-                            "mcp-server-port"
+                            "trades-api-port"
                         ]
                     }
                 }
             },
             "controls": {
                 "security": {
-                    "description": "Connection authorization for Trades API to MCP server",
+                    "description": "Connection authorization for MCP server to Trades API",
                     "requirements": [
                         {
                             "requirement-url": "controls/permitted-connection.requirement.json",

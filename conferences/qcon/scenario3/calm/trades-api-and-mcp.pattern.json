@@ -367,10 +367,10 @@
           "$ref": "https://calm.finos.org/release/1.0/meta/core.json#/defs/relationship",
           "properties": {
             "unique-id": {
-              "const": "trades-api-to-mcp-server"
+              "const": "mcp-server-to-trades-api"
             },
             "description": {
-              "const": "Trades API connects to MCP server to expose trade data"
+              "const": "MCP server connects to Trades API to fetch trade data"
             },
             "protocol": {
               "const": "HTTP"
@@ -379,12 +379,12 @@
               "const": {
                 "connects": {
                   "source": {
-                    "node": "trades-api"
+                    "node": "mcp-server"
                   },
                   "destination": {
-                    "node": "mcp-server",
+                    "node": "trades-api",
                     "interfaces": [
-                      "mcp-server-port"
+                      "trades-api-port"
                     ]
                   }
                 }
@@ -397,7 +397,7 @@
                   "type": "object",
                   "properties": {
                     "description": {
-                      "const": "Connection authorization for Trades API to MCP server"
+                      "const": "Connection authorization for MCP server to Trades API"
                     },
                     "requirements": {
                       "type": "array",

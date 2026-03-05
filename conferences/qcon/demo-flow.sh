@@ -51,14 +51,14 @@ echo ""
 echo -e "${CYAN}Choose your experience:${NC}"
 echo ""
 echo -e "  ${GREEN}1${NC} - ${YELLOW}Concise Mode${NC} (Recommended for presentations)"
-echo "      • Focus on key outcomes and decisions"
-echo "      • Hide infrastructure setup details"
-echo "      • Faster, streamlined experience"
+echo "      • Show all technical commands (calm, kubectl, minikube, calmhub)"
+echo "      • Focus on WHAT is happening, not WHY"
+echo "      • Streamlined for live demos"
 echo ""
-echo -e "  ${GREEN}2${NC} - ${YELLOW}Verbose Mode${NC} (Recommended for learning/debugging)"
-echo "      • Show all commands and output"
-echo "      • See every step of the process"
-echo "      • Full visibility into operations"
+echo -e "  ${GREEN}2${NC} - ${YELLOW}Story Mode${NC} (Recommended for learning/teaching)"
+echo "      • Show all technical commands AND explanations"
+echo "      • Context about why each step matters"
+echo "      • Full narrative for understanding"
 echo ""
 read -p "Enter your choice (1 or 2) [default: 1]: " MODE_CHOICE
 
@@ -67,7 +67,7 @@ MODE_CHOICE=${MODE_CHOICE:-1}
 
 if [ "$MODE_CHOICE" == "2" ]; then
     export VERBOSE_MODE="true"
-    echo -e "${GREEN}✓ Verbose mode enabled${NC}"
+    echo -e "${GREEN}✓ Story mode enabled${NC}"
 else
     export VERBOSE_MODE="false"
     echo -e "${GREEN}✓ Concise mode enabled${NC}"
@@ -81,50 +81,52 @@ echo -e "${BLUE}╔════════════════════�
 echo -e "${BLUE}║                                                                  ║${NC}"
 echo -e "${BLUE}║      APIs for Agents                                             ║${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
-echo -e "${BLUE}║  Scenario 1: Deploy API Infrastructure                           ║${NC}"
+echo -e "${BLUE}║  Scenario 1: Deploy API & MCP Architecture                       ║${NC}"
 echo -e "${BLUE}║  Scenario 2: Self-Service Agent Guardrails                       ║${NC}"
 echo -e "${BLUE}║  Scenario 3: Automated Governance Gates                          ║${NC}"
-echo -e "${BLUE}║  Scenario 4: Platform Evolution Without Architecture Changes     ║${NC}"
+echo -e "${BLUE}║  Scenario 4: Platform Opinion has changed                        ║${NC}"
 echo -e "${BLUE}║                                                                  ║${NC}"
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 sleep 2
 
-info "APIs aren't just consumed by human developers anymore —"
-info "they're consumed by tools and autonomous agents."
-echo ""
-info "This demo shows how Architecture as Code enables:"
-echo "  1️⃣  Deploy standardized API infrastructure"
-echo "  2️⃣  Self-service guardrails for agent-safe APIs (MCP compliance)"
-echo "  3️⃣  Automated governance without central gatekeeping"
-echo "  4️⃣  Platform evolution through bundle versioning"
-echo ""
-info "The Challenge:"
-echo "   • 200+ APIs need consistent security controls"
-echo "   • Agent consumers require runtime guardrails"
-echo "   • Teams must move fast without creating drift"
-echo ""
-info "The Solution:"
-echo "   • Codify architectural patterns in CALM"
-echo "   • Self-service controls teams can apply immediately"
-echo "   • Automated validation gates that scale"
-echo ""
-echo -e "${YELLOW}The demos run continuously. Clusters stay active between scenarios.${NC}"
-echo ""
-echo -e "${CYAN}Note: Port-forwarding is handled by ./port-forward.sh${NC}"
-echo -e "${CYAN}Start it in a separate terminal after Scenario 1 completes.${NC}"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "APIs aren't just consumed by human developers anymore —"
+    info "they're consumed by tools and autonomous agents."
+    echo ""
+    info "This demo shows how Architecture as Code enables:"
+    echo "  1️⃣  Deploy standardized API infrastructure"
+    echo "  2️⃣  Self-service guardrails for agent-safe APIs (MCP compliance)"
+    echo "  3️⃣  Automated governance without central gatekeeping"
+    echo "  4️⃣  Platform evolution through bundle versioning"
+    echo ""
+    info "The Challenge:"
+    echo "   • 200+ APIs need consistent security controls"
+    echo "   • Agent consumers require runtime guardrails"
+    echo "   • Teams must move fast without creating drift"
+    echo ""
+    info "The Solution:"
+    echo "   • Codify architectural patterns in CALM"
+    echo "   • Self-service controls teams can apply immediately"
+    echo "   • Automated validation gates that scale"
+    echo ""
+    echo -e "${CYAN}Note: Port-forwarding is handled by ./port-forward.sh${NC}"
+    echo -e "${CYAN}Start it in a separate terminal after Scenario 1 completes.${NC}"
+    echo ""
+fi
 read -p "Press Enter to begin..."
 
 # ============================================================================
 # SCENARIO 1: Basic Deployment
 # ============================================================================
 
-section "SCENARIO 1: Deploy API Infrastructure"
+section "SCENARIO 1: Deploy API & MCP Architecture"
 
-info "Starting Scenario 1: The Foundation"
-info "Deploying a Trades API with MCP server for agent consumption"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Starting Scenario 1: The Foundation"
+    info "Deploying a Trades API with MCP server for agent consumption"
+    echo ""
+fi
 
 cd scenario1
 
@@ -151,11 +153,13 @@ cd ..
 echo ""
 success "✅ Scenario 1 Complete!"
 echo ""
-echo -e "${GREEN}Achievement: API infrastructure deployed from architecture definition${NC}"
-echo ""
-echo -e "${CYAN}Reminder: Start port-forwarding in separate terminal if you haven't already:${NC}"
-echo -e "${GREEN}  ./port-forward.sh${NC}"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo -e "${GREEN}Achievement: API infrastructure deployed from architecture definition${NC}"
+    echo ""
+    echo -e "${CYAN}Reminder: Start port-forwarding in separate terminal if you haven't already:${NC}"
+    echo -e "${GREEN}  ./port-forward.sh${NC}"
+    echo ""
+fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 2...${NC}"
 read
 
@@ -165,8 +169,10 @@ read
 
 section "SCENARIO 2: Self-Service Agent Guardrails"
 
-info "Starting Scenario 2: MCP Guardrails Without Gatekeeping"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Starting Scenario 2: MCP Guardrails Without Gatekeeping"
+    echo ""
+fi
 
 cd scenario2
 
@@ -193,9 +199,11 @@ cd ..
 echo ""
 success "✅ Scenario 2 Complete!"
 echo ""
-echo -e "${GREEN}Achievement: Self-service guardrails protecting agent interactions${NC}"
-echo -e "${GREEN}Agents calling this API now respect compliance rules — no central review needed${NC}"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo -e "${GREEN}Achievement: Self-service guardrails protecting agent interactions${NC}"
+    echo -e "${GREEN}Agents calling this API now respect compliance rules — no central review needed${NC}"
+    echo ""
+fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 3...${NC}"
 read
 
@@ -203,10 +211,12 @@ read
 # TRANSITION TO SCENARIO 3
 # ============================================================================
 
-section "SCENARIO 3: Automated Governance at Scale"
+section "SCENARIO 3: Automated Governance Gates"
 
-info "Starting Scenario 3: Governance Without Bureaucracy"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Starting Scenario 3: Governance Without Bureaucracy"
+    echo ""
+fi
 
 cd scenario3
 
@@ -233,19 +243,24 @@ cd ..
 echo ""
 success "✅ Scenario 3 Complete!"
 echo ""
-echo -e "${GREEN}Achievement: Governance that scales without central gatekeeping${NC}"
-echo -e "${YELLOW}Non-compliant architectures blocked automatically — no tickets, no delays${NC}"
-echo ""
-read -p "Press Enter to continue to Scenario 4..."
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo -e "${GREEN}Achievement: Governance that scales without central gatekeeping${NC}"
+    echo -e "${YELLOW}Non-compliant architectures blocked automatically — no tickets, no delays${NC}"
+    echo ""
+fi
+echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 4...${NC}"
+read
 
 # ============================================================================
 # TRANSITION TO SCENARIO 4
 # ============================================================================
 
-section "SCENARIO 4: Platform Evolution Without Architecture Changes"
+section "SCENARIO 4: Platform Opinion Has Changed"
 
-info "Starting Scenario 4: Bundle-as-Platform-Opinion"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Starting Scenario 4: Bundle-as-Platform-Opinion"
+    echo ""
+fi
 
 cd scenario4
 
@@ -272,7 +287,9 @@ cd ..
 echo ""
 success "✅ Scenario 4 Complete!"
 echo ""
-echo -e "${GREEN}Achievement: Platform pushes changes without teams modifying architectures${NC}"
-echo -e "${YELLOW}Bundle evolution (HOW) independent from architecture (WHAT)${NC}"
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo -e "${GREEN}Achievement: Platform pushes changes without teams modifying architectures${NC}"
+    echo -e "${YELLOW}Bundle evolution (HOW) independent from architecture (WHAT)${NC}"
+    echo ""
+fi
 sleep 3

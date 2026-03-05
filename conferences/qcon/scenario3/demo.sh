@@ -58,39 +58,36 @@ stage() {
 # Ensure we're in the scenario3 directory
 cd "$(dirname "$0")"
 
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║         Scaling Governance Without Bureaucracy                 ║${NC}"
-echo -e "${BLUE}║           Automated Validation at Deployment Time                ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
+
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${CYAN}📊 Mode: Verbose (showing all details)${NC}"
+    echo -e "${CYAN}� Mode: Story (commands + explanations)${NC}"
 else
-    echo -e "${CYAN}⚡ Mode: Concise (focused on key outcomes)${NC}"
+    echo -e "${CYAN}⚡ Mode: Concise (commands only)${NC}"
 fi
 echo ""
-echo -e "${CYAN}📈 The Challenge:${NC}"
-echo "   200+ API teams need to deploy the Trades API with MCP support."
-echo "   Each deployment must meet security standards."
-echo ""
-echo -e "${RED}The Old Way:${NC}"
-echo "   • Architecture review meeting (2 weeks wait)"
-echo "   • Security team approval (1 week wait)"
-echo "   • Manual configuration verification"
-echo "   • Result: 3+ weeks per deployment, governance becomes a bottleneck"
-echo ""
-echo -e "${GREEN}The Architecture as Code Way:${NC}"
-echo "   • Governance requirements codified in CALM patterns"
-echo "   • Automated validation gates (instant feedback)"
-echo "   • Self-service compliance checking"
-echo "   • Result: Teams move fast, governance scales, security measurable"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo -e "${CYAN}📈 The Challenge:${NC}"
+    echo "   200+ API teams need to deploy the Trades API with MCP support."
+    echo "   Each deployment must meet security standards."
+    echo ""
+    echo -e "${RED}The Old Way:${NC}"
+    echo "   • Architecture review meeting (2 weeks wait)"
+    echo "   • Security team approval (1 week wait)"
+    echo "   • Manual configuration verification"
+    echo "   • Result: 3+ weeks per deployment, governance becomes a bottleneck"
+    echo ""
+    echo -e "${GREEN}The Architecture as Code Way:${NC}"
+    echo "   • Governance requirements codified in CALM patterns"
+    echo "   • Automated validation gates (instant feedback)"
+    echo "   • Self-service compliance checking"
+    echo "   • Result: Teams move fast, governance scales, security measurable"
+fi
 echo ""
 echo -e "${YELLOW}This demo shows three governance gates:${NC}"
 echo -e "${YELLOW}   Gate 1:${NC} Infrastructure Requirements (secure cluster, network segmentation)"
 echo -e "${YELLOW}   Gate 2:${NC} Pattern Validation (architecture must follow approved patterns from CALM Hub)"
 echo -e "${YELLOW}   Gate 3:${NC} Architecture Controls (micro-segmentation, permitted connections, MCP guardrails)"
 echo ""
-echo "   Let's watch a team attempt to deploy and see how automated gates guide them..."
 echo ""
 echo "Press Enter to begin..."
 read
@@ -133,12 +130,8 @@ success "✅ Generated deployment resources:"
 run_command "tree generated"
 tree generated
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 1
-fi
+echo "Press Enter to continue..."
+read
 
 heading "🚦 Gate 1: Infrastructure Requirements"
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -153,12 +146,8 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Why it failed: Cluster must have network segmentation enabled (Calico CNI)"
     info "Impact: Without automated gates, this would slip through to production"
 fi
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # Attempt 2: Fix infrastructure, proceed to architecture validation
@@ -174,8 +163,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     minikube start --profile secure --cni calico > /dev/null 2>&1
     minikube profile secure > /dev/null 2>&1
     success "Secure cluster with Calico CNI ready (profile: secure)"
-    echo "Press Enter to continue..."
-    read
 else
     heading "🔧 Remediate Infrastructure"
     info "⚙️  Switching to secure cluster with Calico CNI..."
@@ -185,6 +172,8 @@ else
     success "✓ Secure cluster ready (profile: secure)"
     echo ""
 fi
+echo "Press Enter to continue..."
+read
 
 heading "📦 Regenerate Deployment"
 run_command "calm template --architecture calm/trades-api-and-mcp-conforming.architecture.json --bundle bundle --output generated"
@@ -199,14 +188,10 @@ success "✅ Generated deployment resources:"
 run_command "tree generated"
 tree generated
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 1
-fi
+echo "Press Enter to continue..."
+read
 
-heading "🚦 Gate 1: Infrastructure Requirements (Retry)"
+heading "🚦 Gate 1: Infrastructure Requirements - Retry"
 if [ "$VERBOSE_MODE" == "true" ]; then
     run_command_verbose "bash deployer.sh"
     echo ""
@@ -247,12 +232,8 @@ else
     
 fi
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # Attempt 4: Use approved pattern from CALM Hub
@@ -278,12 +259,8 @@ if [ -n "$PATTERN_RESPONSE" ] && echo "$PATTERN_RESPONSE" | grep -q "patternId";
     info "This architecture is generated off an approved pattern, deployment can proceed"
 fi
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue to controls validation..."
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to continue to controls validation..."
+read
 
 # ============================================================================
 # Attempt 5: Architecture missing required controls
@@ -297,13 +274,27 @@ echo -e "${CYAN}  1. micro-segmentation${NC} on k8s-cluster (netsec-001)"
 echo -e "${CYAN}  2. permitted-connection${NC} on all relationships (netsec-002)"
 echo -e "${CYAN}  3. mcp-guardrail${NC} on mcp-server (mcp-001)"
 echo ""
+info "Let's examine these control requirements..."
+echo ""
+echo -e "${CYAN}═══ Control 1: micro-segmentation.requirement.json ═══${NC}"
+cat calm/controls/micro-segmentation.requirement.json | bat --language json --style=plain --color=always
+echo ""
+echo "Press Enter to continue..."
+read
+echo ""
+echo -e "${CYAN}═══ Control 2: permitted-connection.requirement.json ═══${NC}"
+cat calm/controls/permitted-connection.requirement.json | bat --language json --style=plain --color=always
+echo ""
+echo "Press Enter to continue..."
+read
+echo ""
+echo -e "${CYAN}═══ Control 3: mcp-guardrail.requirement.json ═══${NC}"
+cat calm/controls/mcp-guardrail.requirement.json | bat --language json --style=plain --color=always
+echo ""
+echo "Press Enter to continue..."
+read
+echo ""
 info "Validating architecture against pattern requirements..."
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 1
-fi
 
 heading "📋 Validate Architecture"
 run_command "calm validate --pattern calm/trades-api-and-mcp.pattern.json --architecture calm/trades-api-and-mcp-non-conforming.architecture.json --format json"
@@ -318,12 +309,26 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Violation: /relationships/0 (mcp-client-to-mcp-server) lacks required control"
     info "The old way: Wait days for security review to catch this"
     info "The new way: Instant feedback, team can fix immediately"
-    echo "Press Enter to continue..."
-    read
 else
     info "Violation: Missing permitted-connection on mcp-client-to-mcp-server relationship"
-    sleep 2
 fi
+echo ""
+info "Let's compare the control declarations..."
+echo ""
+echo -e "${RED}Non-Conforming Architecture:${NC} (missing control on first relationship)"
+echo -e "${CYAN}  relationships[0] mcp-client-to-mcp-server: NO controls declared ❌${NC}"
+echo -e "${CYAN}  relationships[1] mcp-server-to-trades-api: permitted-connection ✓${NC}"
+echo ""
+echo -e "${GREEN}Conforming Architecture:${NC} (all connection relationships have controls)"
+echo -e "${CYAN}  relationships[0] mcp-client-to-mcp-server: permitted-connection ✓${NC}"
+echo -e "${CYAN}  relationships[1] mcp-server-to-trades-api: permitted-connection ✓${NC}"
+echo ""
+info "Additionally:"
+echo -e "${CYAN}  • mcp-server node: mcp-guardrail control ✓${NC}"
+echo -e "${CYAN}  • k8s-cluster node: micro-segmentation control ✓${NC}"
+echo ""
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # Attempt 6: Fully conforming architecture
@@ -335,17 +340,13 @@ heading "🔧 Add Missing Controls"
 info "Team updates architecture to declare all required controls..."
 echo -e "${CYAN}Updated Architecture:${NC}"
 echo -e "  • micro-segmentation on k8s-cluster ✓"
-echo -e "  • permitted-connection on all 3 relationships ✓"
+echo -e "  • permitted-connection on both connect relationships ✓"
 echo -e "  • mcp-guardrail on mcp-server ✓"
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to validate..."
-    read
-else
-    sleep 1
-fi
+echo "Press Enter to validate..."
+read
 
-heading "🚦 Gate 3: Architecture Controls (Retry)"
+heading "🚦 Gate 3: Architecture Controls - Retry"
 run_command "calm validate --pattern calm/trades-api-and-mcp.pattern.json --architecture calm/trades-api-and-mcp-conforming.architecture.json --format json"
 echo ""
 calm validate \
@@ -362,47 +363,49 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "MCP Guardrail Policy: Denies trades in VOD, GME, AMC"
     info "This architecture is now compliant and ready for deployment"
     info "Total time from first attempt to approval: Minutes, not weeks"
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 2
 fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # Journey Complete: Deployment Approved
 # ============================================================================
 
-echo ""
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║            🎉 DEPLOYMENT APPROVED 🎉                           ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${GREEN}The Journey Through Three Governance Gates:${NC}"
-echo ""
-echo -e "${CYAN}  Attempt 1${NC} → ❌ Gate 1: Infrastructure not secure (standard cluster)"
-echo -e "${CYAN}  Attempt 2${NC} → ✅ Gate 1: Team added Calico CNI — INSTANT FEEDBACK"
-echo ""
-echo -e "${CYAN}  Attempt 3${NC} → ❌ Pattern Gate: Custom pattern not in CALM Hub"
-echo -e "${CYAN}  Attempt 4${NC} → ✅ Pattern Gate: Switched to approved 'Basic Trades API Pattern'"
-echo ""
-echo -e "${CYAN}  Attempt 5${NC} → ❌ Gate 3: Missing required controls (permitted-connection)"
-echo -e "${CYAN}  Attempt 6${NC} → ✅ Gate 3: All controls declared — DEPLOYMENT APPROVED"
-echo ""
-echo -e "${GREEN}Three Governance Checkpoints:${NC}"
-echo "   1. Gate 1 - Infrastructure: Secure cluster with network segmentation"
-echo "   2. Gate 2 - Pattern: Architecture must follow approved patterns from CALM Hub"
-echo "   3. Gate 3 - Controls: All required security controls must be declared"
-echo ""
-echo -e "${YELLOW}The Impact at Scale:${NC}"
-echo "   When you need to roll out a new security requirement across 200 APIs:"
-echo ""
-echo -e "${GREEN}   The Architecture as Code Way:${NC}"
-echo "     • Update the CALM pattern once"
-echo "     • All 200 teams get instant feedback on next deployment"
-echo "     • Teams self-service compliance — no coordination needed"
-echo "     • Governance scales, security stays measurable"
-echo ""
-echo -e "${CYAN}Key Insight:${NC}"
-echo "   In the MCP era, governance must be codified, automated, and self-service."
-echo "   Architecture as Code transforms compliance from a bottleneck into a platform capability."
-echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo ""
+    echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║            🎉 DEPLOYMENT APPROVED 🎉                           ║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${GREEN}The Journey Through Three Governance Gates:${NC}"
+    echo ""
+    echo -e "${CYAN}  Attempt 1${NC} → ❌ Gate 1: Infrastructure not secure (standard cluster)"
+    echo -e "${CYAN}  Attempt 2${NC} → ✅ Gate 1: Team added Calico CNI — INSTANT FEEDBACK"
+    echo ""
+    echo -e "${CYAN}  Attempt 3${NC} → ❌ Pattern Gate: Custom pattern not in CALM Hub"
+    echo -e "${CYAN}  Attempt 4${NC} → ✅ Pattern Gate: Switched to approved 'Basic Trades API Pattern'"
+    echo ""
+    echo -e "${CYAN}  Attempt 5${NC} → ❌ Gate 3: Missing required controls (permitted-connection)"
+    echo -e "${CYAN}  Attempt 6${NC} → ✅ Gate 3: All controls declared — DEPLOYMENT APPROVED"
+    echo ""
+    echo -e "${GREEN}Three Governance Checkpoints:${NC}"
+    echo "   1. Gate 1 - Infrastructure: Secure cluster with network segmentation"
+    echo "   2. Gate 2 - Pattern: Architecture must follow approved patterns from CALM Hub"
+    echo "   3. Gate 3 - Controls: All required security controls must be declared"
+    echo ""
+    echo -e "${YELLOW}The Impact at Scale:${NC}"
+    echo "   When you need to roll out a new security requirement across 200 APIs:"
+    echo ""
+    echo -e "${GREEN}   The Architecture as Code Way:${NC}"
+    echo "     • Update the CALM pattern once"
+    echo "     • All 200 teams get instant feedback on next deployment"
+    echo "     • Teams self-service compliance — no coordination needed"
+    echo "     • Governance scales, security stays measurable"
+    echo ""
+    echo -e "${CYAN}Key Insight:${NC}"
+    echo "   In the MCP era, governance must be codified, automated, and self-service."
+    echo "   Architecture as Code transforms compliance from a bottleneck into a platform capability."
+    echo ""
+fi
+
+success "Scenario 3 Complete!"

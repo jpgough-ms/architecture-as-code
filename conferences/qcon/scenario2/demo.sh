@@ -43,52 +43,57 @@ command_verbose() {
     fi
 }
 
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║           Scenario 2: Re-deploy with MCP Guardrail            ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
+
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${BLUE}📊 Mode: Verbose (showing all details)${NC}"
+    echo -e "${BLUE}📖 Mode: Story (commands + explanations)${NC}"
 else
-    echo -e "${BLUE}⚡ Mode: Concise (focused on key outcomes)${NC}"
+    echo -e "${BLUE}⚡ Mode: Concise (commands only)${NC}"
 fi
 echo ""
 
 heading "Step 1: Verify existing deployment"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Checking for running pods..."
-    command_verbose "kubectl get pods"
+    info "Checking for running pods from Scenario 1..."
+    info "Why: Scenario 2 builds on the infrastructure from Scenario 1"
 fi
+command "kubectl get pods"
 kubectl get pods 2>/dev/null || {
     echo "Error: No kubernetes cluster found. Please run scenario 1 first."
     exit 1
 }
-if [ "$VERBOSE_MODE" == "false" ]; then
-    success "✓ Cluster verified"
-fi
 echo ""
+success "✓ Cluster verified"
+echo ""
+echo "Press Enter to continue..."
+read
 
 heading "Step 2: Display the MCP Guardrail Control"
-info "The control defines the denied trading symbols..."
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "The control defines denied trading symbols (VOD, GME, AMC)..."
+    info "Why: CALM controls codify governance requirements declaratively"
+fi
 command "cat calm/controls/mcp-guardrail.config.json"
 cat calm/controls/mcp-guardrail.config.json
 echo ""
+info "Where is this control applied in the architecture?"
 echo ""
-info "How the architecture links to the control (mcp-server node):"
-echo -e "${BLUE}The mcp-server node references the control via requirement-url and config-url:${NC}"
+echo -e "${BLUE}In the trades-api-and-mcp.architecture.json, the mcp-server node declares:${NC}"
 echo ""
-# Extract just the controls section from mcp-server node
-sed -n '/"unique-id": "mcp-server"/,/"unique-id": "trades-api"/p' calm/trades-api-and-mcp.architecture.json | sed -n '/"controls":/,/^      }/p'
+sed -n '/"unique-id": "mcp-server"/,/^    },$/p' calm/trades-api-and-mcp.architecture.json | bat --language json --style=plain --color=always
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 2
+    info "Note: The controls section links to both requirement and config files"
+    info "This declaratively ties governance policy to the service"
 fi
+echo ""
+echo "Press Enter to continue..."
+read
 
 heading "Step 3: Generate infrastructure from CALM architecture"
-info "Extracting denied symbols from control configuration..."
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Using CALM to extract denied symbols from control configuration..."
+    info "Why: CALM transforms declarative controls into executable artifacts"
+fi
 command "calm template --architecture calm/trades-api-and-mcp.architecture.json --bundle bundle --output infrastructure"
 calm template \
   --architecture calm/trades-api-and-mcp.architecture.json \
@@ -96,56 +101,60 @@ calm template \
   --bundle bundle \
   --clear-output-directory 2>&1 | grep -v "Failed to dereference" | grep -v "Unable to resolve reference" || true
 echo ""
+success "✓ Infrastructure generated"
+echo ""
+echo "Press Enter to continue..."
+read
 
 heading "Step 4: Show generated ConfigMap"
-info "ConfigMap generated from control:"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "ConfigMap generated from control configuration:"
+    info "Why: The bundle transforms CALM controls into Kubernetes resources"
+fi
 command "cat infrastructure/kubernetes/denied-symbols-configmap.yaml"
 cat infrastructure/kubernetes/denied-symbols-configmap.yaml
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to apply the configuration..."
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to apply the configuration..."
+read
 
 heading "Step 5: Apply the new configuration"
-command "kubectl apply -k infrastructure/kubernetes"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Applying updated Kubernetes resources..."
-    kubectl apply -k infrastructure/kubernetes
-    kubectl rollout restart deployments
-else
-    info "⚙️  Applying updated Kubernetes resources..."
-    kubectl apply -k infrastructure/kubernetes > /dev/null 2>&1
-    kubectl rollout restart deployments > /dev/null 2>&1
-    success "✓ Configuration applied"
+    info "Applying updated Kubernetes resources with MCP guardrail..."
+    info "Why: kubectl apply updates the ConfigMap and restarts deployments"
 fi
+command "kubectl apply -k infrastructure/kubernetes"
+kubectl apply -k infrastructure/kubernetes
+command "kubectl rollout restart deployments"
+kubectl rollout restart deployments
 echo ""
+success "✓ Configuration applied"
+echo ""
+echo "Press Enter to continue..."
+read
 
 heading "Step 6: Wait for pods to be ready"
-command "kubectl wait --for=condition=ready pod --all --timeout=90s"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Waiting for all pods to be ready..."
-    kubectl wait --for=condition=ready pod --all --timeout=90s
-else
-    info "⚙️  Waiting for pods to restart..."
-    kubectl wait --for=condition=ready pod --all --timeout=90s > /dev/null 2>&1
-    success "✓ All pods ready"
+    info "Why: Deployments need time to mount new ConfigMaps and pass readiness checks"
 fi
+command "kubectl wait --for=condition=ready pod --all --timeout=90s"
+kubectl wait --for=condition=ready pod --all --timeout=90s
 echo ""
+success "✓ All pods ready"
+echo ""
+echo "Press Enter to continue..."
+read
 
 heading "Step 7: Verify deployment"
 info "Current pods:"
 command "kubectl get pods -o wide"
 kubectl get pods -o wide
 echo ""
-# info "ConfigMap in cluster:"
-# kubectl get configmap denied-symbols -o yaml
-# echo ""
-
-if [ "$VERBOSE_MODE" == "false" ]; then
-    sleep 2
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "The MCP guardrail is now active, blocking trades for VOD, GME, AMC"
 fi
+echo ""
+echo "Press Enter to continue..."
+read
 
-success "Scenario 2 complete!"
+success "Scenario 2 Complete!"

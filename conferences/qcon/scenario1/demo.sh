@@ -75,12 +75,6 @@ check_and_display_command() {
         printf "${RED}%-15s %-8s${NC} %-40s\n" "$cmd" "$status" "$version"
     fi
 }
-
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║         QCon Trades Demo Environment Verification             ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
 echo -e "${YELLOW_BOLD}Checking Required Dependencies...${NC}"
 echo ""
 
@@ -120,15 +114,10 @@ else
     read
 fi
 
-echo ""
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║              Starting QCon Trades Demo                        ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${BLUE}📊 Mode: Verbose (showing all details)${NC}"
+    echo -e "${BLUE}� Mode: Story (commands + explanations)${NC}"
 else
-    echo -e "${BLUE}⚡ Mode: Concise (focused on key outcomes)${NC}"
+    echo -e "${BLUE}⚡ Mode: Concise (commands only)${NC}"
 fi
 echo ""
 sleep 2
@@ -175,35 +164,39 @@ command_verbose() {
 
 heading "Starting the Kubernetes Cluster"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Starting Minikube..."
-    command_verbose "minikube start --profile secure --cni calico"
-    minikube start --profile secure --cni calico
+    info "Starting Minikube with secure profile and Calico CNI..."
+    info "Why: Calico provides network policies for micro-segmentation"
+fi
+command "minikube start --profile secure --cni calico"
+minikube start --profile secure --cni calico
+echo ""
+success "✓ Cluster ready"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
     read
 else
-    info "⚙️  Starting Minikube cluster with secure profile and Calico CNI..."
-    minikube start --profile secure --cni calico > /dev/null 2>&1
-    success "✓ Cluster ready"
     sleep 1
 fi
 
 # ============================================================================
-# STEP 2: Load Docker images (hidden from output)
+# STEP 2: Load Docker images
 # ============================================================================
 
 heading "Preparing Docker Images"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Pulling latest images from DockerHub..."
-    info "Loading images into Minikube's daemon — imagePullPolicy: Never means images must be available locally"
-    minikube image load jpgough/trades-mcp-server:latest --profile secure
-    minikube image load jpgough/trades-rest-server:latest --profile secure
-    echo ""
-    success "Images ready in Minikube's daemon"
+    info "Loading images into Minikube's daemon..."
+    info "Why: imagePullPolicy: Never requires images to be pre-loaded locally"
+fi
+command "minikube image load jpgough/trades-mcp-server:latest --profile secure"
+minikube image load jpgough/trades-mcp-server:latest --profile secure
+command "minikube image load jpgough/trades-rest-server:latest --profile secure"
+minikube image load jpgough/trades-rest-server:latest --profile secure
+echo ""
+success "✓ Images ready in Minikube's daemon"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
     read
 else
-    info "⚙️  Loading Docker images into Minikube..."
-    minikube image load jpgough/trades-mcp-server:latest --profile secure > /dev/null 2>&1
-    minikube image load jpgough/trades-rest-server:latest --profile secure > /dev/null 2>&1
-    success "✓ Images loaded"
     sleep 1
 fi
 
@@ -212,53 +205,81 @@ fi
 # ============================================================================
 
 heading "Generate Infrastructure from CALM Architecture"
-info "Using CALM to generate Kubernetes manifests..."
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Using CALM to transform architecture definitions into Kubernetes manifests..."
+    info "Why: Architecture as Code turns CALM JSON into deployable infrastructure"
+fi
 command "calm template --architecture calm/trades-api-and-mcp.architecture.json --bundle bundle --output infrastructure"
 calm template \
   --architecture calm/trades-api-and-mcp.architecture.json \
   --output infrastructure \
   --bundle bundle \
   --clear-output-directory
-echo "" 
+echo ""
+success "✓ Infrastructure generated"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
+    read
+else
+    sleep 1
+fi 
 
 # ============================================================================
 # STEP 4: Deploy
 # ============================================================================
 
 heading "Deploying to Kubernetes"
-command "kubectl apply -k infrastructure/kubernetes"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    kubectl apply -k infrastructure/kubernetes
-else
-    kubectl apply -k infrastructure/kubernetes > /dev/null 2>&1
-    success "✓ Resources deployed"
+    info "Applying generated Kubernetes resources..."
+    info "Why: kubectl apply creates all resources defined in the manifests"
 fi
+command "kubectl apply -k infrastructure/kubernetes"
+kubectl apply -k infrastructure/kubernetes
 echo ""
+success "✓ Resources deployed"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
+    read
+else
+    sleep 1
+fi
 
 # ============================================================================
-# STEP 6: Generated Artifacts
+# STEP 5: Generated Artifacts
 # ============================================================================
 
 heading "Generated Infrastructure Artifacts"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Viewing the complete infrastructure generated from CALM..."
+fi
 command "tree infrastructure"
 tree infrastructure
+echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
     read
 else
-    sleep 2
+    sleep 1
 fi
 
 # ============================================================================
-# STEP 7: Active Pods
+# STEP 6: Active Pods
 # ============================================================================
 
 heading "Active Pods"
-command "kubectl wait --for=condition=ready pod --all --timeout=90s"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    kubectl wait --for=condition=ready pod --all --timeout=90s
+    info "Waiting for all pods to become ready..."
+    info "Why: Readiness probes must pass before pods can accept traffic"
+fi
+command "kubectl wait --for=condition=ready pod --all --timeout=90s"
+kubectl wait --for=condition=ready pod --all --timeout=90s
+echo ""
+success "✓ All pods ready"
+if [ "$VERBOSE_MODE" == "true" ]; then
+    echo "Press Enter to continue..."
+    read
 else
-    kubectl wait --for=condition=ready pod --all --timeout=90s > /dev/null 2>&1
-    success "✓ All pods ready"
+    sleep 1
 fi
 command "kubectl get pods -o wide"
 kubectl get pods -o wide
@@ -272,7 +293,7 @@ fi
 # DEPLOYMENT COMPLETE
 # ============================================================================
 
-heading "Scenario 1 Deployment Complete!"
+success "Scenario 1 Complete!"
 success "✓ Minikube cluster running with Calico CNI"
 success "✓ Trades API and MCP server deployed"
 success "✓ Network policies applied"
