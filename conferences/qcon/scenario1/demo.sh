@@ -159,6 +159,7 @@ command_verbose() {
 # STEP 1: Start Minikube
 # ============================================================================
 
+clear
 heading "Starting the Kubernetes Cluster"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Starting Minikube with secure profile and Calico CNI..."
@@ -168,17 +169,14 @@ command "minikube start --profile secure --cni calico"
 minikube start --profile secure --cni calico
 echo ""
 success "✓ Cluster ready"
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 1
-fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # STEP 2: Load Docker images
 # ============================================================================
 
+clear
 heading "Preparing Docker Images"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Loading images into Minikube's daemon..."
@@ -187,23 +185,19 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     minikube image load jpgough/trades-mcp-server:latest --profile secure
     command "minikube image load jpgough/trades-rest-server:latest --profile secure"
     minikube image load jpgough/trades-rest-server:latest --profile secure
-# else
-    # minikube image load jpgough/trades-mcp-server:latest --profile secure > /dev/null 2>&1
-    # minikube image load jpgough/trades-rest-server:latest --profile secure > /dev/null 2>&1
-fi
-echo ""
-success "✓ Images ready in Minikube's daemon"
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
+    echo ""
+    success "✓ Images ready in Minikube's daemon"
 else
-    sleep 1
+    info "Skipping image loading (only needed in verbose mode)"
 fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # STEP 3: Generate Infrastructure via calm template
 # ============================================================================
 
+clear
 heading "Generate Infrastructure from CALM Architecture"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Using CALM to transform architecture definitions into Kubernetes manifests..."
@@ -217,17 +211,14 @@ calm template \
   --clear-output-directory
 echo ""
 success "✓ Infrastructure generated"
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 1
-fi 
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # STEP 4: Deploy
 # ============================================================================
 
+clear
 heading "Deploying to Kubernetes"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Applying generated Kubernetes resources..."
@@ -237,17 +228,15 @@ command "kubectl apply -k infrastructure/kubernetes"
 kubectl apply -k infrastructure/kubernetes
 echo ""
 success "✓ Resources deployed"
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 1
-fi
+echo "Press Enter to continue..."
+read
+
 
 # ============================================================================
 # STEP 5: Generated Artifacts
 # ============================================================================
 
+clear
 heading "Generated Infrastructure Artifacts"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Viewing the complete infrastructure generated from CALM..."
@@ -255,44 +244,51 @@ fi
 command "tree infrastructure"
 tree infrastructure
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 1
-fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # STEP 6: Active Pods
 # ============================================================================
 
+clear
 heading "Active Pods"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Waiting for all pods to become ready..."
     info "Why: Readiness probes must pass before pods can accept traffic"
 fi
 command "kubectl wait --for=condition=ready pod --all --timeout=90s"
-kubectl wait --for=condition=ready pod --all --timeout=90s
-echo ""
-success "✓ All pods ready"
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
+# Wait a moment for pods to be created after deployment
+sleep 2
+if kubectl wait --for=condition=ready pod --all --timeout=90s 2>/dev/null; then
+    echo ""
+    success "✓ All pods ready"
 else
-    sleep 1
+    echo "Waiting for pods to be created..."
+    sleep 3
+    if kubectl wait --for=condition=ready pod --all --timeout=90s; then
+        echo ""
+        success "✓ All pods ready"
+    else
+        echo ""
+        error "Failed to wait for pods to be ready"
+        echo "Checking current pod status..."
+        kubectl get pods
+        exit 1
+    fi
 fi
+echo "Press Enter to continue..."
+read
 command "kubectl get pods -o wide"
 kubectl get pods -o wide
-if [ "$VERBOSE_MODE" == "true" ]; then
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # STEP 7: Setup Port Forwarding
 # ============================================================================
 
+clear
 heading "Setting Up Port Forwarding"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "To access the deployed services, we need to set up port forwarding..."
@@ -315,46 +311,50 @@ echo ""
 echo -e "${YELLOW_BOLD}Press Enter once port-forwarding is running...${NC}"
 read
 
-# Verify port-forwards
-echo "Verifying port-forwards..."
-echo ""
-MCP_OK=false
-TRADES_OK=false
+# Verify port-forwards with 2 attempts
+for attempt in 1 2; do
+    echo "Verifying port-forwards (Attempt $attempt of 2)..."
+    echo ""
+    MCP_OK=false
+    TRADES_OK=false
 
-if curl -s http://localhost:8080/health > /dev/null 2>&1 || curl -s http://localhost:8080/ > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ MCP Server accessible at localhost:8080${NC}"
-    MCP_OK=true
-else
-    echo -e "${RED}✗ MCP Server NOT accessible at localhost:8080${NC}"
-fi
+    if curl -s http://localhost:8080/health > /dev/null 2>&1 || curl -s http://localhost:8080/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ MCP Server accessible at localhost:8080${NC}"
+        MCP_OK=true
+    else
+        echo -e "${RED}✗ MCP Server NOT accessible at localhost:8080${NC}"
+    fi
 
-if curl -s http://localhost:8081/health > /dev/null 2>&1 || curl -s http://localhost:8081/ > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Trades API accessible at localhost:8081${NC}"
-    TRADES_OK=true
-else
-    echo -e "${RED}✗ Trades API NOT accessible at localhost:8081${NC}"
-fi
+    if curl -s http://localhost:8081/health > /dev/null 2>&1 || curl -s http://localhost:8081/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Trades API accessible at localhost:8081${NC}"
+        TRADES_OK=true
+    else
+        echo -e "${RED}✗ Trades API NOT accessible at localhost:8081${NC}"
+    fi
 
+    echo ""
+    if [ "$MCP_OK" = true ] && [ "$TRADES_OK" = true ]; then
+        success "✓ Port-forwarding confirmed - all services accessible"
+        break
+    elif [ $attempt -eq 1 ]; then
+        echo -e "${YELLOW}Port-forwards not detected. Please ensure ./port-forward.sh is running.${NC}"
+        echo "Press Enter to retry verification..."
+        read
+    else
+        echo -e "${RED}✗ Port-forwards still not detected after 2 attempts${NC}"
+        echo "Press Enter to continue anyway..."
+        read
+    fi
+done
 echo ""
-if [ "$MCP_OK" = true ] && [ "$TRADES_OK" = true ]; then
-    success "✓ Port-forwarding confirmed - all services accessible"
-else
-    error "Please ensure ./port-forward.sh is running in another terminal"
-    echo "Press Enter to continue anyway..."
-    read
-fi
-echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to continue..."
+read
 
 # ============================================================================
 # DEPLOYMENT COMPLETE
 # ============================================================================
 
+clear
 success "Scenario 1 Complete!"
 success "✓ Minikube cluster running with Calico CNI"
 success "✓ Trades API and MCP server deployed"

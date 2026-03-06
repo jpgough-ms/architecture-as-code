@@ -8,6 +8,7 @@ YELLOW='\033[0;33m'
 YELLOW_BOLD='\033[1;33m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 RED='\033[0;31m'
 NC='\033[0m'
 
@@ -51,6 +52,7 @@ else
 fi
 echo ""
 
+clear
 heading "Step 1: Verify existing deployment"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Checking for running pods from Scenario 1..."
@@ -67,19 +69,21 @@ echo ""
 echo "Press Enter to continue..."
 read
 
+clear
 heading "Step 2: Display the MCP Guardrail Control"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "The control defines denied trading symbols (VOD, GME, AMC)..."
     info "Why: CALM controls codify governance requirements declaratively"
 fi
 command "cat calm/controls/mcp-guardrail.config.json"
-cat calm/controls/mcp-guardrail.config.json
+cat calm/controls/mcp-guardrail.config.json | bat --language json --style=plain --color=always
 echo ""
 info "Where is this control applied in the architecture?"
 echo ""
 echo -e "${BLUE}In the trades-api-and-mcp.architecture.json, the mcp-server node declares:${NC}"
+echo -e "${CYAN}(Highlighting the 'controls' section on lines 15-25)${NC}"
 echo ""
-sed -n '/"unique-id": "mcp-server"/,/^    },$/p' calm/trades-api-and-mcp.architecture.json | bat --language json --style=plain --color=always
+sed -n '/"unique-id": "mcp-server"/,/^    },$/p' calm/trades-api-and-mcp.architecture.json | bat --language json --style=plain --color=always --highlight-line 15:25
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Note: The controls section links to both requirement and config files"
@@ -89,6 +93,7 @@ echo ""
 echo "Press Enter to continue..."
 read
 
+clear
 heading "Step 3: Generate infrastructure from CALM architecture"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Using CALM to extract denied symbols from control configuration..."
@@ -106,17 +111,19 @@ echo ""
 echo "Press Enter to continue..."
 read
 
+clear
 heading "Step 4: Show generated ConfigMap"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "ConfigMap generated from control configuration:"
     info "Why: The bundle transforms CALM controls into Kubernetes resources"
 fi
 command "cat infrastructure/kubernetes/denied-symbols-configmap.yaml"
-cat infrastructure/kubernetes/denied-symbols-configmap.yaml
+cat infrastructure/kubernetes/denied-symbols-configmap.yaml | bat --language yaml --style=plain --color=always
 echo ""
 echo "Press Enter to apply the configuration..."
 read
 
+clear
 heading "Step 5: Apply the new configuration"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Applying updated Kubernetes resources with MCP guardrail..."
@@ -132,6 +139,7 @@ echo ""
 echo "Press Enter to continue..."
 read
 
+clear
 heading "Step 6: Wait for pods to be ready"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Waiting for deployments to complete rollout..."
@@ -146,6 +154,7 @@ echo ""
 echo "Press Enter to continue..."
 read
 
+clear
 heading "Step 7: Verify deployment"
 info "Current pods:"
 command "kubectl get pods -o wide"
@@ -162,6 +171,7 @@ read
 # STEP 8: Verify Port Forwarding After Restart
 # ============================================================================
 
+clear
 heading "Step 8: Verify Port Forwarding"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "After restarting deployments, we need to ensure port-forwards are still active..."
@@ -170,57 +180,59 @@ fi
 echo ""
 info "Checking port-forwards from ./port-forward.sh..."
 echo ""
-MCP_OK=false
-TRADES_OK=false
 
-if curl -s http://localhost:8080/health > /dev/null 2>&1 || curl -s http://localhost:8080/ > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ MCP Server accessible at localhost:8080${NC}"
-    MCP_OK=true
-else
-    echo -e "${RED}✗ MCP Server NOT accessible at localhost:8080${NC}"
-fi
-
-if curl -s http://localhost:8081/health > /dev/null 2>&1 || curl -s http://localhost:8081/ > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Trades API accessible at localhost:8081${NC}"
-    TRADES_OK=true
-else
-    echo -e "${RED}✗ Trades API NOT accessible at localhost:8081${NC}"
-fi
-
-echo ""
-if [ "$MCP_OK" = false ] || [ "$TRADES_OK" = false ]; then
-    echo -e "${YELLOW}REMINDER: You may need to restart port-forward.sh in a separate terminal:${NC}"
-    echo -e "  ${CYAN}./port-forward.sh${NC}"
+# Verify port-forwards with 2 attempts
+for attempt in 1 2; do
+    echo "Verifying port-forwards (Attempt $attempt of 2)..."
     echo ""
-    echo "Press Enter once port-forwarding is running..."
-    read
-    
-    # Re-check after user confirmation
-    if curl -s http://localhost:8080/ > /dev/null 2>&1 && curl -s http://localhost:8081/ > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Port-forwards are now active${NC}"
+    MCP_OK=false
+    TRADES_OK=false
+
+    if curl -s http://localhost:8080/health > /dev/null 2>&1 || curl -s http://localhost:8080/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ MCP Server accessible at localhost:8080${NC}"
+        MCP_OK=true
     else
-        echo -e "${RED}✗ Still cannot reach services. Please verify ./port-forward.sh is running.${NC}"
+        echo -e "${RED}✗ MCP Server NOT accessible at localhost:8080${NC}"
+    fi
+
+    if curl -s http://localhost:8081/health > /dev/null 2>&1 || curl -s http://localhost:8081/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ Trades API accessible at localhost:8081${NC}"
+        TRADES_OK=true
+    else
+        echo -e "${RED}✗ Trades API NOT accessible at localhost:8081${NC}"
+    fi
+
+    echo ""
+    if [ "$MCP_OK" = true ] && [ "$TRADES_OK" = true ]; then
+        success "✓ All port-forwards active"
+        break
+    elif [ $attempt -eq 1 ]; then
+        echo -e "${YELLOW}REMINDER: You may need to restart port-forward.sh in a separate terminal:${NC}"
+        echo -e "  ${CYAN}./port-forward.sh${NC}"
+        echo ""
+        echo "Press Enter to retry verification..."
+        read
+    else
+        echo -e "${RED}✗ Still cannot reach services after 2 attempts. Please verify ./port-forward.sh is running.${NC}"
         echo "Press Enter to continue anyway..."
         read
     fi
-else
-    success "✓ All port-forwards active"
-fi
+done
 echo ""
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to continue..."
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to continue..."
+read
 
+clear
 success "Scenario 2 Complete!"
 echo ""
+echo "Press Enter to prepare for Scenario 3..."
+read
 
 # ============================================================================
 # Preparing for Scenario 3
 # ============================================================================
 
+clear
 heading "🔧 Preparing for Scenario 3"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Setting up insecure cluster for next scenario..."
