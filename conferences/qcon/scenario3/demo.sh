@@ -96,6 +96,7 @@ read
 # Attempt 1: Pattern not in CALM Hub
 # ============================================================================
 
+clear
 stage "Attempt 1 — First Deployment Try"
 
 heading " Gate 1: Pattern Validation"
@@ -124,6 +125,7 @@ read
 # Attempt 2: Use approved pattern from CALM Hub
 # ============================================================================
 
+clear
 stage "Attempt 2 — Use Approved Pattern"
 
 heading "🔄 Switch to Approved Pattern"
@@ -171,6 +173,7 @@ read
 # Attempt 3: Deploy without meeting infrastructure requirements
 # ============================================================================
 
+clear
 stage "Attempt 3 — Infrastructure Validation"
 
 heading "🚦 Gate 2: Infrastructure Requirements"
@@ -193,6 +196,7 @@ read
 # Attempt 4: Fix infrastructure
 # ============================================================================
 
+clear
 stage "Attempt 4 — Fix Infrastructure"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -244,14 +248,13 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "No waiting for architecture review meeting"
     echo "Press Enter to continue..."
     read
-else
-    sleep 2
 fi
 
 # ============================================================================
 # Attempt 5: Architecture missing required controls
 # ============================================================================
 
+clear
 stage "Attempt 5 — Architecture Controls Validation"
 
 heading "🚦 Gate 3: Architecture Controls"
@@ -259,6 +262,9 @@ info "Our pattern enforces three control types:"
 echo -e "${CYAN}  1. micro-segmentation${NC} on k8s-cluster (netsec-001)"
 echo -e "${CYAN}  2. permitted-connection${NC} on all relationships (netsec-002)"
 echo -e "${CYAN}  3. mcp-guardrail${NC} on mcp-server (mcp-001)"
+echo ""
+echo "Press Enter to examine these control requirements..."
+read
 echo ""
 info "Let's examine these control requirements..."
 echo ""
@@ -320,6 +326,7 @@ read
 # Attempt 6: Fully conforming architecture
 # ============================================================================
 
+clear
 stage "Attempt 6 — Complete Architecture"
 
 heading "🔧 Add Missing Controls"
@@ -335,18 +342,13 @@ read
 heading "📋 Conforming Architecture - Controls Highlighted"
 info "Let's examine where controls are declared in the architecture..."
 echo ""
-echo -e "${CYAN}═══ Controls on k8s-cluster node ═══${NC}"
-sed -n '/"unique-id": "k8s-cluster"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
+info "Displaying the FULL architecture with controls sections highlighted:"
+echo -e "${CYAN}  • Lines 28-38: mcp-server node with mcp-guardrail control${NC}"
+echo -e "${CYAN}  • Lines 70-80: k8s-cluster node with micro-segmentation control${NC}"
+echo -e "${CYAN}  • Lines 101-111: mcp-client-to-mcp-server relationship with permitted-connection${NC}"
+echo -e "${CYAN}  • Lines 130-140: mcp-server-to-trades-api relationship with permitted-connection${NC}"
 echo ""
-echo -e "${CYAN}═══ Controls on mcp-server node ═══${NC}"
-sed -n '/"unique-id": "mcp-server"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
-echo ""
-echo -e "${CYAN}═══ Controls on relationships ═══${NC}"
-echo -e "${YELLOW}Relationship 1: mcp-client-to-mcp-server${NC}"
-sed -n '/"unique-id": "mcp-client-to-mcp-server"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
-echo ""
-echo -e "${YELLOW}Relationship 2: mcp-server-to-trades-api${NC}"
-sed -n '/"unique-id": "mcp-server-to-trades-api"/,/^    },$/p' calm/trades-api-and-mcp-conforming.architecture.json | grep -A 10 '"controls"' | bat --language json --style=plain --color=always
+cat calm/trades-api-and-mcp-conforming.architecture.json | bat --language json --style=plain --color=always --highlight-line 28:38 --highlight-line 70:80 --highlight-line 101:111 --highlight-line 130:140
 echo ""
 info "All controls are now present in the architecture"
 echo "Press Enter to validate..."
@@ -415,3 +417,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 fi
 
 success "Scenario 3 Complete!"
+echo ""
+echo "Press Enter to continue..."
+read

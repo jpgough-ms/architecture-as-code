@@ -366,6 +366,4 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${YELLOW}• A2A protocol enables autonomous agent coordination${NC}"
     echo ""
 fi
-
-echo -e "${CYAN_BOLD}Thank you for exploring FINOS Architecture as Code!${NC}"
 echo ""

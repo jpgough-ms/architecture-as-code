@@ -79,6 +79,7 @@ read
 # Step 1: Verify Cluster
 # ============================================================================
 
+clear
 stage "Step 1 — Verify Minikube Cluster"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -101,39 +102,42 @@ read
 # Step 2: Pull and Load Docker Images
 # ============================================================================
 
+clear
+heading "Starting Scenario 5: Rapid Platform Adoption"
+echo ""
+echo "Press Enter to begin..."
+read
+
+clear
 stage "Step 2 — Load Docker Images"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Checking and loading Docker images into minikube..."
     info "Why: The deployments use imagePullPolicy: Never, so images must be preloaded"
-fi
-
-# Check and pull trades-rest-server if needed
-if ! docker image inspect jpgough/trades-rest-server:latest > /dev/null 2>&1; then
-    echo "📦 Pulling jpgough/trades-rest-server:latest..."
-    docker pull jpgough/trades-rest-server:latest > /dev/null 2>&1
-else
-    echo "✓ jpgough/trades-rest-server:latest already cached locally"
-fi
-
-# Check and pull trades-a2a-server if needed
-if ! docker image inspect jpgough/trades-a2a-server:latest > /dev/null 2>&1; then
-    echo "📦 Pulling jpgough/trades-a2a-server:latest..."
-    docker pull jpgough/trades-a2a-server:latest > /dev/null 2>&1
-else
-    echo "✓ jpgough/trades-a2a-server:latest already cached locally"
-fi
-
-if [ "$VERBOSE_MODE" == "true" ]; then
+    
+    # Check and pull trades-rest-server if needed
+    if ! docker image inspect jpgough/trades-rest-server:latest > /dev/null 2>&1; then
+        echo "📦 Pulling jpgough/trades-rest-server:latest..."
+        docker pull jpgough/trades-rest-server:latest > /dev/null 2>&1
+    else
+        echo "✓ jpgough/trades-rest-server:latest already cached locally"
+    fi
+    
+    # Check and pull trades-a2a-server if needed
+    if ! docker image inspect jpgough/trades-a2a-server:latest > /dev/null 2>&1; then
+        echo "📦 Pulling jpgough/trades-a2a-server:latest..."
+        docker pull jpgough/trades-a2a-server:latest > /dev/null 2>&1
+    else
+        echo "✓ jpgough/trades-a2a-server:latest already cached locally"
+    fi
+    
     echo ""
     echo "Loading images into minikube..."
     minikube image load jpgough/trades-rest-server:latest > /dev/null 2>&1
     minikube image load jpgough/trades-a2a-server:latest > /dev/null 2>&1
     success "✓ Images loaded into minikube"
 else
-    # Load silently in concise mode
-    minikube image load jpgough/trades-rest-server:latest > /dev/null 2>&1
-    minikube image load jpgough/trades-a2a-server:latest > /dev/null 2>&1
+    info "Skipping image loading (only needed in verbose mode)"
 fi
 echo ""
 echo "Press Enter to continue..."
@@ -143,6 +147,7 @@ read
 # Step 3: Deploy to Kubernetes
 # ============================================================================
 
+clear
 stage "Step 3 — Deploy to Kubernetes"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -186,6 +191,7 @@ read
 # Step 4: Port Forward Instructions
 # ============================================================================
 
+clear
 stage "Step 4 — Setup Port Forwarding"
 
 info "⚠️  IMPORTANT: Port forwarding required for agent communication"
@@ -207,15 +213,24 @@ echo ""
 echo -e "${YELLOW_BOLD}Press Enter once port-forward is running...${NC}"
 read
 
-# Verify port-forward
-echo "Verifying port-forward..."
-if curl -s http://localhost:9103/.well-known/agent.json > /dev/null 2>&1; then
-    success "✓ Port-forward confirmed - A2A server is accessible"
-else
-    error_msg "❌ Could not reach A2A server"
-    info "Please ensure ./port-forward-a2a.sh is running in another terminal"
-    exit 1
-fi
+# Verify port-forward with 2 attempts
+for attempt in 1 2; do
+    echo "Verifying port-forward (Attempt $attempt of 2)..."
+    if curl -s http://localhost:9103/.well-known/agent.json > /dev/null 2>&1; then
+        success "✓ Port-forward confirmed - A2A server is accessible"
+        break
+    elif [ $attempt -eq 1 ]; then
+        echo -e "${RED}✗ Could not reach A2A server at localhost:9103${NC}"
+        echo -e "${YELLOW}Please ensure ./port-forward-a2a.sh is running in another terminal${NC}"
+        echo ""
+        echo "Press Enter to retry verification..."
+        read
+    else
+        error_msg "❌ Could not reach A2A server after 2 attempts"
+        info "Please ensure ./port-forward-a2a.sh is running in another terminal"
+        exit 1
+    fi
+done
 echo ""
 
 echo "Press Enter to continue..."
@@ -225,6 +240,7 @@ read
 # Step 5: Start QCON UI Agent
 # ============================================================================
 
+clear
 stage "Step 5 — Start QCON UI Agent"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -254,6 +270,7 @@ read
 # Step 6: Start Rebalancer Agent
 # ============================================================================
 
+clear
 stage "Step 6 — Start Autonomous Rebalancer Agent"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -279,10 +296,11 @@ echo ""
 echo -e "${YELLOW_BOLD}Press Enter once the rebalancer is running...${NC}"
 read
 
-echo ""# ============================================================================
+# ============================================================================
 # Step 7: Flood Portfolio
 # ============================================================================
 
+clear
 stage "Step 7 — Create Portfolio Imbalance"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
@@ -337,6 +355,7 @@ read
 # Summary
 # ============================================================================
 
+clear
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║                  🎉 SCENARIO 5 COMPLETE 🎉                     ║${NC}"
@@ -379,3 +398,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo "   4. Delete deployments: kubectl delete -k ."
     echo ""
 fi
+
+echo "Press Enter to exit..."
+read

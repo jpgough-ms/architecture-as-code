@@ -98,6 +98,13 @@ read
 # Beat 1: Show the problem - no resource limits
 # ============================================================================
 
+clear
+heading "Starting Scenario 4: Scaling Deployments and Operational Change"
+echo ""
+echo "Press Enter to begin..."
+read
+
+clear
 section "The Problem"
 
 heading "📋 Current State: Pods Without Resource Limits"
@@ -132,6 +139,7 @@ read
 # Beat 2: Platform team releases bundle v2
 # ============================================================================
 
+clear
 section "Platform Team Action"
 
 heading "🔧 Platform Team Releases Bundle v2"
@@ -169,6 +177,7 @@ read
 # Same architecture, new bundle → different output
 # ============================================================================
 
+clear
 section "Team Regenerates Infrastructure"
 
 heading "🔄 Team Action: Regenerate with Bundle v2"
@@ -203,18 +212,14 @@ echo ""
 
 success "✅ Platform defaults automatically injected"
 echo ""
-
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo "Press Enter to deploy the updated infrastructure..."
-    read
-else
-    sleep 2
-fi
+echo "Press Enter to deploy the updated infrastructure..."
+read
 
 # ============================================================================
 # Deploy and verify
 # ============================================================================
 
+clear
 section "Deploy and Verify"
 
 heading "🚀 Deploy Updated Infrastructure"
@@ -265,3 +270,5 @@ echo ""
 echo -e "${GREEN}Bundle-as-Platform-Opinion:${NC}"
 echo "   The platform's HOW evolves independently from the team's WHAT"
 echo ""
+echo "Press Enter to continue..."
+read
