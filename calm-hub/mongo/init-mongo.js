@@ -1015,100 +1015,104 @@ if (db.controls.countDocuments() === 0) {
             }
         ]
     });
-    // Add Micro-Segmentation control to security domain
+    // Add Permitted Connection control to security domain
     db.controls.updateOne(
         { domain: "security" },
         {
             $push: {
                 controls: {
-                    $each: [
-                        {
-                            controlId: NumberInt(2),
-                            name: "Micro-Segmentation",
-                            description: "Defines the requirement for Kubernetes clusters to support network policy enforcement through micro-segmentation. Ensures clusters can implement deny-by-default network policies and enforce fine-grained traffic rules between services.",
-                            requirement: {
-                                "1-0-0": {
-                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                                    "$id": "https://calm.finos.org/calm/domains/security/controls/2/requirement/versions/1.0.0",
-                                    "title": "Micro-Segmentation Control Requirement",
-                                    "description": "Defines the requirement for Kubernetes clusters to support network policy enforcement through micro-segmentation.",
-                                    "control-id": "security-001",
-                                    "type": "object",
-                                    "properties": {
-                                        "permit-ingress": {
-                                            "type": "boolean",
-                                            "description": "Whether to permit ingress traffic from external sources to services within the cluster"
-                                        },
-                                        "permit-egress": {
-                                            "type": "boolean",
-                                            "description": "Whether to permit egress traffic from services within the cluster to external destinations"
-                                        }
-                                    },
-                                    "required": [
-                                        "permit-ingress",
-                                        "permit-egress"
-                                    ]
+                    controlId: NumberInt(2),
+                    name: "Permitted Connection",
+                    description: "Defines requirements for explicitly authorizing connections between services. Every connection must declare the protocol being used and provide a business justification for why the connection is necessary.",
+                    requirement: {
+                        "1-0-0": {
+                            "$schema": "https://calm.finos.org/release/1.0/meta/control.json",
+                            "$id": "https://calm.finos.org/qcon/controls/permitted-connection.requirement.json",
+                            "title": "Permitted Connection Control Requirement",
+                            "description": "Defines requirements for explicitly authorizing connections between services. Every connection must declare the protocol being used and provide a business justification for why the connection is necessary.",
+                            "control-id": "security-002",
+                            "type": "object",
+                            "properties": {
+                                "reason": {
+                                    "type": "string",
+                                    "description": "Business justification for why this connection is required"
+                                },
+                                "protocol": {
+                                    "type": "string",
+                                    "enum": ["HTTP", "HTTPS", "JDBC", "gRPC", "WebSocket", "TCP", "UDP"],
+                                    "description": "The network protocol used for this connection"
                                 }
                             },
-                            configurations: [
-                                {
-                                    configurationId: NumberInt(1),
-                                    versions: {
-                                        "1-0-0": {
-                                            "permit-ingress": true,
-                                            "permit-egress": false
-                                        }
-                                    }
-                                }
+                            "required": [
+                                "reason",
+                                "protocol"
                             ]
-                        },
+                        }
+                    },
+                    configurations: [
                         {
-                            controlId: NumberInt(3),
-                            name: "Permitted Connection",
-                            description: "Defines requirements for explicitly authorizing connections between services. Every connection must declare the protocol being used and provide a business justification for why the connection is necessary.",
-                            requirement: {
+                            configurationId: NumberInt(1),
+                            versions: {
                                 "1-0-0": {
-                                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                                    "$id": "https://calm.finos.org/calm/domains/security/controls/3/requirement/versions/1.0.0",
-                                    "title": "Permitted Connection Control Requirement",
-                                    "description": "Defines requirements for explicitly authorizing connections between services.",
-                                    "control-id": "security-002",
-                                    "type": "object",
-                                    "properties": {
-                                        "reason": {
-                                            "type": "string",
-                                            "description": "Business justification for why this connection is required"
-                                        },
-                                        "protocol": {
-                                            "type": "string",
-                                            "enum": ["HTTP", "HTTPS", "JDBC", "gRPC", "WebSocket", "TCP", "UDP"],
-                                            "description": "The network protocol used for this connection"
-                                        }
-                                    },
-                                    "required": [
-                                        "reason",
-                                        "protocol"
-                                    ]
+                                    "reason": "MCP client and Trades API require HTTP access to MCP server for querying trade data",
+                                    "protocol": "HTTP"
                                 }
-                            },
-                            configurations: [
-                                {
-                                    configurationId: NumberInt(1),
-                                    versions: {
-                                        "1-0-0": {
-                                            "reason": "MCP client and Trades API require HTTP access to MCP server for querying trade data",
-                                            "protocol": "HTTP"
-                                        }
-                                    }
-                                }
-                            ]
+                            }
                         }
                     ]
                 }
             }
         }
     );
-    print("Added Micro-Segmentation and Permitted Connection controls to security domain");
+    print("Added Permitted Connection control to security domain");
+
+    // Insert Micro-Segmentation control for the network domain
+    db.controls.insertOne({
+        domain: "network",
+        controls: [
+            {
+                controlId: NumberInt(3),
+                name: "Micro-Segmentation",
+                description: "Defines the requirement for Kubernetes clusters to support network policy enforcement through micro-segmentation. This control ensures that clusters can implement deny-by-default network policies and enforce fine-grained traffic rules between services.",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/release/1.0/meta/control.json",
+                        "$id": "https://calm.finos.org/qcon/scenario3/calm/controls/micro-segmentation.requirement.json",
+                        "title": "Micro-Segmentation Control Requirement",
+                        "description": "Defines the requirement for Kubernetes clusters to support network policy enforcement through micro-segmentation. This control ensures that clusters can implement deny-by-default network policies and enforce fine-grained traffic rules between services.",
+                        "control-id": "security-001",
+                        "type": "object",
+                        "properties": {
+                            "permit-ingress": {
+                                "type": "boolean",
+                                "description": "Whether to permit ingress traffic from external sources to services within the cluster"
+                            },
+                            "permit-egress": {
+                                "type": "boolean",
+                                "description": "Whether to permit egress traffic from services within the cluster to external destinations"
+                            }
+                        },
+                        "required": [
+                            "permit-ingress",
+                            "permit-egress"
+                        ]
+                    }
+                },
+                configurations: [
+                    {
+                        configurationId: NumberInt(1),
+                        versions: {
+                            "1-0-0": {
+                                "permit-ingress": true,
+                                "permit-egress": false
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    });
+    print("Initialized controls for network domain with Micro-Segmentation control");
 
     // Insert MCP Guardrail control for the mcp-controls domain
     db.controls.insertOne({
@@ -1120,10 +1124,10 @@ if (db.controls.countDocuments() === 0) {
                 description: "Defines a control for restricting access to specific trading symbols in an MCP server. This prevents queries for high-risk or restricted securities.",
                 requirement: {
                     "1-0-0": {
-                        "$schema": "https://json-schema.org/draft/2020-12/schema",
-                        "$id": "https://calm.finos.org/calm/domains/mcp-controls/controls/4/requirement/versions/1.0.0",
+                        "$schema": "https://calm.finos.org/release/1.0/meta/control.json",
+                        "$id": "https://calm.finos.org/qcon/scenario3/calm/controls/mcp-guardrail.requirement.json",
                         "title": "MCP Guardrail Control",
-                        "description": "Defines a control for restricting access to specific trading symbols in an MCP server.",
+                        "description": "Defines a control for restricting access to specific trading symbols in an MCP server. This prevents queries for high-risk or restricted securities.",
                         "control-id": "mcp-001",
                         "type": "object",
                         "properties": {
