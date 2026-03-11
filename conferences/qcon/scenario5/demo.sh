@@ -348,19 +348,12 @@ else
 fi
 
 echo ""
-echo "Press Enter to continue to summary..."
 read
 
 # ============================================================================
 # Summary
 # ============================================================================
 
-clear
-echo ""
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                  🎉 SCENARIO 5 COMPLETE 🎉                     ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}What We Demonstrated:${NC}"

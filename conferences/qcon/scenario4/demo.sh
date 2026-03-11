@@ -228,8 +228,7 @@ kubectl apply -k generated/kubernetes > /dev/null 2>&1
 echo ""
 
 run_command "kubectl rollout restart deployment/trades-mcp-server"
-kubectl rollout restart deployment/trades-mcp-server > /dev/null 2>&1
-kubectl rollout status deployment/trades-mcp-server --timeout=60s > /dev/null 2>&1
+kubectl rollout status deployment/trades-mcp-server --timeout=90s
 echo ""
 
 success "✅ Deployment rolled out"
@@ -247,28 +246,3 @@ echo -e "  • CPU: 500m limit ✓"
 echo -e "  • Memory: 256Mi limit ✓"
 echo -e "  • Cluster stability improved ✓"
 echo ""
-
-# ============================================================================
-# Final Summary
-# ============================================================================
-
-echo ""
-echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                🎉 SCENARIO 4 COMPLETE 🎉                      ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo ""
-echo -e "${GREEN}The Separation of Concerns:${NC}"
-echo "   📐 Architecture = WHAT the system is (team's design)"
-echo "   📦 Bundle = HOW the platform deploys it (platform's opinion)"
-echo ""
-echo -e "${CYAN}Key Insight:${NC}"
-echo "   When platform requirements evolve (resource limits, security policies,"
-echo "   networking rules), teams consume changes like library upgrades —"
-echo "   not manual YAML surgery across hundreds of repositories."
-echo ""
-echo -e "${GREEN}Bundle-as-Platform-Opinion:${NC}"
-echo "   The platform's HOW evolves independently from the team's WHAT"
-echo ""
-echo "Press Enter to continue..."
-read
