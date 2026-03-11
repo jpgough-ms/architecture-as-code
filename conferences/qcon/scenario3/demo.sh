@@ -101,7 +101,6 @@ stage "Attempt 1 — First Deployment Try"
 
 heading " Gate 1: Pattern Validation"
 info "Checking if pattern is registered in CALMHub, central artifact store..."
-# run_command "curl http://localhost:8080/calm/namespaces/qcon2026/patterns"
 echo ""
 
 # Check if pattern exists in CALM Hub
@@ -134,9 +133,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 else
     info "Found: 'Trades API & MCP Pattern' (ID=2, v1.0.0)"
 fi
-# echo ""
-# run_command "curl http://localhost:8080/calm/namespaces/qcon2026/patterns/2/versions/1.0.0"
-# echo ""
 
 # Fetch pattern from CALM Hub
 PATTERN_RESPONSE=$(curl -s http://localhost:8080/calm/namespaces/qcon2026/patterns/2/versions/1.0.0 2>/dev/null)
@@ -309,23 +305,6 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 else
     info "Violation: Missing permitted-connection on mcp-client-to-mcp-server relationship"
 fi
-# echo ""
-# info "Let's compare the control declarations..."
-# echo ""
-# echo -e "${RED}Non-Conforming Architecture:${NC} (missing control on first relationship)"
-# echo -e "${CYAN}  relationships[0] mcp-client-to-mcp-server: NO controls declared ❌${NC}"
-# echo -e "${CYAN}  relationships[1] mcp-server-to-trades-api: permitted-connection ✓${NC}"
-# echo ""
-# echo -e "${GREEN}Conforming Architecture:${NC} (all connection relationships have controls)"
-# echo -e "${CYAN}  relationships[0] mcp-client-to-mcp-server: permitted-connection ✓${NC}"
-# echo -e "${CYAN}  relationships[1] mcp-server-to-trades-api: permitted-connection ✓${NC}"
-# echo ""
-# info "Additionally:"
-# echo -e "${CYAN}  • mcp-server node: mcp-guardrail control ✓${NC}"
-# echo -e "${CYAN}  • k8s-cluster node: micro-segmentation control ✓${NC}"
-# echo ""
-# echo "Press Enter to continue..."
-# read
 
 # ============================================================================
 # Attempt 6: Fully conforming architecture
@@ -421,8 +400,3 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo "   Architecture as Code transforms compliance from a bottleneck into a platform capability."
     echo ""
 fi
-
-# success "Scenario 3 Complete!"
-# echo ""
-# echo "Press Enter to continue..."
-# read

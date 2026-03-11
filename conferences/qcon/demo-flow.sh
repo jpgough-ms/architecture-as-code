@@ -198,9 +198,6 @@ fi
 
 cd ..
 
-# echo ""
-# success "✅ Scenario 2 Complete!"
-# echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}Achievement: Controls codified and governance requirements declared${NC}"
     echo -e "${GREEN}Architecture includes MCP guardrails and security controls${NC}"

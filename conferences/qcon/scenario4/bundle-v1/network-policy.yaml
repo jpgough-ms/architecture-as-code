@@ -33,3 +33,12 @@ spec:
     ports:
     - protocol: TCP
       port: 8080
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector: {}
+      podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53

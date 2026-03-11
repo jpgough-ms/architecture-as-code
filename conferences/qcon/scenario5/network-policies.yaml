@@ -42,6 +42,7 @@ spec:
     # Allow DNS resolution
     - to:
         - namespaceSelector: {}
+          podSelector: {}
       ports:
         - protocol: TCP
           port: 53
@@ -96,6 +97,7 @@ spec:
     # Allow DNS resolution
     - to:
         - namespaceSelector: {}
+          podSelector: {}
       ports:
         - protocol: TCP
           port: 53

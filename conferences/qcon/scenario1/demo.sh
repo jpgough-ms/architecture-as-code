@@ -176,7 +176,7 @@ read
 # STEP 2: Load Docker images
 # ============================================================================
 
-# clear
+
 heading "Preparing Docker Images"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Loading images into Minikube's daemon..."
@@ -218,7 +218,7 @@ read
 # STEP 4: Deploy
 # ============================================================================
 
-# clear
+
 heading "Deploying to Kubernetes"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Applying generated Kubernetes resources..."
@@ -251,7 +251,7 @@ read
 # STEP 6: Active Pods
 # ============================================================================
 
-# clear
+
 heading "Active Pods"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Waiting for all pods to become ready..."
@@ -288,7 +288,7 @@ read
 # STEP 7: Setup Port Forwarding
 # ============================================================================
 
-# clear
+
 heading "Setting Up Port Forwarding"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "To access the deployed services, we need to set up port forwarding..."
@@ -353,9 +353,3 @@ read
 # ============================================================================
 # DEPLOYMENT COMPLETE
 # ============================================================================
-
-# clear
-# success "Scenario 1 Complete!"
-# success "✓ Minikube cluster running with Calico CNI"
-# success "✓ Trades API and MCP server deployed"
-# echo ""
