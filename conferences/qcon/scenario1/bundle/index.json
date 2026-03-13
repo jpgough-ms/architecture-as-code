@@ -51,12 +51,6 @@
       "output-type": "single"
     },
     {
-      "template": "denied-symbols-configmap.yaml",
-      "from": "document",
-      "output": "kubernetes/denied-symbols-configmap.yaml",
-      "output-type": "single"
-    },
-    {
       "template": "kustomization.yaml",
       "from": "document",
       "output": "kubernetes/kustomization.yaml",
