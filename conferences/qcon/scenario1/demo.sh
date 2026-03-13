@@ -266,16 +266,19 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Waiting for all pods to become ready..."
     info "Why: Readiness probes must pass before pods can accept traffic"
 fi
-command "kubectl wait --for=condition=ready pod --all --timeout=90s"
+command "kubectl wait --for=condition=ready pod -l app=trades --timeout=90s"
+command "kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s"
 # Wait a moment for pods to be created after deployment
 sleep 2
-if kubectl wait --for=condition=ready pod --all --timeout=90s 2>/dev/null; then
+if kubectl wait --for=condition=ready pod -l app=trades --timeout=90s 2>/dev/null && \
+   kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s 2>/dev/null; then
     echo ""
     success "✓ All pods ready"
 else
     echo "Waiting for pods to be created..."
     sleep 3
-    if kubectl wait --for=condition=ready pod --all --timeout=90s; then
+    if kubectl wait --for=condition=ready pod -l app=trades --timeout=90s && \
+       kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s; then
         echo ""
         success "✓ All pods ready"
     else
@@ -372,8 +375,6 @@ echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║                   ✓ Scenario 1 Complete!                          ║${NC}"
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${YELLOW}Deployed: API & MCP Server architecture${NC}"
 echo ""
 echo "Press Enter to continue..."
 read

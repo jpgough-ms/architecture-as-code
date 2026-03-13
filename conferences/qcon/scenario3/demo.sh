@@ -63,14 +63,6 @@ if [ -d "generated-deployer" ]; then
     rm -rf generated-deployer
 fi
 
-clear
-echo ""
-echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║   QCon Demo: Automated Governance Gates                           ║${NC}"
-echo -e "${CYAN}║                                                                   ║${NC}"
-echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-
 # ============================================================================
 # Prerequisite: CALM Hub Check
 # ============================================================================
@@ -395,6 +387,4 @@ echo ""
 
 echo -e "${GREEN}✅ Gate 1: Pattern Registration - PASSED${NC}"
 echo -e "${GREEN}✅ Gate 2: Architecture Control Validation - PASSED${NC}"
-echo ""
-echo -e "${YELLOW}Validated: Deployments gated by automated governance${NC}"
 echo ""

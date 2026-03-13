@@ -1,5 +1,5 @@
 {
-    "$schema": "https://calm.finos.org/qcon/scenario3/calm/controls/mcp-guardrail.requirement.json",
+    "$schema": "https://calm.finos.org/qcon/controls/mcp-guardrail.requirement.json",
     "denied-symbols": [
         "VOD",
         "GME",

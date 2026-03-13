@@ -58,7 +58,6 @@ section() {
 # Ensure we're in the scenario4 directory
 cd "$(dirname "$0")"
 
-
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${CYAN}� Mode: Story (commands + explanations)${NC}"
 else
@@ -98,13 +97,6 @@ read
 # Beat 1: Show the problem - no resource limits
 # ============================================================================
 
-clear
-echo ""
-echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║   SCENARIO 4: Scaling Deployments and Operational Change          ║${NC}"
-echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-sleep 1
 
 section "The Problem"
 
@@ -253,6 +245,4 @@ echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║                   ✓ Scenario 4 Complete!                          ║${NC}"
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${YELLOW}Scaled: Platform changes without architecture churn${NC}"
 echo ""

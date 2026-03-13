@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://calm.finos.org/qcon/scenario2/calm/controls/mcp-guardrail.requirement.json",
+    "$id": "https://calm.finos.org/qcon/controls/mcp-guardrail.requirement.json",
     "title": "MCP Server Trading Symbol Guardrail",
     "type": "object",
     "allOf": [

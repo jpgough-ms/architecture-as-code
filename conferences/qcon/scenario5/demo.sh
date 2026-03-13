@@ -71,18 +71,7 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo "   4. Flood portfolio with trades → Watch rebalancer correct imbalances"
     echo ""
 fi
-
 clear
-echo ""
-echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║   SCENARIO 5: Rapid Platform Adoption                             ║${NC}"
-echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-sleep 1
-
-echo "Press Enter to begin..."
-read
-
 # ============================================================================
 # Step 1: Verify Cluster
 # ============================================================================
@@ -204,8 +193,12 @@ if [ -n "$TRADES_POD" ] && [ -n "$A2A_POD" ]; then
             info "Waiting for pods to be ready..."
         fi
         
-        run_command "kubectl wait --for=condition=ready pod --all --timeout=90s"
-        kubectl wait --for=condition=ready pod --all --timeout=90s
+        run_command "kubectl wait --for=condition=ready pod -l app=trades --timeout=90s"
+        kubectl wait --for=condition=ready pod -l app=trades --timeout=90s
+        run_command "kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s"
+        kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s
+        run_command "kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s"
+        kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s
         echo ""
         
         success "✓ Deployment complete"
@@ -242,8 +235,10 @@ else
         info "Waiting for pods to be ready..."
     fi
     
-    run_command "kubectl wait --for=condition=ready pod --all --timeout=90s"
-    kubectl wait --for=condition=ready pod --all --timeout=90s
+    run_command "kubectl wait --for=condition=ready pod -l app=trades --timeout=90s"
+    kubectl wait --for=condition=ready pod -l app=trades --timeout=90s
+    run_command "kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s"
+    kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s
     echo ""
     
     success "✓ Deployment complete"
@@ -456,8 +451,6 @@ echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║                   ✓ Scenario 5 Complete!                          ║${NC}"
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-echo -e "${YELLOW}Demonstrated: Rapid platform capability adoption (A2A)${NC}"
 echo ""
 
 if [ "$VERBOSE_MODE" == "true" ]; then
