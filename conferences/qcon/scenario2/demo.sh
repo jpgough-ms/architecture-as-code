@@ -53,6 +53,14 @@ fi
 echo ""
 
 clear
+echo ""
+echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║   SCENARIO 2: Introducing Controls and Governance                 ║${NC}"
+echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+sleep 1
+
+clear
 heading "Step 1: Verify existing deployment"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Checking for running pods from Scenario 1..."
@@ -78,6 +86,11 @@ fi
 command "cat calm/controls/mcp-guardrail.config.json"
 cat calm/controls/mcp-guardrail.config.json | bat --language json --style=plain --color=always
 echo ""
+
+echo "Press Enter to continue..."
+read
+
+clear
 info "Where is this control applied in the architecture?"
 echo ""
 echo -e "${BLUE}In the trades-api-and-mcp.architecture.json, the mcp-server node declares:${NC}"
@@ -111,30 +124,43 @@ echo ""
 echo "Press Enter to continue..."
 read
 
+
+tree infrastructure/kubernetes
+echo ""
+echo "Press Enter to continue..."
+read
+
 clear
 heading "Step 4: Show generated ConfigMap"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "ConfigMap generated from control configuration:"
     info "Why: The bundle transforms CALM controls into Kubernetes resources"
 fi
+info "ConfigMap generated from control configuration:"
 command "cat infrastructure/kubernetes/denied-symbols-configmap.yaml"
 cat infrastructure/kubernetes/denied-symbols-configmap.yaml | bat --language yaml --style=plain --color=always
 echo ""
 echo "Press Enter to apply the configuration..."
 read
 
+tree infrastructure/kubernetes
+echo ""
+
 clear
 heading "Step 5: Apply the new configuration"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Applying updated Kubernetes resources with MCP guardrail..."
-    info "Why: kubectl apply updates the ConfigMap and restarts deployments"
+    info "Why: kubectl apply updates the ConfigMap, then restart MCP to load new values"
 fi
 command "kubectl apply -k infrastructure/kubernetes"
 kubectl apply -k infrastructure/kubernetes
-command "kubectl rollout restart deployments"
-kubectl rollout restart deployments
+kubectl rollout restart deployment/trades-mcp-server 
 echo ""
 success "✓ Configuration applied"
+echo ""
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "Note: Only MCP server is restarted - trades service doesn't use the ConfigMap"
+fi
 echo ""
 echo "Press Enter to continue..."
 read
@@ -142,11 +168,9 @@ read
 clear
 heading "Step 6: Wait for pods to be ready"
 if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Waiting for deployments to complete rollout..."
-    info "Why: Deployments need time to mount new ConfigMaps and pass readiness checks"
+    info "Waiting for MCP deployment to complete rollout..."
+    info "Why: MCP needs to restart to pick up the new denied symbols ConfigMap"
 fi
-command "kubectl rollout status deployment/trades deployment/trades-mcp-server"
-kubectl rollout status deployment/trades --timeout=90s
 kubectl rollout status deployment/trades-mcp-server --timeout=90s
 echo ""
 success "✓ All deployments rolled out successfully"
@@ -223,27 +247,10 @@ echo "Press Enter to continue..."
 read
 
 clear
-success "Scenario 2 Complete!"
 echo ""
-echo "Press Enter to prepare for Scenario 3..."
-read
-
-# ============================================================================
-# Preparing for Scenario 3
-# ============================================================================
-
-clear
-heading "🔧 Preparing for Scenario 3"
-if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Setting up insecure cluster for next scenario..."
-    info "Why: Scenario 3 demonstrates governance gates starting with non-compliant infrastructure"
-fi
-
-command_verbose "minikube start --profile insecure"
-minikube start --profile insecure > /dev/null 2>&1
-minikube profile insecure > /dev/null 2>&1
-
-success "✓ Insecure cluster ready for Scenario 3"
-if [ "$VERBOSE_MODE" == "true" ]; then
-    info "This cluster will be used to demonstrate infrastructure governance requirements"
-fi
+echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                   ✓ Scenario 2 Complete!                          ║${NC}"
+echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${YELLOW}Declared: Controls and governance requirements${NC}"
+echo ""

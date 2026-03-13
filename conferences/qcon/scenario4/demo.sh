@@ -99,12 +99,13 @@ read
 # ============================================================================
 
 clear
-heading "Starting Scenario 4: Scaling Deployments and Operational Change"
 echo ""
-echo "Press Enter to begin..."
-read
+echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║   SCENARIO 4: Scaling Deployments and Operational Change          ║${NC}"
+echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+sleep 1
 
-clear
 section "The Problem"
 
 heading "📋 Current State: Pods Without Resource Limits"
@@ -245,4 +246,13 @@ echo -e "${GREEN}Results:${NC}"
 echo -e "  • CPU: 500m limit ✓"
 echo -e "  • Memory: 256Mi limit ✓"
 echo -e "  • Cluster stability improved ✓"
+echo ""
+
+clear
+echo ""
+echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                   ✓ Scenario 4 Complete!                          ║${NC}"
+echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${YELLOW}Scaled: Platform changes without architecture churn${NC}"
 echo ""

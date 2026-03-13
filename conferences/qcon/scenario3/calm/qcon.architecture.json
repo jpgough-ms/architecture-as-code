@@ -48,7 +48,7 @@
       "interfaces": [
         {
           "unique-id": "trades-api-image",
-          "image": "[[ IMAGE ]]"
+          "image": "jpgough/trades-rest-server:latest"
         },
         {
           "unique-id": "trades-api-port",
@@ -66,7 +66,18 @@
           "unique-id": "cluster-type",
           "value": "minikube"
         }
-      ]
+      ],
+      "controls": {
+        "security": {
+          "description": "Security requirements for the Kubernetes cluster",
+          "requirements": [
+            {
+              "requirement-url": "controls/micro-segmentation.requirement.json",
+              "config-url": "controls/micro-segmentation.config.json"
+            }
+          ]
+        }
+      }
     }
   ],
   "relationships": [

@@ -1,36 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: trades-mcp-server
+  name: trades-a2a-server
   labels:
-    app: trades-mcp-server
+    app: trades-a2a-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: trades-mcp-server
+      app: trades-a2a-server
   template:
     metadata:
       labels:
-        app: trades-mcp-server
+        app: trades-a2a-server
     spec:
       containers:
-        - name: trades-mcp-server
-          image: jpgough/trades-mcp-server:latest
+        - name: trades-a2a-server
+          image: jpgough/trades-a2a-server:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
-          # Platform opinion: enforce resource limits for cluster stability
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
           env:
-            - name: QUARKUS_REST_CLIENT__COM_DEMO_TRADESMCP_TRADESAPICLIENT__URL
+            - name: QUARKUS_REST_CLIENT__COM_DEMO_TRADESA2A_TRADESAPICLIENT__URL
               value: "http://trades"
+            - name: DENIED_SYMBOLS
+              valueFrom:
+                configMapKeyRef:
+                  name: denied-symbols
+                  key: denied-symbols
+                  optional: true
           readinessProbe:
             httpGet:
               path: /q/health/ready

@@ -1,6 +1,6 @@
 {
   "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
-  "$id": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api-and-mcp.pattern.json",
+  "$id": "https://calm.finos.org/qcon/trades-api-and-mcp.pattern.json",
   "title": "Trades API and MCP Pattern",
   "description": "A pattern for an MCP-based architecture that exposes trade data through a Model Context Protocol server. The trades-api node must conform to the Trades API pattern and may carry a detailed-architecture reference.",
   "type": "object",

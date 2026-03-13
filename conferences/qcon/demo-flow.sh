@@ -32,9 +32,9 @@ error() {
 section() {
     local text=$1
     echo ""
-    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${CYAN}║  $text"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
 
@@ -44,9 +44,9 @@ clear
 # MODE SELECTION
 # ============================================================================
 
-echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                   Select Demo Mode                               ║${NC}"
-echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║                   Select Demo Mode                                ║${NC}"
+echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${CYAN}Choose your experience:${NC}"
 echo ""
@@ -77,17 +77,17 @@ sleep 1
 
 clear
 
-echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║                                                                  ║${NC}"
-echo -e "${BLUE}║      APIs for Agents                                             ║${NC}"
-echo -e "${BLUE}║                                                                  ║${NC}"
-echo -e "${BLUE}║  Scenario 1: Deploy API & MCP Architecture                       ║${NC}"
-echo -e "${BLUE}║  Scenario 2: Introducing Controls and Governance                 ║${NC}"
-echo -e "${BLUE}║  Scenario 3: Gating Deployments                                  ║${NC}"
-echo -e "${BLUE}║  Scenario 4: Scaling Deployments and Operational Change          ║${NC}"
-echo -e "${BLUE}║  Scenario 5: Rapid Platform Adoption                             ║${NC}"
-echo -e "${BLUE}║                                                                  ║${NC}"
-echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║                                                                   ║${NC}"
+echo -e "${CYAN}║      APIs for Agents                                              ║${NC}"
+echo -e "${CYAN}║                                                                   ║${NC}"
+echo -e "${CYAN}║  Scenario 1: Deploy API & MCP Architecture                        ║${NC}"
+echo -e "${CYAN}║  Scenario 2: Introducing Controls and Governance                  ║${NC}"
+echo -e "${CYAN}║  Scenario 3: Gating Deployments                                   ║${NC}"
+echo -e "${CYAN}║  Scenario 4: Scaling Deployments and Operational Change           ║${NC}"
+echo -e "${CYAN}║  Scenario 5: Rapid Platform Adoption                              ║${NC}"
+echo -e "${CYAN}║                                                                   ║${NC}"
+echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 sleep 2
 
@@ -244,7 +244,7 @@ success "✅ Scenario 3 Complete!"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}Achievement: Deployments automatically gated by governance requirements${NC}"
-    echo -e "${YELLOW}Pattern, infrastructure, and control validations enforced before deployment${NC}"
+    echo -e "${YELLOW}Pattern registration and control validations enforced before deployment${NC}"
     echo ""
 fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 4...${NC}"
@@ -254,6 +254,7 @@ read
 # TRANSITION TO SCENARIO 4
 # ============================================================================
 
+clear
 section "SCENARIO 4: Scaling Deployments and Operational Change"
 
 if [ "$VERBOSE_MODE" == "true" ]; then

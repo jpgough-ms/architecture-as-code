@@ -1,5 +1,5 @@
 {
-    "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
+    "$schema": "https://calm.finos.org/qcon/trades-api-and-mcp.pattern.json",
     "unique-id": "trades-api-and-mcp-conforming-architecture",
     "name": "Trades API and MCP Architecture (Conforming)",
     "description": "Conforming architecture with all required controls: micro-segmentation on cluster, permitted connections on all relationships, and MCP guardrail on MCP server",

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
+  "$schema": "https://calm.finos.org/qcon/trades-api-and-mcp.pattern.json",
   "unique-id": "trades-api-and-mcp-architecture",
   "name": "Trades API and MCP Architecture",
   "description": "Concrete instantiation of the Trades API and MCP pattern, deployed on a local Minikube cluster. The trades-api node links to its own detailed architecture via the detailed-architecture reference.",
@@ -32,8 +32,7 @@
       "name": "Trades API",
       "description": "REST API for accessing and managing trade data",
       "details": {
-        "detailed-architecture": "../../trades-demo/calm/trades-api.architecture.json",
-        "required-pattern": "../../trades-demo/calm/trades-api.pattern.json"
+        "detailed-architecture": "trades-api.architecture.json"
       },
       "interfaces": [
         {
