@@ -6,5 +6,7 @@ resources:
   - trades-service.yaml
   - mcp-deployment.yaml
   - mcp-service.yaml
+  - a2a-deployment.yaml
+  - a2a-service.yaml
   - default-deny.yaml
   - network-policy.yaml

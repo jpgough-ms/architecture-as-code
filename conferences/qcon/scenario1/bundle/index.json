@@ -39,6 +39,18 @@
       "output-type": "single"
     },
     {
+      "template": "a2a-deployment.yaml",
+      "from": "document",
+      "output": "kubernetes/a2a-deployment.yaml",
+      "output-type": "single"
+    },
+    {
+      "template": "a2a-service.yaml",
+      "from": "document",
+      "output": "kubernetes/a2a-service.yaml",
+      "output-type": "single"
+    },
+    {
       "template": "kustomization.yaml",
       "from": "document",
       "output": "kubernetes/kustomization.yaml",

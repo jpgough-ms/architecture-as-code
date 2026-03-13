@@ -182,10 +182,6 @@ validate_architecture() {
         return 1
     fi
 }
-        echo ""
-        error "❌ GATE 2 REJECTED: Architecture validation failed"
-        info "   Architecture does not conform to pattern requirements"
-        info "   Common issues: missing controls, incorrect node types, relationship violations"
 
 # ============================================================================
 # Main Execution

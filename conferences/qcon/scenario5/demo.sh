@@ -71,10 +71,7 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo "   4. Flood portfolio with trades → Watch rebalancer correct imbalances"
     echo ""
 fi
-
-echo "Press Enter to begin..."
-read
-
+clear
 # ============================================================================
 # Step 1: Verify Cluster
 # ============================================================================
@@ -150,42 +147,108 @@ read
 clear
 stage "Step 3 — Deploy to Kubernetes"
 
-if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Deploying Trades API and A2A Server..."
-    info "Why: Creates the backend infrastructure that agents will coordinate through"
+# Check if pods are already running
+TRADES_POD=$(kubectl get pods -l app=trades -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+A2A_POD=$(kubectl get pods -l app=trades-a2a-server -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+if [ -n "$TRADES_POD" ] && [ -n "$A2A_POD" ]; then
+    TRADES_STATUS=$(kubectl get pod "$TRADES_POD" -o jsonpath='{.status.phase}' 2>/dev/null)
+    A2A_STATUS=$(kubectl get pod "$A2A_POD" -o jsonpath='{.status.phase}' 2>/dev/null)
+    
+    if [ "$TRADES_STATUS" == "Running" ] && [ "$A2A_STATUS" == "Running" ]; then
+        success "✓ Pods already running - skipping deployment"
+        if [ "$VERBOSE_MODE" == "true" ]; then
+            info "Found running pods:"
+            echo "  • Trades API: $TRADES_POD ($TRADES_STATUS)"
+            echo "  • A2A Server: $A2A_POD ($A2A_STATUS)"
+            echo ""
+        fi
+        kubectl get pods
+        echo ""
+        echo "Press Enter to continue..."
+        read
+    else
+        if [ "$VERBOSE_MODE" == "true" ]; then
+            info "Pods exist but not running - redeploying..."
+            info "Trades: $TRADES_STATUS, A2A: $A2A_STATUS"
+        fi
+        
+        run_command "kubectl apply -f trades-deployment.yaml"
+        kubectl apply -f trades-deployment.yaml
+        echo ""
+        
+        run_command "kubectl apply -f trades-service.yaml"
+        kubectl apply -f trades-service.yaml
+        echo ""
+        
+        run_command "kubectl apply -f a2a-deployment.yaml"
+        kubectl apply -f a2a-deployment.yaml
+        echo ""
+        
+        run_command "kubectl apply -f a2a-service.yaml"
+        kubectl apply -f a2a-service.yaml
+        echo ""
+        
+        if [ "$VERBOSE_MODE" == "true" ]; then
+            info "Waiting for pods to be ready..."
+        fi
+        
+        run_command "kubectl wait --for=condition=ready pod -l app=trades --timeout=90s"
+        kubectl wait --for=condition=ready pod -l app=trades --timeout=90s
+        run_command "kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s"
+        kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s
+        run_command "kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s"
+        kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s
+        echo ""
+        
+        success "✓ Deployment complete"
+        echo ""
+        run_command "kubectl get pods"
+        kubectl get pods
+        echo ""
+        echo "Press Enter to continue..."
+        read
+    fi
+else
+    if [ "$VERBOSE_MODE" == "true" ]; then
+        info "Deploying Trades API and A2A Server..."
+        info "Why: Creates the backend infrastructure that agents will coordinate through"
+    fi
+    
+    run_command "kubectl apply -f trades-deployment.yaml"
+    kubectl apply -f trades-deployment.yaml
+    echo ""
+    
+    run_command "kubectl apply -f trades-service.yaml"
+    kubectl apply -f trades-service.yaml
+    echo ""
+    
+    run_command "kubectl apply -f a2a-deployment.yaml"
+    kubectl apply -f a2a-deployment.yaml
+    echo ""
+    
+    run_command "kubectl apply -f a2a-service.yaml"
+    kubectl apply -f a2a-service.yaml
+    echo ""
+    
+    if [ "$VERBOSE_MODE" == "true" ]; then
+        info "Waiting for pods to be ready..."
+    fi
+    
+    run_command "kubectl wait --for=condition=ready pod -l app=trades --timeout=90s"
+    kubectl wait --for=condition=ready pod -l app=trades --timeout=90s
+    run_command "kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s"
+    kubectl wait --for=condition=ready pod -l app=trades-a2a-server --timeout=90s
+    echo ""
+    
+    success "✓ Deployment complete"
+    echo ""
+    run_command "kubectl get pods"
+    kubectl get pods
+    echo ""
+    echo "Press Enter to continue..."
+    read
 fi
-
-run_command "kubectl apply -f trades-deployment.yaml"
-kubectl apply -f trades-deployment.yaml
-echo ""
-
-run_command "kubectl apply -f trades-service.yaml"
-kubectl apply -f trades-service.yaml
-echo ""
-
-run_command "kubectl apply -f a2a-deployment.yaml"
-kubectl apply -f a2a-deployment.yaml
-echo ""
-
-run_command "kubectl apply -f a2a-service.yaml"
-kubectl apply -f a2a-service.yaml
-echo ""
-
-if [ "$VERBOSE_MODE" == "true" ]; then
-    info "Waiting for pods to be ready..."
-fi
-
-run_command "kubectl wait --for=condition=ready pod --all --timeout=90s"
-kubectl wait --for=condition=ready pod --all --timeout=90s
-echo ""
-
-success "✓ Deployment complete"
-echo ""
-run_command "kubectl get pods"
-kubectl get pods
-echo ""
-echo "Press Enter to continue..."
-read
 
 # ============================================================================
 # Step 4: Port Forward Instructions
@@ -382,6 +445,13 @@ echo ""
 # ============================================================================
 # Cleanup Instructions
 # ============================================================================
+
+clear
+echo ""
+echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                   ✓ Scenario 5 Complete!                          ║${NC}"
+echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${CYAN}To clean up:${NC}"

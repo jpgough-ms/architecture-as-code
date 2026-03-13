@@ -1,0 +1,37 @@
+{
+  "$schema": "https://calm.finos.org/qcon/qcon.pattern.json",
+  "unique-id": "qcon-architecture",
+  "name": "Trades API and MCP Architecture (Non-Conforming)",
+  "description": "Non-conforming architecture missing permitted-connection control on mcp-client-to-mcp-server relationship",
+  "nodes": [
+    {
+      "unique-id": "mcp-server",
+      "node-type": "service",
+      "name": "Reports MCP Server",
+      "description": "MCP server that exposes tools for querying end of day reporting",
+      "interfaces": [
+        {
+          "unique-id": "mcp-server-image",
+          "image": "jpgough/reports-mcp-server:latest"
+        },
+        {
+          "unique-id": "mcp-server-port",
+          "port": 8080
+        }
+      ]
+    },
+    {
+      "unique-id": "k8s-cluster",
+      "node-type": "system",
+      "name": "Kubernetes Cluster",
+      "description": "Kubernetes cluster with network policy enforcement",
+      "interfaces": [
+        {
+          "unique-id": "cluster-type",
+          "value": "minikube"
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

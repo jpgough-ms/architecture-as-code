@@ -1,6 +1,6 @@
 {
     "$schema": "https://calm.finos.org/release/1.0/meta/control.json",
-    "$id": "https://calm.finos.org/qcon/scenario3/calm/controls/mcp-guardrail.requirement.json",
+    "$id": "https://calm.finos.org/qcon/controls/mcp-guardrail.requirement.json",
     "title": "MCP Guardrail Control",
     "description": "Defines a control for restricting access to specific trading symbols in an MCP server. This prevents queries for high-risk or restricted securities.",
     "control-id": "mcp-001",

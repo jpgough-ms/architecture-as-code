@@ -11,8 +11,17 @@ YELLOW_BOLD='\033[1;33m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 # Reset color
 NC='\033[0m'
+
+clear
+echo ""
+echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║   SCENARIO 1: Deploy API & MCP Architecture                       ║${NC}"
+echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+sleep 1
 
 # ============================================================================
 # DEPENDENCY VERIFICATION
@@ -176,7 +185,7 @@ read
 # STEP 2: Load Docker images
 # ============================================================================
 
-# clear
+
 heading "Preparing Docker Images"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Loading images into Minikube's daemon..."
@@ -218,7 +227,7 @@ read
 # STEP 4: Deploy
 # ============================================================================
 
-# clear
+
 heading "Deploying to Kubernetes"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Applying generated Kubernetes resources..."
@@ -251,22 +260,25 @@ read
 # STEP 6: Active Pods
 # ============================================================================
 
-# clear
+
 heading "Active Pods"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Waiting for all pods to become ready..."
     info "Why: Readiness probes must pass before pods can accept traffic"
 fi
-command "kubectl wait --for=condition=ready pod --all --timeout=90s"
+command "kubectl wait --for=condition=ready pod -l app=trades --timeout=90s"
+command "kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s"
 # Wait a moment for pods to be created after deployment
 sleep 2
-if kubectl wait --for=condition=ready pod --all --timeout=90s 2>/dev/null; then
+if kubectl wait --for=condition=ready pod -l app=trades --timeout=90s 2>/dev/null && \
+   kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s 2>/dev/null; then
     echo ""
     success "✓ All pods ready"
 else
     echo "Waiting for pods to be created..."
     sleep 3
-    if kubectl wait --for=condition=ready pod --all --timeout=90s; then
+    if kubectl wait --for=condition=ready pod -l app=trades --timeout=90s && \
+       kubectl wait --for=condition=ready pod -l app=trades-mcp-server --timeout=90s; then
         echo ""
         success "✓ All pods ready"
     else
@@ -288,7 +300,7 @@ read
 # STEP 7: Setup Port Forwarding
 # ============================================================================
 
-# clear
+
 heading "Setting Up Port Forwarding"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "To access the deployed services, we need to set up port forwarding..."
@@ -302,10 +314,12 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "This will make services available at:"
     echo "  • MCP Server:  http://localhost:8080"
     echo "  • Trades API:  http://localhost:8081"
+    echo "  • A2A Server:  http://localhost:9103"
 else
     echo "Services will be available at:"
     echo "  • MCP Server:  http://localhost:8080"
     echo "  • Trades API:  http://localhost:8081"
+    echo "  • A2A Server:  http://localhost:9103"
 fi
 echo ""
 echo -e "${YELLOW_BOLD}Press Enter once port-forwarding is running...${NC}"
@@ -317,6 +331,7 @@ for attempt in 1 2; do
     echo ""
     MCP_OK=false
     TRADES_OK=false
+    A2A_OK=false
 
     if curl -s http://localhost:8080/health > /dev/null 2>&1 || curl -s http://localhost:8080/ > /dev/null 2>&1; then
         echo -e "${GREEN}✓ MCP Server accessible at localhost:8080${NC}"
@@ -332,8 +347,15 @@ for attempt in 1 2; do
         echo -e "${RED}✗ Trades API NOT accessible at localhost:8081${NC}"
     fi
 
+    if curl -s http://localhost:9103/q/health > /dev/null 2>&1 || curl -s http://localhost:9103/ > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ A2A Server accessible at localhost:9103${NC}"
+        A2A_OK=true
+    else
+        echo -e "${RED}✗ A2A Server NOT accessible at localhost:9103${NC}"
+    fi
+
     echo ""
-    if [ "$MCP_OK" = true ] && [ "$TRADES_OK" = true ]; then
+    if [ "$MCP_OK" = true ] && [ "$TRADES_OK" = true ] && [ "$A2A_OK" = true ]; then
         success "✓ Port-forwarding confirmed - all services accessible"
         break
     elif [ $attempt -eq 1 ]; then
@@ -347,15 +369,16 @@ for attempt in 1 2; do
     fi
 done
 echo ""
+
+clear
+echo ""
+echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                   ✓ Scenario 1 Complete!                          ║${NC}"
+echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
+echo ""
 echo "Press Enter to continue..."
 read
 
 # ============================================================================
 # DEPLOYMENT COMPLETE
 # ============================================================================
-
-# clear
-# success "Scenario 1 Complete!"
-# success "✓ Minikube cluster running with Calico CNI"
-# success "✓ Trades API and MCP server deployed"
-# echo ""

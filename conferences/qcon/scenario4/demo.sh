@@ -58,7 +58,6 @@ section() {
 # Ensure we're in the scenario4 directory
 cd "$(dirname "$0")"
 
-
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${CYAN}� Mode: Story (commands + explanations)${NC}"
 else
@@ -98,13 +97,7 @@ read
 # Beat 1: Show the problem - no resource limits
 # ============================================================================
 
-clear
-heading "Starting Scenario 4: Scaling Deployments and Operational Change"
-echo ""
-echo "Press Enter to begin..."
-read
 
-clear
 section "The Problem"
 
 heading "📋 Current State: Pods Without Resource Limits"
@@ -245,4 +238,11 @@ echo -e "${GREEN}Results:${NC}"
 echo -e "  • CPU: 500m limit ✓"
 echo -e "  • Memory: 256Mi limit ✓"
 echo -e "  • Cluster stability improved ✓"
+echo ""
+
+clear
+echo ""
+echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║                   ✓ Scenario 4 Complete!                          ║${NC}"
+echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""

@@ -1,6 +1,6 @@
 {
   "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
-  "$id": "https://raw.githubusercontent.com/finos/architecture-as-code/main/conferences/qcon/trades-demo/calm/trades-api.pattern.json",
+  "$id": "https://calm.finos.org/qcon/trades-api.pattern.json",
   "title": "Trades API Pattern",
   "description": "A pattern for a REST API exposing trade data, deployed within a Kubernetes cluster",
   "type": "object",
@@ -13,10 +13,18 @@
         {
           "$ref": "https://calm.finos.org/release/1.0/meta/core.json#/defs/node",
           "properties": {
-            "unique-id": { "const": "trades-api" },
-            "name": { "const": "Trades API" },
-            "description": { "const": "REST API for accessing and managing trade data" },
-            "node-type": { "const": "service" },
+            "unique-id": {
+              "const": "trades-api"
+            },
+            "name": {
+              "const": "Trades API"
+            },
+            "description": {
+              "const": "REST API for accessing and managing trade data"
+            },
+            "node-type": {
+              "const": "service"
+            },
             "interfaces": {
               "type": "array",
               "minItems": 2,
@@ -25,31 +33,60 @@
                 {
                   "$ref": "#/defs/container-image-interface",
                   "properties": {
-                    "unique-id": { "const": "trades-api-image" }
+                    "unique-id": {
+                      "const": "trades-api-image"
+                    }
                   },
-                  "required": ["unique-id", "image"]
+                  "required": [
+                    "unique-id",
+                    "image"
+                  ]
                 },
                 {
                   "$ref": "#/defs/port-interface",
                   "properties": {
-                    "unique-id": { "const": "trades-api-port" }
+                    "unique-id": {
+                      "const": "trades-api-port"
+                    }
                   },
-                  "required": ["unique-id", "port"]
+                  "required": [
+                    "unique-id",
+                    "port"
+                  ]
                 }
               ]
             }
           },
-          "required": ["unique-id", "name", "description", "node-type", "interfaces"]
+          "required": [
+            "unique-id",
+            "name",
+            "description",
+            "node-type",
+            "interfaces"
+          ]
         },
         {
           "$ref": "https://calm.finos.org/release/1.0/meta/core.json#/defs/node",
           "properties": {
-            "unique-id": { "const": "k8s-cluster" },
-            "name": { "const": "Kubernetes Cluster" },
-            "description": { "const": "Kubernetes cluster hosting the trades API" },
-            "node-type": { "const": "system" }
+            "unique-id": {
+              "const": "k8s-cluster"
+            },
+            "name": {
+              "const": "Kubernetes Cluster"
+            },
+            "description": {
+              "const": "Kubernetes cluster hosting the trades API"
+            },
+            "node-type": {
+              "const": "system"
+            }
           },
-          "required": ["unique-id", "name", "description", "node-type"]
+          "required": [
+            "unique-id",
+            "name",
+            "description",
+            "node-type"
+          ]
         }
       ]
     },
@@ -61,39 +98,60 @@
         {
           "$ref": "https://calm.finos.org/release/1.0/meta/core.json#/defs/relationship",
           "properties": {
-            "unique-id": { "const": "trades-api-deployed-in-k8s" },
-            "description": { "const": "Trades API deployed on the Kubernetes cluster" },
+            "unique-id": {
+              "const": "trades-api-deployed-in-k8s"
+            },
+            "description": {
+              "const": "Trades API deployed on the Kubernetes cluster"
+            },
             "relationship-type": {
               "const": {
                 "deployed-in": {
                   "container": "k8s-cluster",
-                  "nodes": ["trades-api"]
+                  "nodes": [
+                    "trades-api"
+                  ]
                 }
               }
             }
           },
-          "required": ["unique-id", "description", "relationship-type"]
+          "required": [
+            "unique-id",
+            "description",
+            "relationship-type"
+          ]
         }
       ]
     }
   },
-  "required": ["nodes", "relationships"],
+  "required": [
+    "nodes",
+    "relationships"
+  ],
   "defs": {
     "container-image-interface": {
       "$ref": "https://calm.finos.org/release/1.0/meta/interface.json#/defs/interface-type",
       "type": "object",
       "properties": {
-        "image": { "type": "string" }
+        "image": {
+          "type": "string"
+        }
       },
-      "required": ["image"]
+      "required": [
+        "image"
+      ]
     },
     "port-interface": {
       "$ref": "https://calm.finos.org/release/1.0/meta/interface.json#/defs/interface-type",
       "type": "object",
       "properties": {
-        "port": { "type": "integer" }
+        "port": {
+          "type": "integer"
+        }
       },
-      "required": ["port"]
+      "required": [
+        "port"
+      ]
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
+  "$schema": "https://calm.finos.org/qcon/trades-api-and-mcp.pattern.json",
   "unique-id": "trades-api-and-mcp-non-conforming-architecture",
   "name": "Trades API and MCP Architecture (Non-Conforming)",
   "description": "Non-conforming architecture missing permitted-connection control on mcp-client-to-mcp-server relationship",
@@ -43,12 +43,12 @@
       "name": "Trades API",
       "description": "REST API for accessing and managing trade data",
       "details": {
-        "required-pattern": "../../trades-demo/calm/trades-api.pattern.json"
+        "required-pattern": "trades-api.architecture.json"
       },
       "interfaces": [
         {
           "unique-id": "trades-api-image",
-          "image": "jpgough/trades-rest-server:latest"
+          "image": "[[ IMAGE ]]"
         },
         {
           "unique-id": "trades-api-port",
@@ -66,18 +66,7 @@
           "unique-id": "cluster-type",
           "value": "minikube"
         }
-      ],
-      "controls": {
-        "security": {
-          "description": "Security requirements for the Kubernetes cluster",
-          "requirements": [
-            {
-              "requirement-url": "controls/micro-segmentation.requirement.json",
-              "config-url": "controls/micro-segmentation.config.json"
-            }
-          ]
-        }
-      }
+      ]
     }
   ],
   "relationships": [
