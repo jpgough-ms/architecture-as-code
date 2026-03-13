@@ -153,8 +153,6 @@ fi
 cd ..
 
 echo ""
-success "✅ Scenario 1 Complete!"
-echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}Achievement: API infrastructure deployed from architecture definition${NC}"
     echo ""
@@ -240,8 +238,7 @@ fi
 cd ..
 
 echo ""
-success "✅ Scenario 3 Complete!"
-echo ""
+
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}Achievement: Deployments automatically gated by governance requirements${NC}"
     echo -e "${YELLOW}Pattern registration and control validations enforced before deployment${NC}"
@@ -285,8 +282,6 @@ fi
 cd ..
 
 echo ""
-success "✅ Scenario 4 Complete!"
-echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}Achievement: Platform operational changes scale across all teams${NC}"
     echo -e "${YELLOW}Resource limits and platform policies updated without architecture changes${NC}"
@@ -328,8 +323,6 @@ fi
 
 cd ..
 
-echo ""
-success "✅ Scenario 5 Complete!"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}Achievement: New platform capabilities (A2A protocol) adopted rapidly${NC}"
