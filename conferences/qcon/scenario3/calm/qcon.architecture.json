@@ -1,18 +1,18 @@
 {
   "$schema": "https://calm.finos.org/qcon/qcon.pattern.json",
   "unique-id": "qcon-architecture",
-  "name": "Trades API and MCP Architecture (Non-Conforming)",
+  "name": "QCon Architecture (Non-Conforming)",
   "description": "Non-conforming architecture missing permitted-connection control on mcp-client-to-mcp-server relationship",
   "nodes": [
     {
       "unique-id": "mcp-server",
       "node-type": "service",
-      "name": "Reports MCP Server",
-      "description": "MCP server that exposes tools for querying end of day reporting",
+      "name": "Trades MCP Server",
+      "description": "MCP server that exposes tools for querying trade data",
       "interfaces": [
         {
           "unique-id": "mcp-server-image",
-          "image": "jpgough/reports-mcp-server:latest"
+          "image": "jpgough/trades-mcp-server:latest"
         },
         {
           "unique-id": "mcp-server-port",
