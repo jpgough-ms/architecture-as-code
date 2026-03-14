@@ -43,7 +43,8 @@
       "name": "Trades API",
       "description": "REST API for accessing and managing trade data",
       "details": {
-        "required-pattern": "trades-api.architecture.json"
+        "required-pattern": "trades-api.pattern.json",
+        "detailed-architecture": "trades-api.architecture.json"
       },
       "interfaces": [
         {
@@ -66,7 +67,18 @@
           "unique-id": "cluster-type",
           "value": "minikube"
         }
-      ]
+      ],
+      "controls": {
+        "security": {
+          "description": "Security requirements for the Kubernetes cluster",
+          "requirements": [
+            {
+              "requirement-url": "controls/micro-segmentation.requirement.json",
+              "config-url": "controls/micro-segmentation.config.json"
+            }
+          ]
+        }
+      }
     }
   ],
   "relationships": [
