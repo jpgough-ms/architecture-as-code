@@ -162,6 +162,7 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 2...${NC}"
 read
+clear
 
 # ============================================================================
 # TRANSITION

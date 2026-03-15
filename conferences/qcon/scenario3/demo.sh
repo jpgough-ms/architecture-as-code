@@ -7,7 +7,7 @@ VERBOSE_MODE=${VERBOSE_MODE:-"false"}
 
 # Configuration
 CALM_HUB_URL="http://localhost:8085"
-NAMESPACE="QCon"
+NAMESPACE="qcon"
 
 # ANSI color codes
 YELLOW='\033[0;33m'

@@ -225,7 +225,8 @@ kubectl rollout status deployment/trades-mcp-server --timeout=90s
 echo ""
 
 success "✅ Deployment rolled out"
-echo ""
+echo "Press Enter to verify resource limits..."
+read
 
 heading "🔍 Verify Resource Limits"
 run_command "kubectl describe pod -l app=trades-mcp-server | grep -A6 'Limits:'"
@@ -240,7 +241,6 @@ echo -e "  • Memory: 256Mi limit ✓"
 echo -e "  • Cluster stability improved ✓"
 echo ""
 
-clear
 echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║                   ✓ Scenario 4 Complete!                          ║${NC}"

@@ -52,15 +52,7 @@ else
 fi
 echo ""
 
-clear
-echo ""
-echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║   SCENARIO 2: Introducing Controls and Governance                 ║${NC}"
-echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
-echo ""
-sleep 1
-
-clear
+# clear
 heading "Step 1: Verify existing deployment"
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Checking for running pods from Scenario 1..."
