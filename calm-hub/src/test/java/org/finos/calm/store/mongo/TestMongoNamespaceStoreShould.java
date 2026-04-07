@@ -1,9 +1,15 @@
 package org.finos.calm.store.mongo;
 
+import com.mongodb.MongoWriteException;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteError;
 import com.mongodb.client.*;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import org.bson.BsonDocument;
 import org.bson.Document;
+import org.finos.calm.domain.exception.NamespaceAlreadyExistsException;
+import org.finos.calm.domain.namespaces.NamespaceInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -14,6 +20,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,7 +52,7 @@ public class TestMongoNamespaceStoreShould {
         when(findIterable.iterator()).thenReturn(emptyCursor);
         when(namespaceCollection.find()).thenReturn(findIterable);
 
-        List<String> namespaces = mongoNamespaceStore.getNamespaces();
+        List<NamespaceInfo> namespaces = mongoNamespaceStore.getNamespaces();
         assertThat(namespaces, is(empty()));
         verify(namespaceCollection).find();
     }
@@ -55,18 +62,21 @@ public class TestMongoNamespaceStoreShould {
         DocumentFindIterable findIterable = Mockito.mock(DocumentFindIterable.class);
         DocumentMongoCursor cursor = Mockito.mock(DocumentMongoCursor.class);
 
-        Document doc1 = new Document("namespace", "finos");
-        Document doc2 = new Document("namespace", "other");
+        Document doc1 = new Document("name", "finos").append("description","FINOS namespace");
+        Document doc2 = new Document("name", "other").append("description","other namespace");
 
-        when(cursor.hasNext()).thenReturn(true, true, false); // 3 documents, then end
+        when(cursor.hasNext()).thenReturn(true, true, false);
         when(cursor.next()).thenReturn(doc1, doc2);
         when(findIterable.iterator()).thenReturn(cursor);
         when(namespaceCollection.find()).thenReturn(findIterable);
 
-        List<String> namespaces = mongoNamespaceStore.getNamespaces();
-        List<String> expectedNamespaces = Arrays.asList("finos", "other");
+        List<NamespaceInfo> namespaces = mongoNamespaceStore.getNamespaces();
+        List<NamespaceInfo> expectedNamespaces = Arrays.asList(new NamespaceInfo("finos","FINOS namespace"), new NamespaceInfo("other","other namespace"));
 
-        assertThat(namespaces, is(expectedNamespaces));
+        assertThat(namespaces.get(0).getName(), is(expectedNamespaces.get(0).getName()));
+        assertThat(namespaces.get(1).getName(), is(expectedNamespaces.get(1).getName()));
+        assertThat(namespaces.get(0).getDescription(), is("FINOS namespace"));
+        assertThat(namespaces.get(1).getDescription(), is("other namespace"));
     }
 
     @Test
@@ -78,7 +88,7 @@ public class TestMongoNamespaceStoreShould {
         when(findIterable.first()).thenReturn(null);
 
         assertThat(mongoNamespaceStore.namespaceExists(namespace), is(false));
-        verify(namespaceCollection).find(new Document("namespace", namespace));
+        verify(namespaceCollection).find(new Document("name", namespace));
     }
 
     @Test
@@ -91,36 +101,28 @@ public class TestMongoNamespaceStoreShould {
         when(findIterable.first()).thenReturn(documentMock);
 
         assertThat(mongoNamespaceStore.namespaceExists(namespace), is(true));
-        verify(namespaceCollection).find(new Document("namespace", namespace));
+        verify(namespaceCollection).find(new Document("name", namespace));
     }
 
     @Test
-    void create_namespace_when_it_does_not_exist() {
-        DocumentFindIterable findIterable = Mockito.mock(DocumentFindIterable.class);
+    void create_namespace_when_it_does_not_exist() throws NamespaceAlreadyExistsException {
         String namespace = "new-namespace";
 
-        when(namespaceCollection.find(any(Document.class))).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(null); // namespace doesn't exist
+        mongoNamespaceStore.createNamespace(namespace, "desc");
 
-        mongoNamespaceStore.createNamespace(namespace);
-
-        verify(namespaceCollection).find(new Document("namespace", namespace));
-        verify(namespaceCollection).insertOne(new Document("namespace", namespace));
+        verify(namespaceCollection).insertOne(new Document("name", namespace).append("description","desc"));
     }
 
     @Test
-    void do_not_create_namespace_when_it_already_exists() {
-        DocumentFindIterable findIterable = Mockito.mock(DocumentFindIterable.class);
+    void throw_exception_when_namespace_already_exists() {
         String namespace = "existing-namespace";
 
-        when(namespaceCollection.find(any(Document.class))).thenReturn(findIterable);
-        Document documentMock = Mockito.mock(Document.class);
-        when(findIterable.first()).thenReturn(documentMock); // namespace exists
+        WriteError writeError = new WriteError(11000, "duplicate key error", new BsonDocument());
+        MongoWriteException duplicateKeyException = new MongoWriteException(writeError, new ServerAddress());
+        Mockito.doThrow(duplicateKeyException).when(namespaceCollection).insertOne(any(Document.class));
 
-        mongoNamespaceStore.createNamespace(namespace);
-
-        verify(namespaceCollection).find(new Document("namespace", namespace));
-        verify(namespaceCollection, Mockito.never()).insertOne(any(Document.class));
+        assertThrows(NamespaceAlreadyExistsException.class, () ->
+                mongoNamespaceStore.createNamespace(namespace, "desc"));
     }
 
     private interface DocumentFindIterable extends FindIterable<Document> {

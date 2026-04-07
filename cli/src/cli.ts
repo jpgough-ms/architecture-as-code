@@ -1,12 +1,10 @@
-import { CALM_META_SCHEMA_DIRECTORY, DocifyMode, initLogger, runGenerate, SchemaDirectory, TemplateProcessingMode } from '@finos/calm-shared';
+import { CALM_META_SCHEMA_DIRECTORY, DocifyMode, initLogger, runGenerate, SchemaDirectory, TemplateProcessingMode, CalmChoice, buildDocumentLoader, DocumentLoader, DocumentLoaderOptions } from '@finos/calm-shared';
 import { Option, Command } from 'commander';
 import { version } from '../package.json';
 import { promptUserForOptions } from './command-helpers/generate-options';
-import { CalmChoice } from '@finos/calm-shared/dist/commands/generate/components/options';
-import { buildDocumentLoader, DocumentLoader, DocumentLoaderOptions } from '@finos/calm-shared/dist/document-loader/document-loader';
-import { loadCliConfig } from './cli-config';
+import * as cliConfig from './cli-config';
 import path from 'path';
-import inquirer from 'inquirer';
+import { select } from '@inquirer/prompts';
 
 // Shared options used across multiple commands
 const ARCHITECTURE_OPTION = '-a, --architecture <file>';
@@ -22,9 +20,6 @@ const CALMHUB_URL_OPTION = '-c, --calm-hub-url <url>';
 // Validate command options
 const FORMAT_OPTION = '-f, --format <format>';
 const STRICT_OPTION = '--strict';
-
-// Server command options
-const PORT_OPTION = '--port <port>';
 
 // Template and Docify command options
 const BUNDLE_OPTION = '-b, --bundle <path>';
@@ -108,22 +103,6 @@ Validation requires:
         });
 
     program
-        .command('server')
-        .description('Start a HTTP server to proxy CLI commands. (experimental)')
-        .option(PORT_OPTION, 'Port to run the server on', '3000')
-        .requiredOption(SCHEMAS_OPTION, 'Path to the directory containing the meta schemas to use.')
-        .option(VERBOSE_OPTION, 'Enable verbose logging.', false)
-        .option(CALMHUB_URL_OPTION, 'URL to CALMHub instance')
-        .action(async (options) => {
-            const { startServer } = await import('./server/cli-server');
-            const debug = !!options.verbose;
-            const docLoaderOpts = await parseDocumentLoaderConfig(options);
-            const docLoader = buildDocumentLoader(docLoaderOpts);
-            const schemaDirectory = await buildSchemaDirectory(docLoader, debug);
-            startServer(options.port, schemaDirectory, debug);
-        });
-
-    program
         .command('template')
         .description('Generate files from a CALM model using a template bundle, a single file, or a directory of templates')
         .requiredOption(ARCHITECTURE_OPTION, 'Path to the CALM architecture JSON file')
@@ -185,6 +164,7 @@ Validation requires:
         .option(TEMPLATE_DIR_OPTION, 'Path to a directory of .hbs/.md templates')
         .option(URL_MAPPING_OPTION, 'Path to mapping file which maps URLs to local paths')
         .option('--scaffold', 'Copy template files without processing (for customization/live docify)', false)
+        .addOption(new Option('--ants').default(false).hideHelp())
         .option(VERBOSE_OPTION, 'Enable verbose logging.', false)
         .action(async (options) => {
             const { Docifier } = await import('@finos/calm-shared');
@@ -200,11 +180,18 @@ Validation requires:
                 process.exit(1);
             }
 
+            if (options.ants && flagsUsed.length > 0) {
+                console.error('❌ --ants cannot be combined with --template or --template-dir');
+                process.exit(1);
+            }
+
             let docifyMode: DocifyMode = 'WEBSITE';
             let templateProcessingMode: TemplateProcessingMode = 'bundle';
             let templatePath: string | undefined = undefined;
 
-            if (options.template) {
+            if (options.ants) {
+                docifyMode = 'ANTS';
+            } else if (options.template) {
                 docifyMode = 'USER_PROVIDED';
                 templateProcessingMode = 'template';
                 templatePath = options.template;
@@ -242,13 +229,10 @@ Validation requires:
             const providers = AI_PROVIDER_CHOICES;
             let selectedProvider: string = options.provider;
             if (!selectedProvider) {
-                const answer = await inquirer.prompt({
-                    type: 'list',
-                    name: 'provider',
+                selectedProvider = await select({
                     message: 'Select an AI provider:',
-                    choices: providers.map((p) => ({ name: p, value: p })),
+                    choices: providers.map((p: string) => ({ name: p, value: p })),
                 });
-                selectedProvider = answer.provider;
             }
             console.log(`Selected AI provider: ${selectedProvider}`);
 
@@ -261,6 +245,7 @@ interface ParseDocumentLoaderOptions {
     verbose?: boolean;
     calmHubUrl?: string;
     schemaDirectory?: string;
+    allowedRemoteHosts?: string[];
 }
 
 export async function parseDocumentLoaderConfig(
@@ -268,19 +253,24 @@ export async function parseDocumentLoaderConfig(
     urlToLocalMap?: Map<string, string>,
     basePath?: string
 ): Promise<DocumentLoaderOptions> {
-    const logger = initLogger(options.verbose, 'calm-cli');
+    const logger = initLogger(options.verbose ?? false, 'calm-cli');
     const docLoaderOpts: DocumentLoaderOptions = {
         calmHubUrl: options.calmHubUrl,
         schemaDirectoryPath: options.schemaDirectory,
         urlToLocalMap: urlToLocalMap,
         basePath: basePath,
+        allowedRemoteHosts: options.allowedRemoteHosts,
         debug: !!options.verbose
     };
 
-    const userConfig = await loadCliConfig();
+    const userConfig = await cliConfig.loadCliConfig();
     if (userConfig && userConfig.calmHubUrl && !options.calmHubUrl) {
         logger.info('Using CALMHub URL from config file: ' + userConfig.calmHubUrl);
         docLoaderOpts.calmHubUrl = userConfig.calmHubUrl;
+    }
+    if (userConfig && userConfig.allowedRemoteHosts && !options.allowedRemoteHosts) {
+        logger.info('Using allowed remote hosts from config file');
+        docLoaderOpts.allowedRemoteHosts = userConfig.allowedRemoteHosts;
     }
     return docLoaderOpts;
 }

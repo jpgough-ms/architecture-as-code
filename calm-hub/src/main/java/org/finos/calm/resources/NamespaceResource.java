@@ -13,6 +13,8 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.finos.calm.domain.NamespaceRequest;
 import org.finos.calm.domain.ValueWrapper;
+import org.finos.calm.domain.exception.NamespaceAlreadyExistsException;
+import org.finos.calm.domain.namespaces.NamespaceInfo;
 import org.finos.calm.security.CalmHubScopes;
 import org.finos.calm.security.PermittedScopes;
 import org.finos.calm.store.NamespaceStore;
@@ -37,7 +39,7 @@ public class NamespaceResource {
     )
     @PermittedScopes({CalmHubScopes.ARCHITECTURES_ALL,
             CalmHubScopes.ARCHITECTURES_READ, CalmHubScopes.ADRS_ALL, CalmHubScopes.ADRS_READ})
-    public ValueWrapper<String> namespaces() {
+    public ValueWrapper<NamespaceInfo> namespaces() {
         return new ValueWrapper<>(namespaceStore.getNamespaces());
     }
 
@@ -51,16 +53,18 @@ public class NamespaceResource {
     @PermittedScopes({CalmHubScopes.ARCHITECTURES_ALL})
     public Response createNamespace(@Valid @NotNull(message = "Request must not be null") NamespaceRequest request) throws URISyntaxException {
 
-        String namespace = request.getNamespace().trim();
+        String name = request.getName().trim();
+        String description = request.getDescription().trim();
 
-        if (namespaceStore.namespaceExists(namespace)) {
+        try {
+            namespaceStore.createNamespace(name, description);
+        } catch (NamespaceAlreadyExistsException e) {
             return Response.status(Response.Status.CONFLICT)
                     .entity("{\"error\":\"Namespace already exists\"}")
                     .build();
         }
 
-        namespaceStore.createNamespace(namespace);
-        return Response.created(new URI("/calm/namespaces/" + namespace)).build();
+        return Response.created(new URI("/calm/namespaces/" + name)).build();
     }
 
 }

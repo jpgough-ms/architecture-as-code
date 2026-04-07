@@ -5,6 +5,8 @@ import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.collection.DocumentCursor;
 import org.dizitart.no2.collection.NitriteCollection;
 import org.dizitart.no2.filters.Filter;
+import org.finos.calm.domain.exception.NamespaceAlreadyExistsException;
+import org.finos.calm.domain.namespaces.NamespaceInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -41,8 +44,8 @@ public class TestNitriteNamespaceStoreShould {
     @Test
     public void testGetNamespaces_whenNamespacesExist_returnsNamespacesList() {
         // Arrange
-        Document doc1 = Document.createDocument("namespace", "finos");
-        Document doc2 = Document.createDocument("namespace", "workshop");
+        Document doc1 = Document.createDocument("name", "finos").put("description","d1");
+        Document doc2 = Document.createDocument("name", "workshop").put("description","d2");
         List<Document> documents = Arrays.asList(doc1, doc2);
         
         DocumentCursor cursor = mock(DocumentCursor.class);
@@ -50,11 +53,14 @@ public class TestNitriteNamespaceStoreShould {
         when(mockCollection.find()).thenReturn(cursor);
         
         // Act
-        List<String> result = namespaceStore.getNamespaces();
+        List<NamespaceInfo> result = namespaceStore.getNamespaces();
         
         // Assert
         assertThat(result, hasSize(2));
-        assertThat(result, hasItems("finos", "workshop"));
+        assertThat(result.get(0).getName(), is("finos"));
+        assertThat(result.get(1).getName(), is("workshop"));
+        assertThat(result.get(0).getDescription(), is("d1"));
+        assertThat(result.get(1).getDescription(), is("d2"));
     }
     
     @Test
@@ -67,7 +73,7 @@ public class TestNitriteNamespaceStoreShould {
         when(mockCollection.find()).thenReturn(cursor);
         
         // Act
-        List<String> result = namespaceStore.getNamespaces();
+        List<NamespaceInfo> result = namespaceStore.getNamespaces();
         
         // Assert
         assertThat(result, is(empty()));
@@ -76,7 +82,7 @@ public class TestNitriteNamespaceStoreShould {
     @Test
     public void testNamespaceExists_whenNamespaceExists_returnsTrue() {
         // Arrange
-        Document doc = Document.createDocument("namespace", "finos");
+        Document doc = Document.createDocument("name", "finos");
         
         DocumentCursor cursor = mock(DocumentCursor.class);
         when(cursor.firstOrNull()).thenReturn(doc);
@@ -104,31 +110,31 @@ public class TestNitriteNamespaceStoreShould {
     }
     
     @Test
-    public void testCreateNamespace_whenNamespaceDoesNotExist_createsNamespace() {
+    public void testCreateNamespace_whenNamespaceDoesNotExist_createsNamespace() throws NamespaceAlreadyExistsException {
         // Arrange
         DocumentCursor cursor = mock(DocumentCursor.class);
         when(cursor.firstOrNull()).thenReturn(null);
         when(mockCollection.find(any(Filter.class))).thenReturn(cursor);
         
         // Act
-        namespaceStore.createNamespace("new-namespace");
+        namespaceStore.createNamespace("new-namespace","desc");
         
         // Assert
         verify(mockCollection).insert(any(Document.class));
     }
     
     @Test
-    public void testCreateNamespace_whenNamespaceAlreadyExists_doesNotCreateDuplicate() {
+    public void testCreateNamespace_whenNamespaceAlreadyExists_throwsException() {
         // Arrange
-        Document existingDoc = Document.createDocument("namespace", "existing-namespace");
+        Document existingDoc = Document.createDocument("name", "existing-namespace");
         DocumentCursor cursor = mock(DocumentCursor.class);
         when(cursor.firstOrNull()).thenReturn(existingDoc);
         when(mockCollection.find(any(Filter.class))).thenReturn(cursor);
         
-        // Act
-        namespaceStore.createNamespace("existing-namespace");
+        // Act & Assert
+        assertThrows(NamespaceAlreadyExistsException.class, () ->
+                namespaceStore.createNamespace("existing-namespace","desc"));
         
-        // Assert
         verify(mockCollection, never()).insert(any(Document.class));
     }
 }
