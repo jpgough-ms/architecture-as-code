@@ -227,14 +227,44 @@ fi
 # Make sure it's executable
 chmod +x demo.sh
 
-# Run scenario 3
-./demo.sh
+# Run scenario 3 with retry handling (max 3 attempts)
+SCENARIO3_ATTEMPTS=0
+SCENARIO3_MAX=3
+while [ $SCENARIO3_ATTEMPTS -lt $SCENARIO3_MAX ]; do
+    SCENARIO3_ATTEMPTS=$((SCENARIO3_ATTEMPTS + 1))
+    ./demo.sh
 
-# Check if scenario 3 completed successfully
-if [ $? -ne 0 ]; then
-    error "Scenario 3 failed."
-    exit 1
-fi
+    if [ $? -eq 0 ]; then
+        break
+    fi
+
+    if [ $SCENARIO3_ATTEMPTS -ge $SCENARIO3_MAX ]; then
+        error "Scenario 3 failed after $SCENARIO3_MAX attempts. Stopping demo flow."
+        exit 1
+    fi
+
+    SCENARIO3_REMAINING=$((SCENARIO3_MAX - SCENARIO3_ATTEMPTS))
+    error "Scenario 3 did not complete successfully (attempt $SCENARIO3_ATTEMPTS/$SCENARIO3_MAX)."
+    echo ""
+    echo "Choose an option:"
+    echo "  [1] Retry Scenario 3 ($SCENARIO3_REMAINING attempt(s) remaining)"
+    echo "  [2] Quit demo flow"
+    read -p "Selection (1/2) [1]: " SCENARIO3_ACTION
+    SCENARIO3_ACTION=${SCENARIO3_ACTION:-1}
+
+    case "$SCENARIO3_ACTION" in
+        1)
+            info "Retrying Scenario 3..."
+            ;;
+        2)
+            error "Demo flow stopped by user during Scenario 3."
+            exit 1
+            ;;
+        *)
+            info "Invalid selection; retrying Scenario 3 by default..."
+            ;;
+    esac
+done
 
 cd ..
 

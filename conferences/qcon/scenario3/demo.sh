@@ -56,7 +56,97 @@ section() {
 }
 
 # Ensure we're in the scenario3 directory
-cd "$(dirname "$0")"
+SCENARIO_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCENARIO_DIR"
+
+CALM_HUB_DEPLOY_DIR="$SCENARIO_DIR/../../../calm-hub/deploy-qcon"
+
+is_calmhub_up() {
+    curl -sf "${CALM_HUB_URL}/q/swagger-ui/" > /dev/null 2>&1
+}
+
+start_calmhub_in_background() {
+    if [ ! -f "$CALM_HUB_DEPLOY_DIR/docker-compose.yml" ]; then
+        error_msg "❌ Could not find calm-hub deploy directory: $CALM_HUB_DEPLOY_DIR"
+        return 1
+    fi
+
+    info "Starting CALM Hub in background from $CALM_HUB_DEPLOY_DIR ..."
+
+    if command -v docker-compose > /dev/null 2>&1; then
+        (cd "$CALM_HUB_DEPLOY_DIR" && docker-compose up -d)
+    elif command -v docker > /dev/null 2>&1 && docker compose version > /dev/null 2>&1; then
+        (cd "$CALM_HUB_DEPLOY_DIR" && docker compose up -d)
+    else
+        error_msg "❌ Neither docker-compose nor docker compose is available"
+        return 1
+    fi
+}
+
+wait_for_calmhub() {
+    for attempt in {1..20}; do
+        if is_calmhub_up; then
+            success "✅ CALM Hub is now accessible at ${CALM_HUB_URL}"
+            return 0
+        fi
+
+        if [ "$VERBOSE_MODE" == "true" ]; then
+            info "Waiting for CALM Hub to start... (${attempt}/20)"
+        fi
+        sleep 2
+    done
+
+    return 1
+}
+
+ensure_calmhub() {
+    info "Checking if CALM Hub is running..."
+    if is_calmhub_up; then
+        success "✅ CALM Hub is accessible at ${CALM_HUB_URL}"
+        return 0
+    fi
+
+    local CALMHUB_ATTEMPTS=0
+    local CALMHUB_MAX=3
+    while [ $CALMHUB_ATTEMPTS -lt $CALMHUB_MAX ]; do
+        CALMHUB_ATTEMPTS=$((CALMHUB_ATTEMPTS + 1))
+        local CALMHUB_REMAINING=$((CALMHUB_MAX - CALMHUB_ATTEMPTS))
+
+        error_msg "❌ CALM Hub is not accessible at ${CALM_HUB_URL} (attempt $CALMHUB_ATTEMPTS/$CALMHUB_MAX)"
+        echo ""
+        echo "Choose an option:"
+        echo "  [1] Start CALM Hub in background"
+        echo "  [2] Retry connectivity check"
+        echo "  [3] Quit scenario"
+        read -p "Selection (1/2/3) [1]: " CALM_HUB_ACTION
+        CALM_HUB_ACTION=${CALM_HUB_ACTION:-1}
+
+        case "$CALM_HUB_ACTION" in
+            1)
+                if start_calmhub_in_background && wait_for_calmhub; then
+                    return 0
+                fi
+                error_msg "❌ CALM Hub is still not reachable after startup attempt"
+                ;;
+            2)
+                if is_calmhub_up; then
+                    success "✅ CALM Hub is accessible at ${CALM_HUB_URL}"
+                    return 0
+                fi
+                ;;
+            3)
+                return 1
+                ;;
+            *)
+                error_msg "Invalid selection. Please choose 1, 2, or 3."
+                CALMHUB_ATTEMPTS=$((CALMHUB_ATTEMPTS - 1))
+                ;;
+        esac
+    done
+
+    error_msg "❌ CALM Hub not reachable after $CALMHUB_MAX attempts. Giving up."
+    return 1
+}
 
 # Clean up any previous generated files
 if [ -d "generated-deployer" ]; then
@@ -69,15 +159,8 @@ fi
 
 stage "Prerequisite: CALM Hub Connectivity"
 
-info "Checking if CALM Hub is running..."
-if curl -sf "${CALM_HUB_URL}/q/swagger-ui/" > /dev/null 2>&1; then
-    success "✅ CALM Hub is accessible at ${CALM_HUB_URL}"
-else
-    error_msg "❌ CALM Hub is not accessible at ${CALM_HUB_URL}"
-    echo ""
-    echo "Please start CALM Hub:"
-    echo "  cd calm-hub/deploy-qcon"
-    echo "  docker-compose up"
+if ! ensure_calmhub; then
+    error_msg "❌ Exiting scenario: CALM Hub is required for Scenario 3"
     exit 1
 fi
 echo ""
@@ -102,11 +185,11 @@ fi
 heading "Template Bundle: bundle"
 echo ""
 
-info "Running: calm template --architecture calm/qcon.architecture.json --bundle bundle --output generated-deployer"
+info "Running: cd calm && calm template --architecture qcon.architecture.json --bundle ../bundle --output ../generated-deployer"
 echo ""
 
 # Run calm template silently, only show errors if it fails
-if calm template --architecture calm/qcon.architecture.json --bundle bundle --output generated-deployer > /dev/null 2>&1; then
+if (cd calm && calm template --architecture qcon.architecture.json --bundle ../bundle --output ../generated-deployer > /dev/null 2>&1); then
     success "✅ Deployer generated in: generated-deployer/"
 else
     error_msg "❌ Failed to generate deployer"

@@ -5,6 +5,9 @@ export BAT_THEME="zenburn"
 # Check if verbose mode is set (from parent script)
 VERBOSE_MODE=${VERBOSE_MODE:-"true"}
 
+# Ensure we're in the scenario1 directory
+cd "$(dirname "$0")"
+
 # ANSI color codes
 YELLOW='\033[0;33m'
 YELLOW_BOLD='\033[1;33m'
@@ -186,6 +189,8 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     minikube image load jpgough/trades-mcp-server:latest --profile secure
     command "minikube image load jpgough/trades-rest-server:latest --profile secure"
     minikube image load jpgough/trades-rest-server:latest --profile secure
+    command "minikube image load jpgough/trades-a2a-server:latest --profile secure"
+    minikube image load jpgough/trades-a2a-server:latest --profile secure
     echo ""
     success "✓ Images ready in Minikube's daemon"
 else
@@ -204,12 +209,13 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Using CALM to transform architecture definitions into Kubernetes manifests..."
     info "Why: Architecture as Code turns CALM JSON into deployable infrastructure"
 fi
-command "calm template --architecture calm/trades-api-and-mcp.architecture.json --bundle bundle --output infrastructure"
-calm template \
-  --architecture calm/trades-api-and-mcp.architecture.json \
-  --output infrastructure \
-  --bundle bundle \
-  --clear-output-directory
+command "cd calm && calm template --architecture trades-api-and-mcp.architecture.json --bundle ../bundle --output ../infrastructure"
+cd calm && calm template \
+    --architecture trades-api-and-mcp.architecture.json \
+    --output ../infrastructure \
+    --bundle ../bundle \
+    --clear-output-directory
+cd ..
 echo ""
 success "✓ Infrastructure generated"
 echo "Press Enter to continue..."
@@ -299,7 +305,7 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Why: Services run as ClusterIP and need port-forward for local access"
 fi
 echo ""
-echo -e "${YELLOW_BOLD}Run this in a separate terminal:${NC}"
+echo -e "${YELLOW_BOLD}Run this in a separate terminal :${NC}"
 echo -e "${GREEN}  ./port-forward.sh${NC}"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then

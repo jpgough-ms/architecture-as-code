@@ -178,12 +178,13 @@ info "Team's architecture file is UNCHANGED"
 info "Only the bundle parameter changes in the calm template command"
 echo ""
 
-run_command "calm template --architecture calm/trades-api-and-mcp-conforming.architecture.json --bundle bundle-v2 --output generated"
-calm template \
-  --architecture calm/trades-api-and-mcp-conforming.architecture.json \
-  --output generated \
-  --bundle bundle-v2 \
-  --clear-output-directory > /dev/null 2>&1
+run_command "cd calm && calm template --architecture trades-api-and-mcp-conforming.architecture.json --bundle ../bundle-v2 --output ../generated"
+cd calm && calm template \
+    --architecture trades-api-and-mcp-conforming.architecture.json \
+    --output ../generated \
+    --bundle ../bundle-v2 \
+    --clear-output-directory > /dev/null 2>&1
+cd ..
 echo ""
 
 success "✅ Infrastructure regenerated with bundle v2"
