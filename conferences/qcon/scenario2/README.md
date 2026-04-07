@@ -19,29 +19,27 @@ The architecture includes:
 
 ## 1. Run the Demo
 
-The `demo.sh` script will:
-1. Verify existing deployment (requires Scenario 1 to be running)
-2. Display the MCP Guardrail control configuration and architecture linkage
-3. Generate Kubernetes manifests from the CALM architecture using the `calm` CLI
-4. Extract denied symbols from the MCP Guardrail control and create ConfigMap
-5. Deploy/update the `trades-api` and `trades-mcp-server` to the cluster
-6. Apply network policies and ConfigMap
-7. Verify deployment and show the guardrail is active
+**Prerequisite**: Scenario 1 must be running and port-forwarding must be active.
 
-To run the demo, execute the script from this directory:
+The `demo.sh` script will:
+1. Verify the existing deployment (requires Scenario 1 to be running)
+2. Display the MCP Guardrail control configuration and its linkage in the architecture
+3. Generate Kubernetes manifests from the CALM architecture using `calm template`
+4. Show the generated `denied-symbols-configmap.yaml` produced from the control
+5. Apply the updated configuration and restart the MCP server deployment
+6. Wait for the rollout to complete and verify deployment
 
 ```bash
 ./demo.sh
 ```
 
-**Note**: This scenario expects Scenario 1 to be running. Start port-forwarding separately using:
+**Port-forwarding** from Scenario 1 must remain active in a separate terminal. If it dropped, restart it:
 
 ```bash
-cd ..
-./port-forward.sh
+cd ../scenario1 && ./port-forward.sh
 ```
 
-Services will be available at:
+Services are available at:
 - MCP Server: http://localhost:8080
 - Trades API: http://localhost:8081
 
@@ -83,7 +81,7 @@ The MCP server deployment then mounts this ConfigMap as the `DENIED_SYMBOLS` env
 
 ## 3. Connecting Claude to the MCP Server
 
-The `demo.sh` script automatically starts port-forwards at the end:
+Port-forwarding from `scenario1/port-forward.sh` must be active:
 - **MCP Server**: http://localhost:8080
 - **Trades API**: http://localhost:8081
 

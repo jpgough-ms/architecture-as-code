@@ -1,159 +1,86 @@
-# Scenario 3: CALM Governance and Architecture Controls
+# Scenario 3: Gating Deployments
 
-This scenario demonstrates **two-level governance enforcement** using CALM architecture controls:
+Demonstrates **governance gates** that block deployments unless the architecture uses an approved pattern registered in CALM Hub and conforms to that pattern's control requirements.
 
-1. **Runtime Infrastructure Validation** - Checking actual cluster state before deployment
-2. **Design-Time Pattern Validation** - Ensuring architecture conforms to required controls
+## Prerequisites
 
-## Control Types
+- Scenario 1 cluster (`minikube --profile secure`) must be running
+- **CALM Hub** must be reachable at `http://localhost:8085`
 
-This scenario enforces three types of CALM controls:
+Start CALM Hub if needed:
 
-### 1. Micro-Segmentation Control (security-001)
-
-**Applied to**: Kubernetes cluster node  
-**Purpose**: Ensures the cluster supports network policy enforcement
-
-```json
-{
-  "permit-ingress": true,   // Allow external traffic to services
-  "permit-egress": false    // Block inter-service traffic by default
-}
+```bash
+cd calm-hub/deploy-qcon && docker-compose up -d
 ```
 
-This control requires the cluster to have a CNI that supports network policies (e.g., Calico).
+The demo will detect if CALM Hub is not running and offer to start it automatically (up to 3 attempts).
 
-### 2. Permitted Connection Control (security-002)
-
-**Applied to**: All `connects` relationships  
-**Purpose**: Explicitly authorizes each connection between services
-
-```json
-{
-  "reason": "Business justification for this connection",
-  "protocol": "HTTP"  // HTTP, HTTPS, JDBC, gRPC, etc.
-}
-```
-
-This implements "zero-trust networking" where all connections must be declared and justified.
-
-### 3. MCP Guardrail Control (mcp-001)
-
-**Applied to**: MCP Server node  
-**Purpose**: Restricts access to specific trading symbols
-
-```json
-{
-  "denied-symbols": ["VOD", "GME", "AMC"],
-  "enforcement-point": "mcp-server"
-}
-```
-
-This prevents the MCP server from querying high-risk or restricted securities.
-
-## Files
-
-### Control Definitions
-
-- `calm/controls/micro-segmentation.requirement.json` - Schema for cluster network policy requirement
-- `calm/controls/micro-segmentation.config.json` - Configuration (deny-all with ingress)
-- `calm/controls/permitted-connection.requirement.json` - Schema for connection authorization
-- `calm/controls/permitted-connection-http.config.json` - HTTP connection authorization
-- `calm/controls/mcp-guardrail.requirement.json` - Schema for data access restrictions
-- `calm/controls/mcp-guardrail.config.json` - Denied trading symbols
-
-### Pattern and Architectures
-
-- `calm/trades-api-and-mcp.pattern.json` - Pattern enforcing all three control types
-- `calm/trades-api-and-mcp-conforming.architecture.json` - ✅ Architecture with all controls (passes validation)
-- `calm/trades-api-and-mcp-non-conforming.architecture.json` - ❌ Architecture missing controls (fails validation)
-
-### Governance Infrastructure
-
-- `bundle/governance-transformer.js` - Validates runtime cluster state and architecture controls
-- `bundle/deployer.hbs` - Generates deployment validation script
-- `bundle/index.json` - Bundle configuration
-
-## Running the Demo
+## Run the Demo
 
 ```bash
 ./demo.sh
 ```
 
-The demo demonstrates:
+## What the Demo Shows
 
-1. **Runtime Governance - Insecure Cluster** ❌
-   - Starts default minikube cluster (no Calico)
-   - Runs governance checks
-   - Deployment is **blocked** due to missing network policy support
+### Step 1 — Generate Deployer
 
-2. **Runtime Governance - Secure Cluster** ✅
-   - Starts secure minikube cluster with Calico CNI
-   - Runs governance checks
-   - All infrastructure requirements are **met**
+Uses `calm template` with the governance bundle to generate a `generated-deployer/deployer.sh` — a custom deployment script that embeds governance logic for this specific architecture.
 
-3. **Pattern Validation - Non-Conforming** ❌
-   - Validates architecture missing permitted-connection control
-   - Validation **fails** as expected
+### Gate 1 — Pattern Registration Check ❌ then ✅
 
-4. **Pattern Validation - Conforming** ✅
-   - Validates architecture with all required controls
-   - Validation **passes**
+Checks CALM Hub (`http://localhost:8085`) to verify the pattern referenced by the architecture is registered in the `qcon` namespace.
 
-## How It Works
+- First tests `qcon.architecture.json` — its pattern is **not registered** → gate rejects
+- Then tests `trades-api-and-mcp-conforming.architecture.json` — its pattern **is registered** → gate passes
 
-### Runtime Validation
+### Gate 2 — Architecture Control Validation ❌ then ✅
 
-The governance transformer (`governance-transformer.js`):
+Runs `calm validate` to confirm the architecture conforms to pattern requirements (all controls declared).
 
-1. Reads the architecture and extracts cluster requirements
-2. Executes `minikube profile list` to check actual cluster state
-3. Validates:
-   - Cluster type is 'minikube'
-   - Cluster profile is 'secure'
-   - Cluster is running
-   - Micro-segmentation control is present
-   - All connections have permitted-connection controls
-   - MCP Guardrail is configured
-4. Returns validation results and `deploymentReady` flag
+- First tests `trades-api-and-mcp-non-conforming.architecture.json` — missing `permitted-connection` controls → validation **fails**
+- Then tests `trades-api-and-mcp-conforming.architecture.json` — all controls present → validation **passes**
 
-The deployer template (`deployer.hbs`):
+## Key Files
 
-1. Receives governance validation results
-2. Generates `deployer.sh` script with:
-   - ✅ Success message if all checks pass (exit 0)
-   - ❌ Failure message with remediation steps (exit 1)
+### Architectures
 
-### Design-Time Validation
+| File | Status |
+|------|--------|
+| `calm/qcon.architecture.json` | ❌ Uses unregistered pattern (Gate 1 fail) |
+| `calm/trades-api-and-mcp-non-conforming.architecture.json` | ❌ Missing controls (Gate 2 fail) |
+| `calm/trades-api-and-mcp-conforming.architecture.json` | ✅ Registered pattern + all controls present |
 
-The pattern validation (`calm validate`):
+### Controls
 
-1. Compares architecture against pattern schema
-2. Checks that required controls are present:
-   - k8s-cluster **MUST** have micro-segmentation control
-   - All connects relationships **MUST** have permitted-connection controls
-   - mcp-server **MUST** have mcp-guardrail control
-3. Reports validation errors if controls are missing
+| File | Purpose |
+|------|---------|
+| `calm/controls/micro-segmentation.*.json` | Cluster network policy requirement |
+| `calm/controls/permitted-connection.*.json` | Explicit connection authorization |
+| `calm/controls/mcp-guardrail.*.json` | Restricted trading symbols |
+
+### Bundle
+
+| File | Purpose |
+|------|---------|
+| `bundle/governance-transformer.js` | Generates deployer with governance validation |
+| `bundle/deployer.hbs` | Deployer script template |
+| `bundle/index.json` | Bundle configuration |
 
 ## Key Takeaways
 
-- **Shift-Left Governance**: Controls are enforced **before** deployment, not after
-- **Two-Level Validation**: Both infrastructure state (runtime) and architecture design (pattern) are validated
-- **Automated Compliance**: Governance checks are automated through transformers and validators
-- **Clear Remediation**: Failures provide specific instructions on how to fix issues
-- **Architecture as Code**: Controls are declared in architecture YAML/JSON, version-controlled and auditable
+- **Shift-Left Governance**: Controls are checked before deployment, not after
+- **Central Registry**: CALM Hub enforces that only pre-approved patterns can be deployed
+- **Pattern Conformance**: Architecture must satisfy all required controls defined in the pattern
+- **Clear Remediation**: Each gate failure shows exactly what is missing and how to fix it
 
 ## Cleanup
 
 ```bash
-# Stop secure cluster
-minikube stop --profile=secure
+# Stop CALM Hub
+cd calm-hub/deploy-qcon && docker-compose down
 
-# Delete clusters
-minikube delete --profile=default
-minikube delete --profile=secure
-
-# Remove generated files
-rm -f deployer.sh
+# Remove generated deployer
+rm -rf generated-deployer/
 ```
 
