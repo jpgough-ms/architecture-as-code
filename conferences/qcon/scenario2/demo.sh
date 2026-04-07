@@ -3,6 +3,9 @@
 # Check if verbose mode is set (from parent script)
 VERBOSE_MODE=${VERBOSE_MODE:-"true"}
 
+# Ensure we're in the scenario2 directory
+cd "$(dirname "$0")"
+
 # ANSI color codes
 YELLOW='\033[0;33m'
 YELLOW_BOLD='\033[1;33m'
@@ -104,12 +107,13 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Using CALM to extract denied symbols from control configuration..."
     info "Why: CALM transforms declarative controls into executable artifacts"
 fi
-command "calm template --architecture calm/trades-api-and-mcp.architecture.json --bundle bundle --output infrastructure"
-calm template \
-  --architecture calm/trades-api-and-mcp.architecture.json \
-  --output infrastructure \
-  --bundle bundle \
-  --clear-output-directory 2>&1 | grep -v "Failed to dereference" | grep -v "Unable to resolve reference" || true
+command "cd calm && calm template --architecture trades-api-and-mcp.architecture.json --bundle ../bundle --output ../infrastructure"
+cd calm && calm template \
+    --architecture trades-api-and-mcp.architecture.json \
+    --output ../infrastructure \
+    --bundle ../bundle \
+    --clear-output-directory
+cd ..
 echo ""
 success "✓ Infrastructure generated"
 echo ""
@@ -194,7 +198,10 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Why: Pod restarts may require re-establishing port-forward connections"
 fi
 echo ""
-info "Checking port-forwards from ./port-forward.sh..."
+info "Checking existing port-forwards from Scenario 1..."
+echo ""
+echo -e "${YELLOW}If needed, restart port-forward from scenario1:${NC}"
+echo -e "${CYAN}  cd ../scenario1 && ./port-forward.sh${NC}"
 echo ""
 
 # Verify port-forwards with 2 attempts
@@ -223,13 +230,13 @@ for attempt in 1 2; do
         success "✓ All port-forwards active"
         break
     elif [ $attempt -eq 1 ]; then
-        echo -e "${YELLOW}REMINDER: You may need to restart port-forward.sh in a separate terminal:${NC}"
-        echo -e "  ${CYAN}./port-forward.sh${NC}"
+        echo -e "${YELLOW}REMINDER: You may need to restart Scenario 1 port-forward in a separate terminal:${NC}"
+        echo -e "  ${CYAN}cd ../scenario1 && ./port-forward.sh${NC}"
         echo ""
         echo "Press Enter to retry verification..."
         read
     else
-        echo -e "${RED}✗ Still cannot reach services after 2 attempts. Please verify ./port-forward.sh is running.${NC}"
+        echo -e "${RED}✗ Still cannot reach services after 2 attempts. Please verify scenario1/port-forward.sh is running.${NC}"
         echo "Press Enter to continue anyway..."
         read
     fi

@@ -227,14 +227,35 @@ fi
 # Make sure it's executable
 chmod +x demo.sh
 
-# Run scenario 3
-./demo.sh
+# Run scenario 3 with retry handling
+while true; do
+    ./demo.sh
 
-# Check if scenario 3 completed successfully
-if [ $? -ne 0 ]; then
-    error "Scenario 3 failed."
-    exit 1
-fi
+    if [ $? -eq 0 ]; then
+        break
+    fi
+
+    error "Scenario 3 did not complete successfully."
+    echo ""
+    echo "Choose an option:"
+    echo "  [1] Retry Scenario 3"
+    echo "  [2] Quit demo flow"
+    read -p "Selection (1/2) [1]: " SCENARIO3_ACTION
+    SCENARIO3_ACTION=${SCENARIO3_ACTION:-1}
+
+    case "$SCENARIO3_ACTION" in
+        1)
+            info "Retrying Scenario 3..."
+            ;;
+        2)
+            error "Demo flow stopped by user during Scenario 3."
+            exit 1
+            ;;
+        *)
+            info "Invalid selection; retrying Scenario 3 by default..."
+            ;;
+    esac
+done
 
 cd ..
 
