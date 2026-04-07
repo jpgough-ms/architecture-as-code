@@ -1,95 +1,49 @@
-# Kubernetes Deployment Guide
+# Scenario 5: Rapid Platform Adoption — Agent-to-Agent (A2A)
 
-## Prerequisites
+Demonstrates the **Agent-to-Agent (A2A) protocol**: an autonomous rebalancer agent that observes portfolio state, makes decisions, and corrects imbalances without human intervention.
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
-- [minikube](https://minikube.sigs.k8s.io/docs/start/) installed
-- [kubectl](https://kubernetes.io/docs/tasks/tools/) installed
-
-## 1. Start Minikube
+## Run the Demo
 
 ```bash
-minikube start
+./demo.sh
 ```
 
-Verify the cluster is running:
+The script handles the full lifecycle — generation, deployment, port-forwarding, UI startup, and agent coordination.
+
+## What the Demo Shows
+
+1. **Verifies** the Minikube cluster (reuses the `secure` profile from Scenario 1)
+2. **Generates** Kubernetes manifests from the CALM architecture using `calm template`
+3. **Deploys** all services and waits for pods to be ready
+4. **Starts port-forwarding** for the A2A server — required for agent communication
+5. **Launches the QCon Agent UI** (`jpgough/qcon-agent-ui`) on http://localhost:3000
+6. **Floods** the portfolio with trades (`run-flood.sh`)
+7. **Starts the rebalancer agent** (`run-rebalancer.sh`) — watch it detect and correct imbalances in the OBSERVE → DECIDE → ACT loop
+
+## Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| MCP Server | :8080 | LLM-facing tool interface |
+| Trades API | :8081 | REST API for trade CRUD (debug) |
+| A2A Server | :9103 | Agent-to-agent coordination |
+| Agent UI | :3000 | Web UI for exploring tools |
+
+## Port Forwarding
+
+The A2A port-forward is **required** and started by the demo automatically. To run manually:
 
 ```bash
-kubectl cluster-info
+# Required — A2A server:
+./port-forward-a2a.sh
+
+# Optional — Trades API debug access:
+kubectl port-forward svc/trades 8081:80 --namespace default
 ```
 
-## 2. Load Docker Images into Minikube
+## Agent UI
 
-Since the deployments use `imagePullPolicy: Never`, images must be loaded manually into minikube's container runtime.
-
-### Build the images (from the repo root)
-
-```bash
-docker build -f rest/src/main/docker/Dockerfile -t jpgough/trades-rest-server:latest .
-docker build -f mcp/src/main/docker/Dockerfile -t jpgough/trades-mcp-server:latest .
-docker build -f a2a/src/main/docker/Dockerfile -t jpgough/trades-a2a-server:latest .
-```
-
-### Load into minikube
-
-```bash
-minikube image load jpgough/trades-rest-server:latest
-minikube image load jpgough/trades-mcp-server:latest
-minikube image load jpgough/trades-a2a-server:latest
-```
-
-## 3. Deploy to Kubernetes
-
-```bash
-kubectl apply -k kubernetes/
-```
-
-Verify all pods are running:
-
-```bash
-kubectl get pods
-```
-
-You should see three pods:
-
-| Pod | Description |
-|-----|-------------|
-| `trades-*` | REST API (trade CRUD) |
-| `trades-mcp-server-*` | MCP server (LLM tool-use) |
-| `trades-a2a-server-*` | A2A server (agent-to-agent) |
-
-## 4. Port Forwarding
-
-The services are ClusterIP-only, so you need port-forwards to access them from your machine.
-
-### REST API (port 9090)
-
-```bash
-kubectl port-forward svc/trades 9090:80
-```
-
-- Swagger UI: http://localhost:9090/q/swagger-ui
-- Health check: http://localhost:9090/q/health
-
-### MCP Server (port 9102)
-
-```bash
-kubectl port-forward svc/trades-mcp-server 9102:80
-```
-
-### A2A Server (port 9103)
-
-```bash
-kubectl port-forward svc/trades-a2a-server 9103:80
-```
-
-- Agent Card: http://localhost:9103/.well-known/agent.json
-
-## 5. Start the QCon Agent UI
-
-The UI runs as a Docker container outside minikube. It connects to the A2A server via the port-forward above.
-
-### Run the UI
+The UI runs as a Docker container outside Minikube:
 
 ```bash
 docker run -d \
@@ -99,42 +53,17 @@ docker run -d \
   jpgough/qcon-agent-ui:latest
 ```
 
-Open http://localhost:3000 in your browser, then click **Connect**.
+Open http://localhost:3000 and click **Connect**.
 
-> **Note:** `host.docker.internal` resolves to your host machine from inside Docker on macOS and Windows. On Linux, use `--network host` and set `A2A_URL=http://localhost:9103` instead.
+> **Note:** `host.docker.internal` resolves to your host on macOS/Windows. On Linux, use `--network host` with `A2A_URL=http://localhost:9103`.
 
-### Stop the UI
+## Cleanup
 
 ```bash
+# Stop Agent UI
 docker rm -f qcon-agent-ui
+
+# Stop cluster
+minikube stop --profile secure
+minikube delete --profile secure
 ```
-
-## Quick Start (all commands)
-
-```bash
-# Start cluster
-minikube start
-
-# Build and load images
-docker build -f rest/src/main/docker/Dockerfile -t jpgough/trades-rest-server:latest .
-docker build -f mcp/src/main/docker/Dockerfile -t jpgough/trades-mcp-server:latest .
-docker build -f a2a/src/main/docker/Dockerfile -t jpgough/trades-a2a-server:latest .
-minikube image load jpgough/trades-rest-server:latest
-minikube image load jpgough/trades-mcp-server:latest
-minikube image load jpgough/trades-a2a-server:latest
-
-# Deploy
-kubectl apply -k kubernetes/
-
-# Port forwards (run each in a separate terminal)
-kubectl port-forward svc/trades 9090:80
-kubectl port-forward svc/trades-mcp-server 9102:80
-kubectl port-forward svc/trades-a2a-server 9103:80
-
-# Start UI
-docker run -d --name qcon-agent-ui -p 3000:80 \
-  -e A2A_URL=http://host.docker.internal:9103 \
-  jpgough/qcon-agent-ui:latest
-```
-
-Then open http://localhost:3000.
