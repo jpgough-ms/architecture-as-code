@@ -267,15 +267,11 @@ echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Why: The A2A server runs as ClusterIP, so we need port-forward to access it"
     info "The agents \(UI and Rebalancer\) will connect via http://host.docker.internal:9103"
-    info "Trades API calls happen through A2A inside the cluster; no separate trades port-forward is required"
 fi
 echo ""
 echo "📍 Once port-forward is running, the A2A server will be available at:"
 echo "   • http://localhost:9103"
 echo "   • Agent Card: http://localhost:9103/.well-known/agent.json"
-echo ""
-echo "Optional (debug Trades API directly):"
-echo "   • kubectl port-forward svc/trades 8081:80"
 echo ""
 echo -e "${YELLOW_BOLD}Press Enter once port-forward is running...${NC}"
 read
