@@ -106,8 +106,13 @@ ensure_calmhub() {
         return 0
     fi
 
-    while true; do
-        error_msg "❌ CALM Hub is not accessible at ${CALM_HUB_URL}"
+    local CALMHUB_ATTEMPTS=0
+    local CALMHUB_MAX=3
+    while [ $CALMHUB_ATTEMPTS -lt $CALMHUB_MAX ]; do
+        CALMHUB_ATTEMPTS=$((CALMHUB_ATTEMPTS + 1))
+        local CALMHUB_REMAINING=$((CALMHUB_MAX - CALMHUB_ATTEMPTS))
+
+        error_msg "❌ CALM Hub is not accessible at ${CALM_HUB_URL} (attempt $CALMHUB_ATTEMPTS/$CALMHUB_MAX)"
         echo ""
         echo "Choose an option:"
         echo "  [1] Start CALM Hub in background"
@@ -134,9 +139,13 @@ ensure_calmhub() {
                 ;;
             *)
                 error_msg "Invalid selection. Please choose 1, 2, or 3."
+                CALMHUB_ATTEMPTS=$((CALMHUB_ATTEMPTS - 1))
                 ;;
         esac
     done
+
+    error_msg "❌ CALM Hub not reachable after $CALMHUB_MAX attempts. Giving up."
+    return 1
 }
 
 # Clean up any previous generated files
