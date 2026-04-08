@@ -158,8 +158,8 @@ export function ControlDetailSection({ controlData }: ControlDetailSectionProps)
                 </div>
             </div>
 
-            {/* Bottom section: Configurations */}
-            <div className="flex-1 min-h-0 bg-base-100 rounded-2xl overflow-hidden flex flex-col shadow-xl">
+            {/* Bottom section: Configurations (hidden when no configs exist) */}
+            {configIds.length > 0 && <div className="flex-1 min-h-0 bg-base-100 rounded-2xl overflow-hidden flex flex-col shadow-xl">
                 {/* Configuration breadcrumb header */}
                 <div className="bg-base-200 px-6 py-2 flex items-center justify-between border-b border-base-300">
                     <h2 className="text-sm font-bold flex items-center gap-2">
@@ -246,7 +246,7 @@ export function ControlDetailSection({ controlData }: ControlDetailSectionProps)
                         <JsonRenderer json={configJson} />
                     )}
                 </div>
-            </div>
+            </div>}
         </div>
     );
 }

@@ -94,7 +94,7 @@ if (db.counters.countDocuments({ _id: "userAccessStoreCounter" }) === 0) {
 if (db.counters.countDocuments({ _id: "controlStoreCounter" }) === 0) {
     db.counters.insertOne({
         _id: "controlStoreCounter",
-        sequence_value: 2
+        sequence_value: 12
     });
     logSuccess("Initialized controlStoreCounter with sequence_value 2");
 } else {
@@ -166,7 +166,8 @@ if (db.namespaces.countDocuments() === 0) {
     db.namespaces.insertMany([
         { name: "finos", description: "FINOS namespace" },
         { name: "workshop", description: "Workshop namespace" },
-        { name: "traderx", description: "TraderX namespace" }
+        { name: "traderx", description: "TraderX namespace" },
+        { name: "risk", description: "Risk and threat governance namespace" }
     ]);
     logSuccess("Initialized namespaces: finos, workshop, traderx");
 } else {
@@ -177,11 +178,96 @@ logSection("Domains");
 // Insert domains if they don't exist
 if (db.domains.countDocuments() === 0) {
     db.domains.insertMany([
-        { name: "security" }
+        { name: "security" },
+        { name: "api-threats" }
     ]);
-    logSuccess("Initialized domains: security");
+    logSuccess("Initialized domains: security, api-threats");
 } else {
     logSkip("Domains already exist, no initialization needed");
+}
+
+logSection("Standards");
+// Insert the Threat Standard into the risk namespace
+if (db.standards.countDocuments() === 0) {
+    db.standards.insertOne({
+        namespace: "risk",
+        standards: [
+            {
+                standardId: NumberInt(1),
+                name: "API Threat Requirement Standard",
+                description: "Governance standard defining the canonical shape for threat records as CALM control requirements",
+                versions: {
+                    "1-0-0": {
+                        "$schema": "https://json-schema.org/draft/2020-12/schema",
+                        "$id": "https://calm.finos.org/calm/namespaces/risk/standards/1/versions/1.0.0",
+                        "title": "API Threat Requirement Standard",
+                        "description": "Defines the canonical shape for capturing API threat records as CALM control requirements",
+                        "type": "object",
+                        "allOf": [
+                            { "$ref": "https://calm.finos.org/release/1.2/meta/control-requirement.json" }
+                        ],
+                        "properties": {
+                            "control-id": {
+                                "type": "string",
+                                "description": "Unique threat identifier following THREAT-{DOMAIN}-{SEQ} convention",
+                                "pattern": "^THREAT-[A-Z]+-[0-9]{3}$"
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Human-readable threat name"
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Developer-facing description of the threat and what to consider"
+                            },
+                            "category": {
+                                "type": "string",
+                                "description": "Threat category for classification and filtering",
+                                "enum": ["injection", "authentication", "authorization", "data-exposure", "configuration", "resource-management", "business-logic"]
+                            },
+                            "severity": {
+                                "type": "string",
+                                "description": "Threat severity level",
+                                "enum": ["critical", "high", "medium", "low"]
+                            },
+                            "owasp-reference": {
+                                "type": "string",
+                                "description": "OWASP reference identifier, e.g. API1:2023"
+                            },
+                            "attack-vector": {
+                                "type": "string",
+                                "description": "Description of how the attack is carried out"
+                            },
+                            "impact": {
+                                "type": "string",
+                                "description": "Business and technical impact of the threat"
+                            },
+                            "affected-component-types": {
+                                "type": "array",
+                                "description": "CALM node types susceptible to this threat",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "control-id",
+                            "name",
+                            "description",
+                            "category",
+                            "severity",
+                            "attack-vector",
+                            "impact",
+                            "affected-component-types"
+                        ]
+                    }
+                }
+            }
+        ]
+    });
+    logSuccess("Initialized standards for risk namespace with API Threat Requirement Standard");
+} else {
+    logSkip("Standards already exist, no initialization needed");
 }
 
 logSection("Controls");
@@ -260,6 +346,222 @@ if (db.controls.countDocuments() === 0) {
         ]
     });
     logSuccess("Initialized controls for security domain with example Data Encryption control");
+
+    // Insert 10 API threat control requirements into the api-threats domain
+    db.controls.insertOne({
+        domain: "api-threats",
+        controls: [
+            {
+                controlId: NumberInt(2),
+                name: "Broken Object Level Authorization (BOLA)",
+                description: "APIs exposing object identifiers without proper authorization checks, allowing attackers to access other users' data by manipulating IDs",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/2/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-001",
+                        "name": "Broken Object Level Authorization (BOLA)",
+                        "description": "APIs exposing object identifiers without proper authorization checks, allowing attackers to access other users' data by manipulating IDs in API requests",
+                        "category": "authorization",
+                        "severity": "critical",
+                        "owasp-reference": "API1:2023",
+                        "attack-vector": "Attacker substitutes the ID of their own resource in the API call with an ID of a resource belonging to another user. Lack of proper authorization checks allows the attacker to access the specified resource.",
+                        "impact": "Unauthorized access to sensitive data belonging to other users, potential data breach, regulatory compliance violations",
+                        "affected-component-types": ["service", "api-gateway", "database"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(3),
+                name: "Broken Authentication",
+                description: "Weak or improperly implemented authentication mechanisms allowing attackers to compromise tokens or exploit implementation flaws to assume other users' identities",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/3/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-002",
+                        "name": "Broken Authentication",
+                        "description": "Weak or improperly implemented authentication mechanisms allowing attackers to compromise tokens or exploit implementation flaws to assume other users' identities",
+                        "category": "authentication",
+                        "severity": "critical",
+                        "owasp-reference": "API2:2023",
+                        "attack-vector": "Attacker exploits weak authentication endpoints such as credential stuffing, brute force, or token manipulation to gain unauthorized access without valid credentials.",
+                        "impact": "Full account takeover, identity theft, unauthorized transactions, complete system compromise",
+                        "affected-component-types": ["service", "api-gateway", "identity-provider"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(4),
+                name: "Broken Object Property Level Authorization",
+                description: "APIs exposing object properties without proper authorization, allowing attackers to read or modify properties they should not have access to",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/4/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-003",
+                        "name": "Broken Object Property Level Authorization",
+                        "description": "APIs exposing object properties without proper authorization, allowing attackers to read or modify object properties they should not have access to",
+                        "category": "authorization",
+                        "severity": "high",
+                        "owasp-reference": "API3:2023",
+                        "attack-vector": "Attacker sends API requests with additional or modified properties in the request body. The API processes these properties without checking if the user is authorized to read or write them.",
+                        "impact": "Data exposure through excessive properties returned by API, privilege escalation through mass assignment of restricted properties",
+                        "affected-component-types": ["service", "api-gateway"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(5),
+                name: "Unrestricted Resource Consumption",
+                description: "APIs that do not limit the size or number of resources requested by clients, enabling denial-of-service through resource exhaustion",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/5/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-004",
+                        "name": "Unrestricted Resource Consumption",
+                        "description": "APIs that do not limit the size or number of resources requested by clients, enabling denial-of-service through resource exhaustion",
+                        "category": "resource-management",
+                        "severity": "high",
+                        "owasp-reference": "API4:2023",
+                        "attack-vector": "Attacker sends a high volume of API requests or requests that consume excessive CPU, memory, bandwidth, or storage. Without rate limiting or resource quotas, the API becomes unavailable to legitimate users.",
+                        "impact": "Service degradation or outage, increased infrastructure costs, denial of service to legitimate users",
+                        "affected-component-types": ["service", "api-gateway", "database", "message-broker"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(6),
+                name: "Broken Function Level Authorization",
+                description: "APIs with overly complex access control policies or unclear separation between admin and regular functions, allowing unauthorized access to privileged endpoints",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/6/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-005",
+                        "name": "Broken Function Level Authorization",
+                        "description": "APIs with overly complex access control policies or unclear separation between admin and regular functions, allowing unauthorized access to privileged endpoints",
+                        "category": "authorization",
+                        "severity": "high",
+                        "owasp-reference": "API5:2023",
+                        "attack-vector": "Attacker discovers and calls administrative or privileged API endpoints by guessing URL patterns, modifying HTTP methods, or analyzing API responses that leak endpoint information.",
+                        "impact": "Unauthorized access to administrative functions, data manipulation, privilege escalation",
+                        "affected-component-types": ["service", "api-gateway"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(7),
+                name: "Server Side Request Forgery (SSRF)",
+                description: "APIs that fetch remote resources based on user-supplied URIs without proper validation, enabling attackers to make the server send requests to unintended destinations",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/7/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-006",
+                        "name": "Server Side Request Forgery (SSRF)",
+                        "description": "APIs that fetch remote resources based on user-supplied URIs without proper validation, enabling attackers to make the server send requests to unintended destinations",
+                        "category": "injection",
+                        "severity": "high",
+                        "owasp-reference": "API7:2023",
+                        "attack-vector": "Attacker provides a malicious URL as input to an API that fetches remote resources. The server-side request is sent to an internal service, cloud metadata endpoint, or other restricted resource.",
+                        "impact": "Access to internal services, cloud metadata credential theft, port scanning of internal networks, data exfiltration",
+                        "affected-component-types": ["service", "api-gateway"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(8),
+                name: "Security Misconfiguration",
+                description: "APIs with insecure default configurations, incomplete configurations, open cloud storage, misconfigured HTTP headers, unnecessary HTTP methods, or verbose error messages",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/8/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-007",
+                        "name": "Security Misconfiguration",
+                        "description": "APIs with insecure default configurations, incomplete configurations, open cloud storage, misconfigured HTTP headers, unnecessary HTTP methods, or verbose error messages containing sensitive information",
+                        "category": "configuration",
+                        "severity": "high",
+                        "owasp-reference": "API8:2023",
+                        "attack-vector": "Attacker probes for common misconfigurations such as default credentials, unnecessary HTTP methods, unpatched systems, unprotected files or directories, and verbose error messages that leak implementation details.",
+                        "impact": "Full server compromise, data breach, detailed system information disclosure aiding further attacks",
+                        "affected-component-types": ["service", "api-gateway", "database", "load-balancer"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(9),
+                name: "Content Injection",
+                description: "APIs that accept and process user-supplied content without proper validation or sanitization, allowing injection of malicious payloads into responses or downstream systems",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/9/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-008",
+                        "name": "Content Injection",
+                        "description": "APIs that accept and process user-supplied content without proper validation or sanitization, allowing injection of malicious payloads into responses or downstream systems",
+                        "category": "injection",
+                        "severity": "high",
+                        "attack-vector": "Attacker submits crafted input containing malicious content (HTML, JavaScript, SQL, OS commands) through API parameters, headers, or request bodies. The API processes this input without sanitization and includes it in responses or passes it to downstream systems.",
+                        "impact": "Cross-site scripting via API responses, SQL injection, command injection, data corruption in downstream systems",
+                        "affected-component-types": ["service", "api-gateway", "database", "web-client"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(10),
+                name: "Improper Inventory Management",
+                description: "APIs with outdated documentation, unpatched endpoints, or exposed debug/staging versions that expand the attack surface due to lack of proper API inventory management",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/10/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-009",
+                        "name": "Improper Inventory Management",
+                        "description": "APIs with outdated documentation, unpatched endpoints, or exposed debug and staging versions that expand the attack surface due to lack of proper API inventory management",
+                        "category": "configuration",
+                        "severity": "medium",
+                        "owasp-reference": "API9:2023",
+                        "attack-vector": "Attacker discovers and exploits old API versions, unpatched endpoints, or debug interfaces that remain accessible. Shadow APIs and deprecated but still-active endpoints provide entry points that bypass current security controls.",
+                        "impact": "Exploitation of unpatched vulnerabilities, access to deprecated functions with weaker security, shadow API abuse",
+                        "affected-component-types": ["service", "api-gateway", "load-balancer"]
+                    }
+                },
+                configurations: []
+            },
+            {
+                controlId: NumberInt(11),
+                name: "Mass Assignment",
+                description: "APIs that automatically bind client-provided data to internal object properties without filtering, allowing attackers to modify properties they should not have access to",
+                requirement: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/calm/risk/threat-standard",
+                        "$id": "https://calm.finos.org/calm/domains/api-threats/controls/11/requirement/versions/1.0.0",
+                        "control-id": "THREAT-API-010",
+                        "name": "Mass Assignment",
+                        "description": "APIs that automatically bind client-provided data to internal object properties without filtering, allowing attackers to modify properties they should not have access to",
+                        "category": "data-exposure",
+                        "severity": "high",
+                        "attack-vector": "Attacker includes additional properties in API request payloads (e.g., isAdmin, accountBalance, role) that map directly to internal object fields. The API blindly binds all provided properties without an explicit allowlist.",
+                        "impact": "Privilege escalation, business logic bypass, unauthorized data modification, financial fraud",
+                        "affected-component-types": ["service", "database"]
+                    }
+                },
+                configurations: []
+            }
+        ]
+    });
+    logSuccess("Initialized controls for api-threats domain with 10 API threat requirements");
 } else {
     logSkip("Controls already exist, no initialization needed");
 }
@@ -2470,7 +2772,8 @@ if (db.resource_mappings.countDocuments() === 0) {
         { namespace: "traderx", customId: "traderx", resourceType: "ARCHITECTURE", numericId: NumberInt(1) },
         { namespace: "workshop", customId: "conference-signup-pattern", resourceType: "PATTERN", numericId: NumberInt(1) },
         { namespace: "workshop", customId: "conference-secure-signup-pattern", resourceType: "PATTERN", numericId: NumberInt(2) },
-        { namespace: "workshop", customId: "conference-signup-architecture", resourceType: "ARCHITECTURE", numericId: NumberInt(1) }
+        { namespace: "workshop", customId: "conference-signup-architecture", resourceType: "ARCHITECTURE", numericId: NumberInt(1) },
+        { namespace: "risk", customId: "threat-standard", resourceType: "STANDARD", numericId: NumberInt(1) }
     ]);
     logSuccess("Initialized resource_mappings with seed data");
 } else {

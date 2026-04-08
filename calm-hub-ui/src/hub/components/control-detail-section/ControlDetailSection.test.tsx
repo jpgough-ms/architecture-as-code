@@ -113,12 +113,12 @@ describe('ControlDetailSection', () => {
             });
         });
 
-        it('shows "No configurations" when no config IDs exist', async () => {
+        it('hides configuration panel when no config IDs exist', async () => {
             setupMocks({ configIds: [] });
             render(<ControlDetailSection controlData={controlData} />);
 
             await waitFor(() => {
-                expect(screen.getByText('No configurations')).toBeInTheDocument();
+                expect(screen.queryByText('Configurations')).not.toBeInTheDocument();
             });
         });
 
@@ -404,7 +404,11 @@ describe('ControlDetailSection', () => {
             const user = userEvent.setup();
             render(<ControlDetailSection controlData={controlData} />);
 
-            const rawTabs = await screen.findAllByRole('tab', { name: 'Raw JSON' });
+            await waitFor(() => {
+                expect(screen.getAllByRole('tab', { name: 'Raw JSON' })).toHaveLength(2);
+            });
+
+            const rawTabs = screen.getAllByRole('tab', { name: 'Raw JSON' });
             await user.click(rawTabs[1]); // click config panel's Raw JSON tab
 
             await waitFor(() => {
