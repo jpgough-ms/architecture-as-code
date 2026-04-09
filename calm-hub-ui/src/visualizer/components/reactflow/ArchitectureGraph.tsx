@@ -12,19 +12,21 @@ import 'reactflow/dist/style.css';
 import { FloatingEdge } from './FloatingEdge.js';
 import { CustomNode } from './CustomNode.js';
 import { SystemGroupNode } from './SystemGroupNode.js';
+import { ThreatBadgeNode } from './ThreatBadgeNode.js';
 import { SearchBar } from './SearchBar.js';
 import { THEME } from './theme.js';
 import { EmptyGraphState } from './EmptyGraphState.js';
 import { parseCALMData } from './utils/calmTransformer.js';
+import { createThreatOverlay } from './utils/threatOverlay.js';
 import { getMatchingNodeIds, isEdgeVisible, getUniqueNodeTypes } from './utils/searchUtils.js';
 import { useGraphInteractions } from './hooks/useGraphInteractions.js';
 import type { ArchitectureGraphProps } from '../../contracts/contracts.js';
 
 const edgeTypes = { custom: FloatingEdge };
-const nodeTypes = { custom: CustomNode, group: SystemGroupNode };
+const nodeTypes = { custom: CustomNode, group: SystemGroupNode, threatBadge: ThreatBadgeNode };
 const GROUP_NODE_TYPES = ['group'];
 
-export function ArchitectureGraph({ jsonData, onNodeClick, onEdgeClick }: ArchitectureGraphProps) {
+export function ArchitectureGraph({ jsonData, onNodeClick, onEdgeClick, threatDecorators, onThreatSelect }: ArchitectureGraphProps) {
     const [nodes, setNodes, onNodesChangeBase] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -54,10 +56,22 @@ export function ArchitectureGraph({ jsonData, onNodeClick, onEdgeClick }: Archit
     useEffect(() => {
         const { nodes: parsedNodes, edges: parsedEdges } = parseCALMData(jsonData, onNodeClick);
         sourceNodesRef.current = parsedNodes;
-        setNodes(parsedNodes);
-        setEdges(parsedEdges);
+
+        if (threatDecorators && threatDecorators.length > 0) {
+            const { boundaryEdges, badgeNodes } = createThreatOverlay(
+                parsedNodes,
+                parsedEdges,
+                threatDecorators,
+                onThreatSelect
+            );
+            setNodes([...parsedNodes, ...badgeNodes]);
+            setEdges([...parsedEdges, ...boundaryEdges]);
+        } else {
+            setNodes(parsedNodes);
+            setEdges(parsedEdges);
+        }
         setAvailableNodeTypes(getUniqueNodeTypes(parsedNodes));
-    }, [jsonData, setNodes, setEdges, onNodeClick]);
+    }, [jsonData, setNodes, setEdges, onNodeClick, threatDecorators, onThreatSelect]);
 
     // Search & filter
     const isSearchActive = searchTerm !== '' || typeFilter !== '';

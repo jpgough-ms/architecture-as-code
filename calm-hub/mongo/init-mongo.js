@@ -104,9 +104,9 @@ if (db.counters.countDocuments({ _id: "controlStoreCounter" }) === 0) {
 if (db.counters.countDocuments({ _id: "decoratorStoreCounter" }) === 0) {
     db.counters.insertOne({
         _id: "decoratorStoreCounter",
-        sequence_value: 4
+        sequence_value: 5
     });
-    logSuccess("Initialized decoratorStoreCounter with sequence_value 4");
+    logSuccess("Initialized decoratorStoreCounter with sequence_value 5");
 } else {
     logSkip("decoratorStoreCounter already exists, no initialization needed");
 }
@@ -2666,6 +2666,168 @@ if (db.decorators.countDocuments() === 0) {
                         "data": {
                             "dashboard-url": "https://datadog.example.com/dashboard/workshop-conference",
                             "notes": "Monitoring dashboard for workshop conference system"
+                        }
+                    }
+                },
+                {
+                    decoratorId: NumberInt(3),
+                    decorator: {
+                        "$schema": "https://calm.finos.org/draft/2026-03/standards/threat-model/threat-model.decorator.standard.json",
+                        "unique-id": "workshop-conference-threat-model",
+                        "type": "threat-model",
+                        "target": [
+                            "/calm/namespaces/workshop/architectures/1/versions/1-0-0"
+                        ],
+                        "target-type": [
+                            "architecture"
+                        ],
+                        "applies-to": [
+                            "conference-website",
+                            "load-balancer",
+                            "attendees"
+                        ],
+                        "data": {
+                            "summary": {
+                                "date": "2025-07-01",
+                                "methodology": "STRIDE",
+                                "overall-risk": "high",
+                                "total-threats": 6,
+                                "unmitigated-threats": 2,
+                                "partially-mitigated-threats": 2,
+                                "mitigated-threats": 2
+                            },
+                            "trust-boundaries": [
+                                {
+                                    "id": "TB-1",
+                                    "name": "Public Internet to Load Balancer",
+                                    "from": "conference-website",
+                                    "to": "load-balancer",
+                                    "protocol": "HTTPS",
+                                    "criticality": "critical"
+                                },
+                                {
+                                    "id": "TB-2",
+                                    "name": "Load Balancer to API",
+                                    "from": "load-balancer",
+                                    "to": "attendees",
+                                    "protocol": "HTTP",
+                                    "criticality": "high"
+                                }
+                            ],
+                            "threats": [
+                                {
+                                    "id": "T-1.1",
+                                    "trust-boundary": "TB-1",
+                                    "stride-category": "spoofing",
+                                    "description": "Attacker impersonates legitimate attendee using stolen session tokens to register for conference sessions",
+                                    "risk": "high",
+                                    "mitigation-status": "partial",
+                                    "existing-controls": ["broken-authentication"],
+                                    "notes": "Basic token auth exists but no multi-factor authentication"
+                                },
+                                {
+                                    "id": "T-1.2",
+                                    "trust-boundary": "TB-1",
+                                    "stride-category": "denial-of-service",
+                                    "description": "Automated bot traffic overwhelms the conference registration endpoint during peak signup periods",
+                                    "risk": "high",
+                                    "mitigation-status": "unmitigated",
+                                    "existing-controls": [],
+                                    "notes": "No rate limiting or CAPTCHA on registration forms"
+                                },
+                                {
+                                    "id": "T-1.3",
+                                    "trust-boundary": "TB-1",
+                                    "stride-category": "information-disclosure",
+                                    "description": "Verbose error messages expose internal system architecture including database schema and API endpoints",
+                                    "risk": "medium",
+                                    "mitigation-status": "mitigated",
+                                    "existing-controls": ["security-misconfiguration"],
+                                    "notes": "Custom error handler strips stack traces in production"
+                                },
+                                {
+                                    "id": "T-2.1",
+                                    "trust-boundary": "TB-2",
+                                    "stride-category": "tampering",
+                                    "description": "Man-in-the-middle attacker modifies API requests between load balancer and backend due to HTTP (not HTTPS) internal traffic",
+                                    "risk": "high",
+                                    "mitigation-status": "unmitigated",
+                                    "existing-controls": [],
+                                    "notes": "Internal traffic uses plain HTTP; should upgrade to mTLS"
+                                },
+                                {
+                                    "id": "T-2.2",
+                                    "trust-boundary": "TB-2",
+                                    "stride-category": "elevation-of-privilege",
+                                    "description": "Broken function-level authorization allows regular attendees to access admin registration management endpoints",
+                                    "risk": "high",
+                                    "mitigation-status": "partial",
+                                    "existing-controls": ["bfla"],
+                                    "notes": "Role checks exist but are inconsistently applied across all endpoints"
+                                },
+                                {
+                                    "id": "T-2.3",
+                                    "trust-boundary": "TB-2",
+                                    "stride-category": "repudiation",
+                                    "description": "Insufficient audit logging means conference registration modifications cannot be traced to specific users",
+                                    "risk": "medium",
+                                    "mitigation-status": "mitigated",
+                                    "existing-controls": [],
+                                    "notes": "Comprehensive audit logging recently added to all write operations"
+                                }
+                            ],
+                            "recommendations": [
+                                {
+                                    "id": "R-1",
+                                    "priority": "critical",
+                                    "threats": ["T-2.1"],
+                                    "description": "Upgrade internal communication between load balancer and API to mTLS",
+                                    "implementation": "Deploy service mesh (e.g. Istio) or configure TLS termination on both sides with mutual certificate verification"
+                                },
+                                {
+                                    "id": "R-2",
+                                    "priority": "high",
+                                    "threats": ["T-1.2"],
+                                    "description": "Implement rate limiting and CAPTCHA on registration endpoints",
+                                    "implementation": "Add API gateway rate limiting (100 req/min per IP) and reCAPTCHA v3 on the signup form"
+                                },
+                                {
+                                    "id": "R-3",
+                                    "priority": "high",
+                                    "threats": ["T-1.1", "T-2.2"],
+                                    "description": "Strengthen authentication and authorization controls",
+                                    "implementation": "Add MFA for attendee accounts and implement consistent RBAC middleware across all API endpoints"
+                                }
+                            ],
+                            "domain-controls-evaluated": {
+                                "domain": "api-threats",
+                                "controls-mapped": [
+                                    {
+                                        "control-id": "broken-authentication",
+                                        "control-name": "Broken Authentication",
+                                        "threats-mitigated": ["T-1.1"],
+                                        "status": "applied"
+                                    },
+                                    {
+                                        "control-id": "bfla",
+                                        "control-name": "Broken Function Level Authorization",
+                                        "threats-mitigated": ["T-2.2"],
+                                        "status": "applied"
+                                    },
+                                    {
+                                        "control-id": "unrestricted-resource-consumption",
+                                        "control-name": "Unrestricted Resource Consumption",
+                                        "threats-mitigated": ["T-1.2"],
+                                        "status": "gap"
+                                    },
+                                    {
+                                        "control-id": "security-misconfiguration",
+                                        "control-name": "Security Misconfiguration",
+                                        "threats-mitigated": ["T-1.3"],
+                                        "status": "applied"
+                                    }
+                                ]
+                            }
                         }
                     }
                 }

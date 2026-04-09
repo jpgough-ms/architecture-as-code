@@ -1,0 +1,251 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://calm.finos.org/draft/2026-03/standards/threat-model/threat-model.decorator.standard.json",
+    "title": "CALM Threat Model Decorator Standard",
+    "description": "Threat model decorator standard for capturing STRIDE threat analysis results. Extends the base CALM decorator standard to add threat-model-specific attributes including trust boundaries, threats, and recommendations.",
+    "allOf": [
+        {
+            "$ref": "https://calm.finos.org/draft/2026-03/meta/decorators.json#/defs/decorator"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "threat-model",
+                    "description": "Must be 'threat-model' for threat model decorators"
+                },
+                "target-type": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "architecture",
+                            "pattern"
+                        ]
+                    },
+                    "description": "Type of resources this decorator can target. Threat model decorators can target architecture or pattern files."
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "summary": {
+                            "type": "object",
+                            "properties": {
+                                "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "description": "Date the threat model was created or last updated"
+                                },
+                                "methodology": {
+                                    "type": "string",
+                                    "description": "Threat modeling methodology used (e.g. 'STRIDE')"
+                                },
+                                "overall-risk": {
+                                    "type": "string",
+                                    "enum": ["critical", "high", "medium", "low"],
+                                    "description": "Overall risk assessment of the architecture"
+                                },
+                                "total-threats": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Total number of threats identified"
+                                },
+                                "unmitigated-threats": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Number of threats with no mitigation"
+                                },
+                                "partially-mitigated-threats": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Number of threats with partial mitigation"
+                                },
+                                "mitigated-threats": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "description": "Number of fully mitigated threats"
+                                }
+                            },
+                            "required": ["date", "methodology", "overall-risk", "total-threats"],
+                            "additionalProperties": false
+                        },
+                        "trust-boundaries": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Trust boundary identifier (e.g. 'TB-1')"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Human-readable name for the trust boundary"
+                                    },
+                                    "from": {
+                                        "type": "string",
+                                        "description": "Source node unique-id"
+                                    },
+                                    "to": {
+                                        "type": "string",
+                                        "description": "Destination node unique-id"
+                                    },
+                                    "protocol": {
+                                        "type": "string",
+                                        "description": "Communication protocol (e.g. 'HTTPS', 'mTLS')"
+                                    },
+                                    "criticality": {
+                                        "type": "string",
+                                        "enum": ["critical", "high", "medium", "low"],
+                                        "description": "Criticality level of the trust boundary"
+                                    }
+                                },
+                                "required": ["id", "name", "criticality"],
+                                "additionalProperties": false
+                            },
+                            "description": "Trust boundaries identified in the architecture"
+                        },
+                        "threats": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Threat identifier (e.g. 'T-1.1')"
+                                    },
+                                    "trust-boundary": {
+                                        "type": "string",
+                                        "description": "ID of the trust boundary this threat applies to"
+                                    },
+                                    "stride-category": {
+                                        "type": "string",
+                                        "enum": [
+                                            "spoofing",
+                                            "tampering",
+                                            "repudiation",
+                                            "information-disclosure",
+                                            "denial-of-service",
+                                            "elevation-of-privilege"
+                                        ],
+                                        "description": "STRIDE threat category"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Detailed description of the threat"
+                                    },
+                                    "risk": {
+                                        "type": "string",
+                                        "enum": ["high", "medium", "low"],
+                                        "description": "Risk level of the threat"
+                                    },
+                                    "mitigation-status": {
+                                        "type": "string",
+                                        "enum": ["mitigated", "partial", "unmitigated"],
+                                        "description": "Current mitigation status"
+                                    },
+                                    "existing-controls": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "List of existing control IDs that mitigate this threat"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "description": "Additional context or notes about the threat"
+                                    }
+                                },
+                                "required": ["id", "stride-category", "description", "risk", "mitigation-status"],
+                                "additionalProperties": false
+                            },
+                            "description": "Threats identified through STRIDE analysis"
+                        },
+                        "recommendations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "Recommendation identifier (e.g. 'R-1')"
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "enum": ["critical", "high", "medium", "low"],
+                                        "description": "Priority level of the recommendation"
+                                    },
+                                    "threats": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "List of threat IDs this recommendation addresses"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "What needs to be done"
+                                    },
+                                    "implementation": {
+                                        "type": "string",
+                                        "description": "How to implement the recommendation"
+                                    }
+                                },
+                                "required": ["id", "priority", "description"],
+                                "additionalProperties": false
+                            },
+                            "description": "Security recommendations based on threat analysis"
+                        },
+                        "domain-controls-evaluated": {
+                            "type": "object",
+                            "properties": {
+                                "domain": {
+                                    "type": "string",
+                                    "description": "The control domain evaluated (e.g. 'api-threats')"
+                                },
+                                "controls-mapped": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "control-id": {
+                                                "type": "string",
+                                                "description": "Control identifier"
+                                            },
+                                            "control-name": {
+                                                "type": "string",
+                                                "description": "Human-readable control name"
+                                            },
+                                            "threats-mitigated": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "description": "Threat IDs mitigated by this control"
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "enum": ["applied", "not-applicable", "gap"],
+                                                "description": "Whether the control is applied, not applicable, or a gap"
+                                            }
+                                        },
+                                        "required": ["control-id", "control-name", "status"],
+                                        "additionalProperties": false
+                                    }
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": ["summary", "threats"],
+                    "additionalProperties": true
+                }
+            },
+            "required": [
+                "type",
+                "target-type",
+                "data"
+            ]
+        }
+    ]
+}

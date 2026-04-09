@@ -26,7 +26,7 @@ function extractId(item: CalmNodeSchema | CalmRelationshipSchema): string {
     return item?.['unique-id'] || '';
 }
 
-export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: DrawerProps) {
+export function Drawer({ data, onItemSelect, decorators: decoratorsProp, threatDecorators, onThreatSelect }: DrawerProps) {
     const calmService = useMemo(() => new CalmService(), []);
     const [calmInstance, setCALMInstance] = useState<CalmArchitectureSchema | undefined>(undefined);
     const [patternInstance, setPatternInstance] = useState<Record<string, unknown> | undefined>(undefined);
@@ -198,6 +198,8 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
                                 onNodeClick={handleNodeClick}
                                 onEdgeClick={handleEdgeClick}
                                 onBackgroundClick={closeSidebar}
+                                threatDecorators={threatDecorators}
+                                onThreatSelect={onThreatSelect}
                             />
                         ) : null}
                     </div>

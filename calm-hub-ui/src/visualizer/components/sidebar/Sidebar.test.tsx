@@ -52,13 +52,13 @@ describe('Sidebar Component', () => {
 
     it('should display message unknown entity', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        render(<Sidebar selectedData={{} as any} closeSidebar={mockCloseSidebar} />);
+        render(<Sidebar selectedItem={{ data: {} as any }} closeSidebar={mockCloseSidebar} />);
 
         expect(screen.getByText('Unknown Selected Entity')).toBeInTheDocument();
     });
 
     it('should render readable relationship details by default', () => {
-        render(<Sidebar selectedData={mockEdgeData} closeSidebar={mockCloseSidebar} />);
+        render(<Sidebar selectedItem={{ data: mockEdgeData }} closeSidebar={mockCloseSidebar} />);
 
         expect(screen.getByText('Relationship')).toBeInTheDocument();
         expect(screen.getByText('Edge 1')).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe('Sidebar Component', () => {
     });
 
     it('should render readable node details by default', () => {
-        render(<Sidebar selectedData={mockNodeData} closeSidebar={mockCloseSidebar} />);
+        render(<Sidebar selectedItem={{ data: mockNodeData }} closeSidebar={mockCloseSidebar} />);
 
         expect(screen.getByText('Node')).toBeInTheDocument();
         expect(screen.getByText('Node 1')).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('Sidebar Component', () => {
     });
 
     it('should show JSON view when JSON tab is clicked', () => {
-        render(<Sidebar selectedData={mockNodeData} closeSidebar={mockCloseSidebar} />);
+        render(<Sidebar selectedItem={{ data: mockNodeData }} closeSidebar={mockCloseSidebar} />);
 
         fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
 
@@ -85,7 +85,7 @@ describe('Sidebar Component', () => {
     });
 
     it('should switch back to details view', () => {
-        render(<Sidebar selectedData={mockNodeData} closeSidebar={mockCloseSidebar} />);
+        render(<Sidebar selectedItem={{ data: mockNodeData }} closeSidebar={mockCloseSidebar} />);
 
         fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
         fireEvent.click(screen.getByRole('tab', { name: 'Details' }));
@@ -95,7 +95,7 @@ describe('Sidebar Component', () => {
     });
 
     it('should call closeSidebar when close button is clicked', () => {
-        render(<Sidebar selectedData={mockNodeData} closeSidebar={mockCloseSidebar} />);
+        render(<Sidebar selectedItem={{ data: mockNodeData }} closeSidebar={mockCloseSidebar} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'close-sidebar' }));
         expect(mockCloseSidebar).toHaveBeenCalled();

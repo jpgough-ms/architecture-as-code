@@ -10,6 +10,8 @@ export function ReactFlowVisualizer({
   onNodeClick,
   onEdgeClick,
   onBackgroundClick,
+  threatDecorators,
+  onThreatSelect,
 }: ReactFlowVisualizerProps) {
   const handleBackgroundClick = (event: React.MouseEvent) => {
     // Only trigger if clicking the background (not a node or edge)
@@ -34,6 +36,8 @@ export function ReactFlowVisualizer({
         jsonData={calmData}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
+        threatDecorators={threatDecorators}
+        onThreatSelect={onThreatSelect}
       />
     </div>
   );

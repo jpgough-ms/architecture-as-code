@@ -104,7 +104,7 @@ export default function Hub() {
                     )}
                 </div>
                 {selectedItem && isDiagramView && (
-                    <Sidebar selectedData={selectedItem.data} closeSidebar={closeSidebar} />
+                    <Sidebar selectedItem={selectedItem} closeSidebar={closeSidebar} />
                 )}
             </div>
         </div>

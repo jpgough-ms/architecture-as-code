@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { IoConstructOutline, IoGridOutline, IoEyeOutline, IoCodeOutline, IoRocketOutline } from 'react-icons/io5';
+import { IoConstructOutline, IoGridOutline, IoEyeOutline, IoCodeOutline, IoRocketOutline, IoShieldCheckmarkOutline } from 'react-icons/io5';
 import { Data } from '../../../model/calm.js';
 import { JsonRenderer } from '../json-renderer/JsonRenderer.js';
 import { Drawer } from '../../../visualizer/components/drawer/Drawer.js';
 import { SectionHeader } from '../section-header/SectionHeader.js';
 import { DeploymentPanel } from '../../../visualizer/components/reactflow/DeploymentPanel.js';
 import { CalmService } from '../../../service/calm-service.js';
-import type { DeploymentDecorator, SelectedItem } from '../../../visualizer/contracts/contracts.js';
+import type { DeploymentDecorator, ThreatModelDecorator, SelectedItem } from '../../../visualizer/contracts/contracts.js';
 
 interface DiagramSectionProps {
     data: Data & { calmType: 'Architectures' | 'Patterns' };
@@ -20,7 +20,7 @@ const iconMap = {
     Patterns: IoGridOutline,
 } as const;
 
-type DiagramTabType = 'diagram' | 'json' | 'deployments';
+type DiagramTabType = 'diagram' | 'json' | 'deployments' | 'threats';
 
 export function DiagramSection({ data, onItemSelect, hasDetailsPanel }: DiagramSectionProps) {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -28,6 +28,16 @@ export function DiagramSection({ data, onItemSelect, hasDetailsPanel }: DiagramS
     const activeTab: DiagramTabType = tabParam ?? 'diagram';
     const calmService = useMemo(() => new CalmService(), []);
     const [decorators, setDecorators] = useState<DeploymentDecorator[]>([]);
+    const [threatDecorators, setThreatDecorators] = useState<ThreatModelDecorator[]>([]);
+
+    const handleThreatSelect = useCallback((threatId: string) => {
+        const decorator = threatDecorators[0];
+        if (!decorator) return;
+        const threat = decorator.data.threats.find((t) => t.id === threatId);
+        if (threat && onItemSelect) {
+            onItemSelect({ threat, recommendations: decorator.data.recommendations });
+        }
+    }, [threatDecorators, onItemSelect]);
 
     const setActiveTab = (tab: DiagramTabType) => {
         setSearchParams({ tab }, { replace: true });
@@ -38,6 +48,7 @@ export function DiagramSection({ data, onItemSelect, hasDetailsPanel }: DiagramS
     useEffect(() => {
         if (!isArchitecture) {
             setDecorators([]);
+            setThreatDecorators([]);
             return;
         }
         const versionPath = data.version.replace(/\./g, '-');
@@ -46,6 +57,7 @@ export function DiagramSection({ data, onItemSelect, hasDetailsPanel }: DiagramS
             ? `/calm/${data.name}/${data.id}/versions/${versionPath}`
             : `/calm/namespaces/${data.name}/architectures/${data.id}/versions/${versionPath}`;
         calmService.fetchDecoratorValues(data.name, target, 'deployment').then((values) => setDecorators(values as DeploymentDecorator[]));
+        calmService.fetchDecoratorValues(data.name, target, 'threat-model').then((values) => setThreatDecorators(values as ThreatModelDecorator[]));
     }, [data, isArchitecture, calmService]);
 
     const Icon = iconMap[data.calmType];
@@ -78,6 +90,16 @@ export function DiagramSection({ data, onItemSelect, hasDetailsPanel }: DiagramS
                     Deployments
                 </button>
             )}
+            {isArchitecture && (
+                <button
+                    role="tab"
+                    className={`tab gap-1 rounded-lg ${activeTab === 'threats' ? 'tab-active !bg-accent !text-white' : ''}`}
+                    onClick={() => setActiveTab('threats')}
+                >
+                    <IoShieldCheckmarkOutline />
+                    Threats
+                </button>
+            )}
         </div>
     );
 
@@ -100,6 +122,10 @@ export function DiagramSection({ data, onItemSelect, hasDetailsPanel }: DiagramS
                     ) : activeTab === 'deployments' && isArchitecture ? (
                         <div className="h-full bg-base-200 overflow-auto p-4">
                             <DeploymentPanel decorators={decorators} />
+                        </div>
+                    ) : activeTab === 'threats' && isArchitecture ? (
+                        <div className="w-full h-full">
+                            <Drawer data={data} onItemSelect={onItemSelect} threatDecorators={threatDecorators} onThreatSelect={handleThreatSelect} />
                         </div>
                     ) : (
                         <div className="h-full bg-base-200 overflow-auto">

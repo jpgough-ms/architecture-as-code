@@ -66,6 +66,18 @@ export type {
     DeploymentDecoratorData,
     DeploymentDecorator,
     DeploymentPanelProps,
+    StrideCategory,
+    RiskLevel,
+    MitigationStatus,
+    OverallRisk,
+    TrustBoundaryCriticality,
+    ThreatModelSummary,
+    TrustBoundary,
+    Threat,
+    Recommendation,
+    ThreatModelDecoratorData,
+    ThreatModelDecorator,
+    ThreatPanelProps,
 } from './decorator-contracts.js';
 
 export type HubParams = {

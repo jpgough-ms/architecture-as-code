@@ -61,6 +61,7 @@ export function useGraphInteractions({
 
     const handleNodeClick = useCallback(
         (_event: React.MouseEvent, node: Node) => {
+            if (node.type === 'threatBadge') return;
             if (onNodeClick) {
                 onNodeClick(node.data);
             }

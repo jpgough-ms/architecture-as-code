@@ -5,7 +5,7 @@ import {
 } from '@finos/calm-models/types';
 import type { Flow } from './flow-contracts.js';
 import type { Control } from './control-contracts.js';
-import type { Decorator } from './decorator-contracts.js';
+import type { Decorator, ThreatModelDecorator, Threat, Recommendation } from './decorator-contracts.js';
 import { Data } from '../../model/calm.js';
 
 //These types and interfaces are used in the top-level visualizer components e.g. Drawer, Sidebar, ReactFlowVisualizer.
@@ -17,6 +17,8 @@ export interface DrawerProps {
     data?: Data;
     onItemSelect?: (item: SelectedItem) => void;
     decorators?: Decorator[];
+    threatDecorators?: ThreatModelDecorator[];
+    onThreatSelect?: (threatId: string) => void;
 }
 
 /**
@@ -24,13 +26,16 @@ export interface DrawerProps {
  */
 export type SelectedItem = {
     data: CalmNodeSchema | CalmRelationshipSchema;
+} | {
+    threat: Threat;
+    recommendations?: Recommendation[];
 } | null;
 
 /**
  * Props for Sidebar component
  */
 export interface SidebarProps {
-    selectedData: CalmNodeSchema | CalmRelationshipSchema;
+    selectedItem: NonNullable<SelectedItem>;
     closeSidebar: () => void;
 }
 
@@ -42,6 +47,8 @@ export interface ReactFlowVisualizerProps {
     onNodeClick?: (nodeData: CalmNodeSchema) => void;
     onEdgeClick?: (edgeData: CalmRelationshipSchema) => void;
     onBackgroundClick?: () => void;
+    threatDecorators?: ThreatModelDecorator[];
+    onThreatSelect?: (threatId: string) => void;
 }
 
 /**
@@ -51,6 +58,8 @@ export interface ArchitectureGraphProps {
     jsonData: CalmArchitectureSchema;
     onNodeClick?: (node: CalmNodeSchema) => void;
     onEdgeClick?: (edge: CalmRelationshipSchema) => void;
+    threatDecorators?: ThreatModelDecorator[];
+    onThreatSelect?: (threatId: string) => void;
 }
 
 /**
