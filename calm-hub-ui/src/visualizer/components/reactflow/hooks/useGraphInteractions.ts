@@ -87,7 +87,7 @@ export function useGraphInteractions({
                         ...n.style,
                         zIndex: n.id === node.id && !isGroupType(n.type) ? 1000
                             : isGroupType(n.type) ? -1
-                            : 1,
+                                : 1,
                     },
                 }))
             );

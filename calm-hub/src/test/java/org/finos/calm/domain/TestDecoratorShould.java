@@ -2,7 +2,9 @@ package org.finos.calm.domain;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -160,5 +162,61 @@ public class TestDecoratorShould {
                 .setAppliesTo(List.of("node-1"))
                 .setData("some-data")
                 .build();
+    }
+
+    @Test
+    void parse_document_with_string_target_wrapping_to_list() {
+        Map<String, Object> doc = new HashMap<>();
+        doc.put("$schema", "https://example.com/schema.json");
+        doc.put("unique-id", "test-decorator");
+        doc.put("type", "threat-model");
+        doc.put("target", "some-architecture");
+        doc.put("target-type", "architecture");
+        doc.put("applies-to", "workshop");
+        doc.put("data", Map.of("key", "value"));
+
+        Decorator decorator = Decorator.fromDocument(doc);
+
+        assertThat(decorator.getTarget(), equalTo(List.of("some-architecture")));
+        assertThat(decorator.getTargetType(), equalTo(List.of("architecture")));
+        assertThat(decorator.getAppliesTo(), equalTo(List.of("workshop")));
+    }
+
+    @Test
+    void parse_document_with_list_target_unchanged() {
+        Map<String, Object> doc = new HashMap<>();
+        doc.put("$schema", "https://example.com/schema.json");
+        doc.put("unique-id", "test-decorator");
+        doc.put("type", "threat-model");
+        doc.put("target", List.of("/calm/namespaces/workshop/architectures/1/versions/1-0-0"));
+        doc.put("target-type", List.of("architecture"));
+        doc.put("applies-to", List.of("workshop"));
+        doc.put("data", Map.of("key", "value"));
+
+        Decorator decorator = Decorator.fromDocument(doc);
+
+        assertThat(decorator.getTarget(), equalTo(List.of("/calm/namespaces/workshop/architectures/1/versions/1-0-0")));
+        assertThat(decorator.getTargetType(), equalTo(List.of("architecture")));
+        assertThat(decorator.getAppliesTo(), equalTo(List.of("workshop")));
+    }
+
+    @Test
+    void parse_document_with_null_target_returns_null_fields() {
+        Map<String, Object> doc = new HashMap<>();
+        doc.put("$schema", "https://example.com/schema.json");
+        doc.put("unique-id", "test-decorator");
+        doc.put("type", "threat-model");
+        doc.put("data", Map.of("key", "value"));
+
+        Decorator decorator = Decorator.fromDocument(doc);
+
+        assertThat(decorator.getTarget(), is(nullValue()));
+        assertThat(decorator.getTargetType(), is(nullValue()));
+        assertThat(decorator.getAppliesTo(), is(nullValue()));
+    }
+
+    @Test
+    void return_null_from_document_when_document_is_null() {
+        assertThat(Decorator.fromDocument(null), is(nullValue()));
     }
 }

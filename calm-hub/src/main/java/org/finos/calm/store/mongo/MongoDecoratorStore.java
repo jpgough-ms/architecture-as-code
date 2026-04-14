@@ -217,14 +217,22 @@ public class MongoDecoratorStore implements DecoratorStore {
     }
 
     /**
-     * Checks if the decorator matches the target filter (if provided)
+     * Checks if the decorator matches the target filter (if provided).
+     * Handles both array and legacy single-string target values.
      */
     private boolean matchesTargetFilter(Document decorator, String target) {
         if (target == null || target.isBlank()) {
             return true;
         }
-        
-        List<String> targets = decorator.getList("target", String.class);
-        return targets != null && targets.contains(target);
+
+        Object targetObj = decorator.get("target");
+        if (targetObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> targets = (List<String>) targetObj;
+            return targets.contains(target);
+        } else if (targetObj instanceof String) {
+            return target.equals(targetObj);
+        }
+        return false;
     }
 }

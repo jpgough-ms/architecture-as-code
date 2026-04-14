@@ -267,9 +267,9 @@ public class NitriteDecoratorStore implements DecoratorStore {
                 .setSchema(doc.get("$schema", String.class))
                 .setUniqueId(doc.get("unique-id", String.class))
                 .setType(doc.get("type", String.class))
-                .setTarget((List<String>) doc.get("target"))
-                .setTargetType((List<String>) doc.get("target-type"))
-                .setAppliesTo((List<String>) doc.get("applies-to"))
+                .setTarget(Decorator.toStringList(doc.get("target")))
+                .setTargetType(Decorator.toStringList(doc.get("target-type")))
+                .setAppliesTo(Decorator.toStringList(doc.get("applies-to")))
                 .setData(doc.get("data"))
                 .build();
     }

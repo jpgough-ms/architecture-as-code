@@ -15,7 +15,7 @@ A threat-model decorator associates STRIDE threat analysis with a specific archi
   "$schema": "https://raw.githubusercontent.com/finos/architecture-as-code/main/calm/draft/2026-03/standards/threat-model/threat-model.decorator.standard.json",
   "unique-id": "threat-model-<architecture-id>-<timestamp>",
   "type": "threat-model",
-  "target": ["<architecture-unique-id>"],
+  "target": ["/calm/namespaces/<namespace>/architectures/<numericId>/versions/<version-with-dashes>"],
   "target-type": ["architecture"],
   "applies-to": ["<namespace>"],
   "data": {
@@ -74,30 +74,57 @@ A threat-model decorator associates STRIDE threat analysis with a specific archi
 }
 ```
 
+## Target Path Format (Critical)
+
+The `target` field **must** contain a CalmHub API path — not a bare architecture name or unique-id. The CalmHub UI uses this path to look up decorators, and the backend performs an **exact match**. If the path is wrong, the decorator will be stored but never displayed.
+
+### Constructing the target path
+
+Use the **namespace**, **numeric architecture ID**, and **version** returned by the MCP `listArchitectures` / `getArchitecture` tools:
+
+```
+/calm/namespaces/{namespace}/architectures/{numericId}/versions/{version-with-dashes}
+```
+
+**Version format**: replace dots with dashes — `1.0.0` → `1-0-0`.
+
+**Examples**:
+| Namespace | Architecture ID | Version | Target Path |
+|-----------|----------------|---------|-------------|
+| `workshop` | `1` | `1.0.0` | `/calm/namespaces/workshop/architectures/1/versions/1-0-0` |
+| `finos` | `42` | `2.1.0` | `/calm/namespaces/finos/architectures/42/versions/2-1-0` |
+
 ## Creating Decorators via MCP
 
 When CalmHub MCP is available, use the tools directly:
 
 ### Step 1: Verify the architecture exists
 
-Use `list_architectures` to find the target architecture:
+Use `listArchitectures` to find the target architecture and note the **numeric ID**:
 ```
 Namespace: workshop
-Architecture: api-gateway
+Architecture ID: 1   ← use this numeric ID in the target path
 Version: 1.0.0
 ```
 
 ### Step 2: Check existing decorators
 
-Use `list_decorators` with type filter `threat-model` to avoid duplicates.
+Use `listDecorators` with type filter `threat-model` to avoid duplicates.
 
 ### Step 3: Load domain controls
 
-Use `list_controls` for the `api-threats` domain to map controls to threats.
+Use `getControlsForDomain` for the `api-threats` domain to map controls to threats.
 
-### Step 4: Create the decorator
+### Step 4: Construct the target path
 
-Use `create_decorator` with the threat-model JSON payload.
+Build the target from Step 1 values:
+```
+/calm/namespaces/workshop/architectures/1/versions/1-0-0
+```
+
+### Step 5: Create the decorator
+
+Use `createDecorator` with the threat-model JSON payload, ensuring the `target` array contains the path from Step 4.
 
 ## Creating Decorators via REST API
 
@@ -158,7 +185,7 @@ The `api-threats` domain in CalmHub contains OWASP API Security controls. Map th
   "$schema": "https://raw.githubusercontent.com/finos/architecture-as-code/main/calm/draft/2026-03/standards/threat-model/threat-model.decorator.standard.json",
   "unique-id": "threat-model-mcp-demo-20250101",
   "type": "threat-model",
-  "target": ["mcp-demo-architecture"],
+  "target": ["/calm/namespaces/workshop/architectures/1/versions/1-0-0"],
   "target-type": ["architecture"],
   "applies-to": ["workshop"],
   "data": {

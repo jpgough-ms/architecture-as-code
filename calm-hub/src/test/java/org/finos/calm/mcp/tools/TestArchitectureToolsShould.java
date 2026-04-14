@@ -1,5 +1,7 @@
 package org.finos.calm.mcp.tools;
 
+import org.bson.json.JsonParseException;
+import org.finos.calm.domain.Architecture;
 import org.finos.calm.domain.architecture.NamespaceArchitectureSummary;
 import org.finos.calm.domain.exception.ArchitectureNotFoundException;
 import org.finos.calm.domain.exception.ArchitectureVersionNotFoundException;
@@ -105,5 +107,44 @@ class TestArchitectureToolsShould {
 
         assertThat(result, startsWith("Error:"));
         assertThat(result, containsString("not found"));
+    }
+
+    @Test
+    void create_architecture_successfully() throws NamespaceNotFoundException {
+        Architecture returnedArch = new Architecture.ArchitectureBuilder()
+                .setNamespace("workshop")
+                .setId(42)
+                .setVersion("1.0.0")
+                .build();
+        when(architectureStore.createArchitectureForNamespace(any()))
+                .thenReturn(returnedArch);
+
+        String result = architectureTools.createArchitecture("workshop", "My Arch", "A description", "{\"nodes\":[]}");
+
+        assertThat(result, containsString("ID: 42"));
+        assertThat(result, containsString("version 1.0.0"));
+        assertThat(result, containsString("workshop"));
+    }
+
+    @Test
+    void return_error_when_creating_architecture_in_missing_namespace() throws NamespaceNotFoundException {
+        when(architectureStore.createArchitectureForNamespace(any()))
+                .thenThrow(new NamespaceNotFoundException());
+
+        String result = architectureTools.createArchitecture("missing", "My Arch", "desc", "{}");
+
+        assertThat(result, startsWith("Error:"));
+        assertThat(result, containsString("not found"));
+    }
+
+    @Test
+    void return_error_for_invalid_architecture_json() throws NamespaceNotFoundException {
+        when(architectureStore.createArchitectureForNamespace(any()))
+                .thenThrow(new JsonParseException("bad json"));
+
+        String result = architectureTools.createArchitecture("workshop", "My Arch", "desc", "not-json");
+
+        assertThat(result, startsWith("Error:"));
+        assertThat(result, containsString("Invalid"));
     }
 }

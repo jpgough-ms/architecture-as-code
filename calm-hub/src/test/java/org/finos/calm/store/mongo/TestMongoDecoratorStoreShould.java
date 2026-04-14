@@ -693,4 +693,88 @@ class TestMongoDecoratorStoreShould {
         verify(namespaceStore).namespaceExists(namespace);
         verify(decoratorCollection, never()).updateOne(any(Bson.class), any(Bson.class));
     }
+
+    @Test
+    void should_not_throw_when_decorator_has_string_target_instead_of_list() throws NamespaceNotFoundException {
+        // Given — simulates a decorator created by an AI skill that stored target as a plain string
+        String namespace = "workshop";
+        when(namespaceStore.namespaceExists(namespace)).thenReturn(true);
+
+        Document decorator = new Document("decoratorId", 1)
+                .append("decorator", new Document("unique-id", "threat-model-1")
+                        .append("type", "threat-model")
+                        .append("target", "attendees-gateway")
+                        .append("applies-to", "workshop")
+                        .append("data", new Document("key", "value")));
+
+        Document namespaceDocument = new Document("namespace", namespace)
+                .append("decorators", List.of(decorator));
+
+        when(decoratorCollection.find(any(Bson.class))).thenReturn(findIterable);
+        when(findIterable.first()).thenReturn(namespaceDocument);
+
+        // When — filtering with a path that does NOT match the stored string target
+        List<Decorator> result = decoratorStore.getDecoratorValuesForNamespace(
+                namespace, "/calm/namespaces/workshop/architectures/2/versions/1-0-0", "threat-model");
+
+        // Then — should NOT throw ClassCastException, just return empty
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void should_match_string_target_when_filter_matches_exact_value() throws NamespaceNotFoundException {
+        // Given — decorator with plain string target that matches the filter exactly
+        String namespace = "workshop";
+        String targetPath = "/calm/namespaces/workshop/architectures/2/versions/1-0-0";
+        when(namespaceStore.namespaceExists(namespace)).thenReturn(true);
+
+        Document decorator = new Document("decoratorId", 1)
+                .append("decorator", new Document("unique-id", "threat-model-1")
+                        .append("$schema", "https://example.com/schema.json")
+                        .append("type", "threat-model")
+                        .append("target", targetPath)
+                        .append("target-type", "architecture")
+                        .append("applies-to", "workshop")
+                        .append("data", new Document("key", "value")));
+
+        Document namespaceDocument = new Document("namespace", namespace)
+                .append("decorators", List.of(decorator));
+
+        when(decoratorCollection.find(any(Bson.class))).thenReturn(findIterable);
+        when(findIterable.first()).thenReturn(namespaceDocument);
+
+        // When
+        List<Decorator> result = decoratorStore.getDecoratorValuesForNamespace(namespace, targetPath, "threat-model");
+
+        // Then — string target should match and be wrapped to a list in the returned Decorator
+        assertEquals(1, result.size());
+        assertEquals(List.of(targetPath), result.get(0).getTarget());
+        assertEquals(List.of("workshop"), result.get(0).getAppliesTo());
+    }
+
+    @Test
+    void should_return_decorator_ids_when_target_is_string_and_matches() throws NamespaceNotFoundException {
+        // Given
+        String namespace = "workshop";
+        String targetPath = "/calm/namespaces/workshop/architectures/2/versions/1-0-0";
+        when(namespaceStore.namespaceExists(namespace)).thenReturn(true);
+
+        Document decorator = new Document("decoratorId", 5)
+                .append("decorator", new Document("unique-id", "threat-model-1")
+                        .append("type", "threat-model")
+                        .append("target", targetPath));
+
+        Document namespaceDocument = new Document("namespace", namespace)
+                .append("decorators", List.of(decorator));
+
+        when(decoratorCollection.find(any(Bson.class))).thenReturn(findIterable);
+        when(findIterable.first()).thenReturn(namespaceDocument);
+
+        // When
+        List<Integer> ids = decoratorStore.getDecoratorsForNamespace(namespace, targetPath, "threat-model");
+
+        // Then
+        assertEquals(List.of(5), ids);
+    }
 }

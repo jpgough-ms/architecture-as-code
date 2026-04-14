@@ -5,6 +5,7 @@ import io.quarkiverse.mcp.server.ToolArg;
 import jakarta.inject.Inject;
 import org.finos.calm.domain.Architecture;
 import org.finos.calm.domain.architecture.NamespaceArchitectureSummary;
+import org.bson.json.JsonParseException;
 import org.finos.calm.domain.exception.ArchitectureNotFoundException;
 import org.finos.calm.domain.exception.ArchitectureVersionNotFoundException;
 import org.finos.calm.domain.exception.NamespaceNotFoundException;
@@ -85,6 +86,28 @@ public class ArchitectureTools {
             return "Error: Architecture " + architectureId + " not found in namespace '" + namespace + "'.";
         } catch (ArchitectureVersionNotFoundException e) {
             return "Error: Version '" + version + "' not found for architecture " + architectureId + ".";
+        }
+    }
+
+    @Tool(description = "Create a new architecture in a namespace. Returns the allocated architecture ID and version.")
+    String createArchitecture(
+            @ToolArg(description = "The namespace to create the architecture in") String namespace,
+            @ToolArg(description = "The name of the architecture") String name,
+            @ToolArg(description = "A description of the architecture") String description,
+            @ToolArg(description = "The full CALM architecture JSON content") String architectureJson) {
+        try {
+            Architecture architecture = new Architecture.ArchitectureBuilder()
+                    .setNamespace(namespace)
+                    .setName(name)
+                    .setDescription(description)
+                    .setArchitecture(architectureJson)
+                    .build();
+            Architecture result = architectureStore.createArchitectureForNamespace(architecture);
+            return "Architecture created successfully with ID: " + result.getId() + " (version " + result.getDotVersion() + ") in namespace '" + namespace + "'.";
+        } catch (NamespaceNotFoundException e) {
+            return "Error: Namespace '" + namespace + "' not found.";
+        } catch (JsonParseException e) {
+            return "Error: Invalid architecture JSON.";
         }
     }
 }

@@ -78,7 +78,7 @@ The complete base decorator schema from the FINOS CALM v1.2 specification:
 |---|---|---|
 | `unique-id` | string | Unique identifier for this decorator instance |
 | `type` | string | A free-form string identifying the decorator category (e.g. `guide`, `business`, `threat-model`, `deployment`). Not an enum — any value is valid |
-| `target` | array of strings | File paths or URLs referencing the CALM documents this decorator targets (min 1 item) |
+| `target` | array of strings | CalmHub API paths or file paths referencing the CALM documents this decorator targets (min 1 item). **When targeting CalmHub architectures**, use the path format `/calm/namespaces/{namespace}/architectures/{numericId}/versions/{version-with-dashes}` (e.g. `/calm/namespaces/workshop/architectures/1/versions/1-0-0`). Replace dots with dashes in versions: `1.0.0` → `1-0-0`. |
 | `applies-to` | array of strings | `unique-id` values of the architecture elements within the targeted documents (min 1 item) |
 | `data` | object | JSON payload whose shape is determined by the decorator type (min 1 property) |
 
@@ -302,7 +302,7 @@ Use **custom decorator schemas** when:
 ## Validation Rules
 
 1. Every decorator MUST have all five required properties: `unique-id`, `type`, `target`, `applies-to`, `data`
-2. `target` must contain at least one file path or URL
+2. `target` must contain at least one path. **For CalmHub architectures**, use `/calm/namespaces/{namespace}/architectures/{numericId}/versions/{version-with-dashes}` — the CalmHub UI performs an exact match on this path
 3. `applies-to` must contain at least one `unique-id` reference
 4. `data` must contain at least one property (`minProperties: 1`)
 5. No additional top-level properties are allowed (`additionalProperties: false`)

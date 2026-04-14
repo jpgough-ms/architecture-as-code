@@ -42,7 +42,12 @@
                                 },
                                 "overall-risk": {
                                     "type": "string",
-                                    "enum": ["critical", "high", "medium", "low"],
+                                    "enum": [
+                                        "critical",
+                                        "high",
+                                        "medium",
+                                        "low"
+                                    ],
                                     "description": "Overall risk assessment of the architecture"
                                 },
                                 "total-threats": {
@@ -66,7 +71,12 @@
                                     "description": "Number of fully mitigated threats"
                                 }
                             },
-                            "required": ["date", "methodology", "overall-risk", "total-threats"],
+                            "required": [
+                                "date",
+                                "methodology",
+                                "overall-risk",
+                                "total-threats"
+                            ],
                             "additionalProperties": false
                         },
                         "trust-boundaries": {
@@ -96,11 +106,20 @@
                                     },
                                     "criticality": {
                                         "type": "string",
-                                        "enum": ["critical", "high", "medium", "low"],
+                                        "enum": [
+                                            "critical",
+                                            "high",
+                                            "medium",
+                                            "low"
+                                        ],
                                         "description": "Criticality level of the trust boundary"
                                     }
                                 },
-                                "required": ["id", "name", "criticality"],
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "criticality"
+                                ],
                                 "additionalProperties": false
                             },
                             "description": "Trust boundaries identified in the architecture"
@@ -136,12 +155,20 @@
                                     },
                                     "risk": {
                                         "type": "string",
-                                        "enum": ["high", "medium", "low"],
+                                        "enum": [
+                                            "high",
+                                            "medium",
+                                            "low"
+                                        ],
                                         "description": "Risk level of the threat"
                                     },
                                     "mitigation-status": {
                                         "type": "string",
-                                        "enum": ["mitigated", "partial", "unmitigated"],
+                                        "enum": [
+                                            "mitigated",
+                                            "partial",
+                                            "unmitigated"
+                                        ],
                                         "description": "Current mitigation status"
                                     },
                                     "existing-controls": {
@@ -156,7 +183,13 @@
                                         "description": "Additional context or notes about the threat"
                                     }
                                 },
-                                "required": ["id", "stride-category", "description", "risk", "mitigation-status"],
+                                "required": [
+                                    "id",
+                                    "stride-category",
+                                    "description",
+                                    "risk",
+                                    "mitigation-status"
+                                ],
                                 "additionalProperties": false
                             },
                             "description": "Threats identified through STRIDE analysis"
@@ -172,7 +205,12 @@
                                     },
                                     "priority": {
                                         "type": "string",
-                                        "enum": ["critical", "high", "medium", "low"],
+                                        "enum": [
+                                            "critical",
+                                            "high",
+                                            "medium",
+                                            "low"
+                                        ],
                                         "description": "Priority level of the recommendation"
                                     },
                                     "threats": {
@@ -191,7 +229,11 @@
                                         "description": "How to implement the recommendation"
                                     }
                                 },
-                                "required": ["id", "priority", "description"],
+                                "required": [
+                                    "id",
+                                    "priority",
+                                    "description"
+                                ],
                                 "additionalProperties": false
                             },
                             "description": "Security recommendations based on threat analysis"
@@ -225,11 +267,19 @@
                                             },
                                             "status": {
                                                 "type": "string",
-                                                "enum": ["applied", "not-applicable", "gap"],
+                                                "enum": [
+                                                    "applied",
+                                                    "not-applicable",
+                                                    "gap"
+                                                ],
                                                 "description": "Whether the control is applied, not applicable, or a gap"
                                             }
                                         },
-                                        "required": ["control-id", "control-name", "status"],
+                                        "required": [
+                                            "control-id",
+                                            "control-name",
+                                            "status"
+                                        ],
                                         "additionalProperties": false
                                     }
                                 }
@@ -237,7 +287,10 @@
                             "additionalProperties": false
                         }
                     },
-                    "required": ["summary", "threats"],
+                    "required": [
+                        "summary",
+                        "threats"
+                    ],
                     "additionalProperties": true
                 }
             },

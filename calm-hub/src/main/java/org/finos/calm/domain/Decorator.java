@@ -97,11 +97,26 @@ public class Decorator {
                 .setSchema((String) document.get("$schema"))
                 .setUniqueId((String) document.get("unique-id"))
                 .setType((String) document.get("type"))
-                .setTarget((List<String>) document.get("target"))
-                .setTargetType((List<String>) document.get("target-type"))
-                .setAppliesTo((List<String>) document.get("applies-to"))
+                .setTarget(toStringList(document.get("target")))
+                .setTargetType(toStringList(document.get("target-type")))
+                .setAppliesTo(toStringList(document.get("applies-to")))
                 .setData(document.get("data"))
                 .build();
+    }
+
+    /**
+     * Safely converts an object to a List of Strings.
+     * Handles both List and single String values for backwards compatibility
+     * with decorators stored before the schema enforced arrays.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<String> toStringList(Object value) {
+        if (value instanceof List) {
+            return (List<String>) value;
+        } else if (value instanceof String) {
+            return List.of((String) value);
+        }
+        return null;
     }
 
     public static class DecoratorBuilder {
