@@ -24,7 +24,7 @@ This guide helps AI assistants work efficiently with the CALM Hub backend codeba
 
 # Development Mode (Hot Reload)
 ../mvnw quarkus:dev                       # Default (MongoDB)
-../mvnw quarkus:dev -Dcalm.database.mode=standalone  # Standalone (NitriteDB)
+../mvnw quarkus:dev -Pstandalone                     # Standalone (NitriteDB) — use -Pstandalone, NOT -Dquarkus.profile=standalone
 ../mvnw quarkus:dev -Dquarkus.profile=secure         # Secure mode (Keycloak)
 
 # Docker
@@ -151,6 +151,19 @@ public class ArchitectureStoreProducer {
 - Annotations: `@Operation`, `@APIResponse`, etc.
 
 ## Testing
+
+### Coverage Requirements
+
+**CRITICAL**: JaCoCo enforces **90% line coverage per class**. CI runs `mvn clean verify -Ddependency-check.skip=true` which includes the JaCoCo coverage check. Any class below 90% will fail the build.
+
+```bash
+# Run the same check CI uses — always run this before pushing changes
+../mvnw clean verify -Ddependency-check.skip=true
+```
+
+**Exclusions**: Classes in `**/domain/**/*`, `**/*Constants.*`, `**/CalmHubScopes.*`, and `**/LogSanitizationPolicy.*` are excluded from the coverage check.
+
+If coverage drops below 90% for a class you've modified, add tests for uncovered error paths (catch blocks, edge cases) until the threshold is met. Check the JaCoCo report at `target/site/jacoco/` for details on uncovered lines.
 
 ### Unit Tests
 ```bash
@@ -317,7 +330,10 @@ CALM Hub is largely independent - it's a standalone REST API server.
 
 1. **TestContainers Errors**: Ensure Docker is running before integration tests
 2. **Port Conflicts**: Check if port 8080 is free (or change `quarkus.http.port`)
-3. **MongoDB Connection**: Start MongoDB before dev mode (unless using standalone)
+3. **MongoDB Connection**: Start MongoDB before dev mode (unless using `-Pstandalone` for NitriteDB)
+   - **IMPORTANT**: Use `-Pstandalone` (Maven profile), not `-Dquarkus.profile=standalone`. The Maven plugin
+     forks a separate JVM and the `-D` flag does not reliably propagate; the Maven profile injects
+     `quarkus.profile=standalone` via the plugin's own `systemProperties` configuration.
 4. **Certificate Issues**: Use exact CN in URLs when using self-signed certs
 5. **Profile Selection**: Remember to pass `-Dquarkus.profile=secure` for secure mode
 

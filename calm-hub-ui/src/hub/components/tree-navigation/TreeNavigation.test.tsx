@@ -1,7 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TreeNavigation, buildNamespaceTree } from './TreeNavigation.js';
 import { CalmService } from '../../../service/calm-service.js';
-import { MemoryRouter, useParams } from 'react-router-dom';
+import { ControlService } from '../../../service/control-service.js';
+import { InterfaceService } from '../../../service/interface-service.js';
+import { MemoryRouter, useParams, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi, Mock } from 'vitest';
 
 // Mock react-router-dom
@@ -28,6 +30,9 @@ let calmServiceInstance: {
     fetchFlow: Mock;
     fetchStandard: Mock;
     fetchArchitecture: Mock;
+    fetchMappings: Mock;
+    fetchVersionsByCustomId: Mock;
+    fetchResourceByCustomId: Mock;
 } | undefined;
 
 vi.mock('../../../service/calm-service.js', () => ({
@@ -45,23 +50,41 @@ vi.mock('../../../service/calm-service.js', () => ({
             fetchPattern: vi.fn().mockResolvedValue({}),
             fetchFlow: vi.fn().mockResolvedValue({}),
             fetchStandard: vi.fn().mockResolvedValue({}),
-            fetchArchitecture: vi.fn().mockResolvedValue({})
+            fetchArchitecture: vi.fn().mockResolvedValue({}),
+            fetchMappings: vi.fn().mockResolvedValue([]),
+            fetchVersionsByCustomId: vi.fn().mockResolvedValue([]),
+            fetchResourceByCustomId: vi.fn().mockResolvedValue({})
         };
         return calmServiceInstance;
     })
 }));
 
+let controlServiceInstance: {
+    fetchDomains: Mock;
+    fetchControlsForDomain: Mock;
+} | undefined;
+
 vi.mock('../../../service/control-service.js', () => ({
-    ControlService: vi.fn().mockImplementation(() => ({
-        fetchDomains: vi.fn().mockResolvedValue(['test-domain']),
-        fetchControlsForDomain: vi.fn().mockResolvedValue([]),
-    })),
+    ControlService: vi.fn().mockImplementation(() => {
+        controlServiceInstance = {
+            fetchDomains: vi.fn().mockResolvedValue(['test-domain']),
+            fetchControlsForDomain: vi.fn().mockResolvedValue([]),
+        };
+        return controlServiceInstance;
+    }),
 }));
 
+let interfaceServiceInstance: {
+    fetchInterfacesForNamespace: Mock;
+} | undefined;
+
 vi.mock('../../../service/interface-service.js', () => ({
-    InterfaceService: vi.fn().mockImplementation(() => ({
-        fetchInterfacesForNamespace: vi.fn().mockResolvedValue([]),
-    })),
+    InterfaceService: vi.fn().mockImplementation(() => {
+        interfaceServiceInstance = {
+            fetchInterfacesForNamespace: vi.fn().mockResolvedValue([]),
+        };
+        return interfaceServiceInstance;
+    }),
 }));
 
 let adrServiceInstance: {
@@ -135,7 +158,7 @@ describe('TreeNavigation', () => {
         vi.mocked(useParams).mockReturnValue({
             namespace: 'test-namespace',
             type: 'patterns',
-            id: 'pattern2',
+            id: '102',
             version: 'v2.0'
         });
 
@@ -146,8 +169,7 @@ describe('TreeNavigation', () => {
         await waitFor(() => {
             expect(calmServiceInstance?.fetchNamespaces).toHaveBeenCalled();
             expect(calmServiceInstance?.fetchPatternSummaries).toHaveBeenCalledWith('test-namespace');
-            expect(calmServiceInstance?.fetchPatternVersions).toHaveBeenCalledWith('test-namespace', 'pattern2');
-            expect(calmServiceInstance?.fetchPattern).toHaveBeenCalledWith('test-namespace', 'pattern2', 'v2.0');
+            expect(calmServiceInstance?.fetchPattern).toHaveBeenCalledWith('test-namespace', '102', 'v2.0');
         });
     });
 
@@ -166,7 +188,6 @@ describe('TreeNavigation', () => {
         await waitFor(() => {
             expect(calmServiceInstance?.fetchNamespaces).toHaveBeenCalled();
             expect(calmServiceInstance?.fetchArchitectureSummaries).toHaveBeenCalledWith('test-namespace');
-            expect(calmServiceInstance?.fetchArchitectureVersions).toHaveBeenCalledWith('test-namespace', '201');
             expect(calmServiceInstance?.fetchArchitecture).toHaveBeenCalledWith('test-namespace', '201', 'v2.0');
         });
     });
@@ -186,7 +207,6 @@ describe('TreeNavigation', () => {
         await waitFor(() => {
             expect(calmServiceInstance?.fetchNamespaces).toHaveBeenCalled();
             expect(calmServiceInstance?.fetchFlowSummaries).toHaveBeenCalledWith('test-namespace');
-            expect(calmServiceInstance?.fetchFlowVersions).toHaveBeenCalledWith('test-namespace', '201');
             expect(calmServiceInstance?.fetchFlow).toHaveBeenCalledWith('test-namespace', '201', 'v2.0');
         });
     });
@@ -205,8 +225,108 @@ describe('TreeNavigation', () => {
 
         await waitFor(() => {
             expect(adrServiceInstance?.fetchAdrSummaries).toHaveBeenCalledWith('test-namespace');
-            expect(adrServiceInstance?.fetchAdrRevisions).toHaveBeenCalledWith('test-namespace', '201');
             expect(adrServiceInstance?.fetchAdr).toHaveBeenCalledWith('test-namespace', '201', 'v2.0');
+        });
+    });
+
+    it('loads data based on deeplink route - interface', async () => {
+        vi.mocked(InterfaceService).mockImplementation(() => {
+            interfaceServiceInstance = {
+                fetchInterfacesForNamespace: vi.fn().mockResolvedValue([
+                    { id: 301, name: 'Test Interface', description: 'An interface' },
+                ]),
+            };
+            return interfaceServiceInstance as unknown as InstanceType<typeof InterfaceService>;
+        });
+
+        vi.mocked(useParams).mockReturnValue({
+            namespace: 'test-namespace',
+            type: 'interfaces',
+            id: '301',
+            version: 'detail',
+        });
+
+        render(<MemoryRouter initialEntries={["/"]}>
+            <TreeNavigation {...mockProps} />
+        </MemoryRouter>);
+
+        await waitFor(() => {
+            expect(interfaceServiceInstance?.fetchInterfacesForNamespace).toHaveBeenCalledWith('test-namespace');
+            expect(mockProps.onInterfaceLoad).toHaveBeenCalledWith({
+                namespace: 'test-namespace',
+                interfaceId: 301,
+                interfaceName: 'Test Interface',
+                interfaceDescription: 'An interface',
+            });
+        });
+    });
+
+    it('loads data based on deeplink route - control', async () => {
+        vi.mocked(ControlService).mockImplementation(() => {
+            controlServiceInstance = {
+                fetchDomains: vi.fn().mockResolvedValue(['test-domain']),
+                fetchControlsForDomain: vi.fn().mockResolvedValue([
+                    { id: 401, name: 'Test Control', description: 'A control' },
+                ]),
+            };
+            return controlServiceInstance as unknown as InstanceType<typeof ControlService>;
+        });
+
+        vi.mocked(useParams).mockReturnValue({
+            namespace: 'test-domain',
+            type: 'controls',
+            id: '401',
+            version: 'detail',
+        });
+
+        render(<MemoryRouter initialEntries={["/"]}>
+            <TreeNavigation {...mockProps} />
+        </MemoryRouter>);
+
+        await waitFor(() => {
+            expect(controlServiceInstance?.fetchControlsForDomain).toHaveBeenCalledWith('test-domain');
+            expect(mockProps.onControlLoad).toHaveBeenCalledWith({
+                domain: 'test-domain',
+                controlId: 401,
+                controlName: 'Test Control',
+                controlDescription: 'A control',
+            });
+        });
+    });
+
+    it('navigates to the latest version when a resource is clicked', async () => {
+        vi.mocked(useParams).mockReturnValue({});
+        const navigate = vi.fn();
+        vi.mocked(useNavigate).mockReturnValue(navigate);
+        vi.mocked(CalmService).mockImplementationOnce(() => ({
+            fetchNamespaces: vi.fn().mockResolvedValue(['test-namespace']),
+            fetchPatternSummaries: vi.fn().mockResolvedValue([]),
+            fetchFlowSummaries: vi.fn().mockResolvedValue([]),
+            fetchStandardSummaries: vi.fn().mockResolvedValue([]),
+            fetchArchitectureSummaries: vi.fn().mockResolvedValue([{ id: 201, name: 'arch-a', description: '' }]),
+            fetchPatternVersions: vi.fn().mockResolvedValue([]),
+            fetchFlowVersions: vi.fn().mockResolvedValue([]),
+            fetchStandardVersions: vi.fn().mockResolvedValue([]),
+            fetchArchitectureVersions: vi.fn().mockResolvedValue(['1.0.0', '2.0.0', '1.5.0']),
+            fetchPattern: vi.fn().mockResolvedValue({}),
+            fetchFlow: vi.fn().mockResolvedValue({}),
+            fetchStandard: vi.fn().mockResolvedValue({}),
+            fetchArchitecture: vi.fn().mockResolvedValue({}),
+            fetchMappings: vi.fn().mockResolvedValue([]),
+            fetchVersionsByCustomId: vi.fn().mockResolvedValue([]),
+            fetchResourceByCustomId: vi.fn().mockResolvedValue({}),
+        }) as unknown as InstanceType<typeof CalmService>);
+
+        render(<MemoryRouter initialEntries={["/"]}>
+            <TreeNavigation {...mockProps} />
+        </MemoryRouter>);
+
+        fireEvent.click(await screen.findByText('test-namespace'));
+        fireEvent.click(await screen.findByText('Architectures'));
+        fireEvent.click(await screen.findByText('arch-a'));
+
+        await waitFor(() => {
+            expect(navigate).toHaveBeenCalledWith('/test-namespace/architectures/201/2.0.0');
         });
     });
 });
@@ -274,7 +394,10 @@ describe('buildNamespaceTree', () => {
             fetchPattern: vi.fn().mockResolvedValue({}),
             fetchFlow: vi.fn().mockResolvedValue({}),
             fetchStandard: vi.fn().mockResolvedValue({}),
-            fetchArchitecture: vi.fn().mockResolvedValue({})
+            fetchArchitecture: vi.fn().mockResolvedValue({}),
+            fetchMappings: vi.fn().mockResolvedValue([]),
+            fetchVersionsByCustomId: vi.fn().mockResolvedValue([]),
+            fetchResourceByCustomId: vi.fn().mockResolvedValue({})
         }));
 
         render(

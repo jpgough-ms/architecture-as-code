@@ -29,6 +29,7 @@ docs/contributing.md
 /shared/package-lock.json
 
 **/.vscode**/
+/.vscode/settings.json
 
 node_modules/
 **/dist/
@@ -41,8 +42,32 @@ node_modules/
 
 !/.mvn/wrapper/maven-wrapper.jar
 
+# Stray Java compiler output (e.g. from running `javac` outside Maven)
+*.class
+/io/
+
 coverage/
 /cli/test/template-bundles/
 .github/chatmodes
 .github/agents
 shared/test-output/
+
+# Next.js
+.next/
+next-env.d.ts
+
+# SvelteKit
+.svelte-kit/
+**/build/
+
+# Docusaurus (sub-projects)
+**/.docusaurus/
+**/docs-site/docs/api/
+
+# Tauri/Rust build output
+**/src-tauri/target/
+**/src-tauri/gen/
+
+# Playwright
+playwright-report/
+test-results/

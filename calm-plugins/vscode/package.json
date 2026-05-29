@@ -2,7 +2,7 @@
     "name": "calm-vscode-plugin",
     "displayName": "CALM Tools",
     "description": "Live-visualize CALM architecture models, validate, and generate docs.",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "publisher": "FINOS",
     "homepage": "https://calm.finos.org",
     "repository": {
@@ -177,6 +177,8 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
+        "test:integration:compile": "tsc -p test/integration",
+        "test:integration": "npm run build && npm run test:integration:compile && node ./out/integration/runTest.js",
         "lint": "eslint src",
         "lint-fix": "eslint src --fix",
         "package": "npm run build && npx @vscode/vsce package --no-dependencies",
@@ -184,12 +186,16 @@
     },
     "devDependencies": {
         "@types/markdown-it": "^14.1.2",
+        "@types/mocha": "^10.0.6",
         "@types/svg-pan-zoom": "^3.3.0",
         "@types/vscode": "^1.88.0",
         "@vscode/dts": "^0.4.1",
+        "@vscode/test-electron": "^2.3.9",
         "@vscode/vsce": "^3.7.1",
         "copyfiles": "^2.4.1",
         "eslint-plugin-import": "^2.32.0",
+        "glob": "^10.3.10",
+        "mocha": "^10.2.0",
         "tsup": "^8.4.0"
     },
     "dependencies": {
@@ -197,10 +203,10 @@
         "@finos/calm-shared": "file:../../shared",
         "@mermaid-js/layout-elk": "^0.2.0",
         "elkjs": "^0.11.0",
-        "jsdom": "^22.1.0",
+        "jsdom": "^26.1.0",
         "lodash": "^4.18.1",
         "markdown-it": "^14.1.1",
-        "mermaid": "^11.0.0",
+        "mermaid": "^11.15.0",
         "svg-pan-zoom": "^3.6.2",
         "yaml": "^2.8.3",
         "zustand": "^5.0.8"

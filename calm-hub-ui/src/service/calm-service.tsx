@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
-import { Data, ResourceSummary } from '../model/calm.js';
+import type { CalmTimelineSchema } from '@finos/calm-models/types';
+import { Data, ResourceSummary, ResourceMapping } from '../model/calm.js';
 import { getAuthHeaders } from '../authService.js';
 import { Decorator } from '../visualizer/contracts/decorator-contracts.js';
 
@@ -243,6 +244,34 @@ export class CalmService {
             });
     }
 
+    // --- Timelines ---
+
+    /**
+     * Fetch the timeline for an architecture. Returns the explicit timeline if
+     * one references this architecture; otherwise the backend returns an implied
+     * timeline projected from the architecture's version history. Either way the
+     * response is a `calm-timeline.json` document describing each version as a
+     * moment.
+     */
+    public async fetchArchitectureTimeline(
+        namespace: string,
+        architectureID: string
+    ): Promise<CalmTimelineSchema> {
+        const headers = await getAuthHeaders();
+        return this.ax
+            .get(
+                `/calm/namespaces/${encodeURIComponent(namespace)}/architectures/${encodeURIComponent(architectureID)}/timeline`,
+                { headers }
+            )
+            .then((res) => res.data)
+            .catch((error) => {
+                const errorMessage = `Error fetching timeline for architecture ID ${architectureID}:`;
+                // arg1 is %s to prevent format string injection from `architectureID`.
+                console.error('%s', errorMessage, error);
+                return Promise.reject(new Error(errorMessage));
+            });
+    }
+
     /**
      * Fetch decorator values for a given namespace with optional target and type filters.
     */
@@ -264,6 +293,53 @@ export class CalmService {
                 // arg1 is %s to prevent format string injection from `namespace`.
                 console.error('%s', errorMessage, error);
                 return [];
+            });
+    }
+
+    // --- Front Controller API (custom ID / slug-based access) ---
+
+    public async fetchMappings(namespace: string, type?: string): Promise<ResourceMapping[]> {
+        const headers = await getAuthHeaders();
+        const query = type ? `?type=${encodeURIComponent(type)}` : '';
+        return this.ax
+            .get(`/calm/namespaces/${encodeURIComponent(namespace)}/mappings${query}`, { headers })
+            .then((res) => {
+                return Array.isArray(res.data?.values) ? res.data.values : [];
+            })
+            .catch((error) => {
+                const errorMessage = `Error fetching mappings for namespace ${namespace}:`;
+                console.error('%s', errorMessage, error);
+                return [];
+            });
+    }
+
+    public async fetchVersionsByCustomId(namespace: string, customId: string): Promise<string[]> {
+        const headers = await getAuthHeaders();
+        return this.ax
+            .get(`/calm/namespaces/${encodeURIComponent(namespace)}/${encodeURIComponent(customId)}/versions`, { headers })
+            .then((res) => res.data.values)
+            .catch((error) => {
+                const errorMessage = `Error fetching versions for custom ID ${customId}:`;
+                console.error('%s', errorMessage, error);
+                return Promise.reject(new Error(errorMessage));
+            });
+    }
+
+    public async fetchResourceByCustomId(namespace: string, customId: string, version: string, calmType: string): Promise<Data> {
+        const headers = await getAuthHeaders();
+        return this.ax
+            .get(`/calm/namespaces/${encodeURIComponent(namespace)}/${encodeURIComponent(customId)}/versions/${encodeURIComponent(version)}`, { headers })
+            .then((res) => ({
+                id: customId,
+                version: version,
+                calmType: calmType as Data['calmType'],
+                name: namespace,
+                data: res.data,
+            }))
+            .catch((error) => {
+                const errorMessage = `Error fetching resource ${customId} version ${version}:`;
+                console.error('%s', errorMessage, error);
+                return Promise.reject(new Error(errorMessage));
             });
     }
 }

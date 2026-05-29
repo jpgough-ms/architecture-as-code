@@ -26,11 +26,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.dizitart.no2.filters.FluentFilter.where;
+import io.quarkus.arc.lookup.LookupIfProperty;
 
 /**
  * NitriteDB implementation of DecoratorStore.
  * This implementation is used when the application is running in standalone mode.
  */
+@LookupIfProperty(name = "calm.database.mode", stringValue = "standalone")
 @ApplicationScoped
 @Typed(NitriteDecoratorStore.class)
 public class NitriteDecoratorStore implements DecoratorStore {
@@ -99,7 +101,7 @@ public class NitriteDecoratorStore implements DecoratorStore {
     }
 
     @Override
-    public Optional<Decorator> getDecoratorById(String namespace, int id) throws NamespaceNotFoundException, DecoratorNotFoundException {
+    public Optional<Decorator> getDecoratorById(String namespace, int id) throws NamespaceNotFoundException {
         validateNamespace(namespace);
 
         Document namespaceDoc = fetchNamespaceDocument(namespace);

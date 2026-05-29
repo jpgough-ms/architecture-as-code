@@ -42,6 +42,8 @@ export interface ReactFlowVisualizerProps {
     onNodeClick?: (nodeData: CalmNodeSchema) => void;
     onEdgeClick?: (edgeData: CalmRelationshipSchema) => void;
     onBackgroundClick?: () => void;
+    /** Identifies the diagram (namespace/id) so its viewport can be remembered. */
+    viewportKey?: string;
 }
 
 /**
@@ -51,6 +53,8 @@ export interface ArchitectureGraphProps {
     jsonData: CalmArchitectureSchema;
     onNodeClick?: (node: CalmNodeSchema) => void;
     onEdgeClick?: (edge: CalmRelationshipSchema) => void;
+    /** Identifies the diagram (namespace/id) so its viewport can be remembered. */
+    viewportKey?: string;
 }
 
 /**
@@ -60,6 +64,7 @@ export interface MetadataPanelProps {
     flows: Flow[];
     controls: Record<string, Control>;
     decorators: Decorator[];
+    adrs: string[];
     onTransitionClick?: (relationshipId: string) => void;
     onNodeClick?: (nodeId: string) => void;
     onControlClick?: (controlId: string) => void;
@@ -72,4 +77,11 @@ export interface MetadataPanelProps {
 /**
  * Tab type for MetadataPanel
  */
-export type MetadataPanelTabType = 'flows' | 'controls' | 'deployment';
+export type MetadataPanelTabType = 'flows' | 'controls' | 'deployment' | 'adrs';
+
+/**
+ * Props for AdrsPanel component
+ */
+export interface AdrsPanelProps {
+    adrs: string[];
+}

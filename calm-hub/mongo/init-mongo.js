@@ -43,9 +43,9 @@ if (db.counters.countDocuments({ _id: "patternStoreCounter" }) === 0) {
 if (db.counters.countDocuments({ _id: "architectureStoreCounter" }) === 0) {
     db.counters.insertOne({
         _id: "architectureStoreCounter",
-        sequence_value: 1
+        sequence_value: 2
     });
-    logSuccess("Initialized architectureStoreCounter with sequence_value 1");
+    logSuccess("Initialized architectureStoreCounter with sequence_value 2");
 } else {
     logSkip("architectureStoreCounter already exists, no initialization needed");
 }
@@ -94,9 +94,9 @@ if (db.counters.countDocuments({ _id: "userAccessStoreCounter" }) === 0) {
 if (db.counters.countDocuments({ _id: "controlStoreCounter" }) === 0) {
     db.counters.insertOne({
         _id: "controlStoreCounter",
-        sequence_value: 5
+        sequence_value: 18
     });
-    logSuccess("Initialized controlStoreCounter with sequence_value 5");
+    logSuccess("Initialized controlStoreCounter with sequence_value 18");
 } else {
     logSkip("controlStoreCounter already exists, no initialization needed");
 }
@@ -129,6 +129,12 @@ const basePath = (typeof process !== 'undefined' && process.env.CALM_SCHEMA_BASE
     ? process.env.CALM_SCHEMA_BASE_PATH
     : '/calm';
 
+// Load controls dynamically from domain subdirectories.
+// Set CALM_CONTROLS_BASE_PATH env var to override the default base path (/controls).
+const controlsBasePath = (typeof process !== 'undefined' && process.env.CALM_CONTROLS_BASE_PATH)
+    ? process.env.CALM_CONTROLS_BASE_PATH
+    : '/controls';
+
 function loadSchemasFromDir(baseDir, prefix) {
     if (!fs.existsSync(baseDir)) {
         logFail(`Schema directory not found at ${baseDir}, skipping`);
@@ -160,15 +166,49 @@ function loadSchemasFromDir(baseDir, prefix) {
 loadSchemasFromDir(`${basePath}/release`, 'release');
 loadSchemasFromDir(`${basePath}/draft`, 'draft');
 
+function loadControlsFromDir(baseDir) {
+    if (!fs.existsSync(baseDir)) {
+        logFail(`Controls directory not found at ${baseDir}, skipping`);
+        logFail(`Set CALM_CONTROLS_BASE_PATH environment variable to load controls from a different location`);
+        return;
+    }
+    const domains = fs.readdirSync(baseDir).filter(f =>
+        fs.statSync(`${baseDir}/${f}`).isDirectory() && !f.startsWith('.')
+    );
+    const domainDocs = [];
+    for (const domain of domains) {
+        const domainDir = `${baseDir}/${domain}`;
+        const controlFiles = fs.readdirSync(domainDir).filter(f => f.endsWith('.json'));
+        const controls = [];
+        for (const file of controlFiles) {
+            const control = JSON.parse(fs.readFileSync(`${domainDir}/${file}`, 'utf8'));
+            control.controlId = NumberInt(control.controlId);
+            if (Array.isArray(control.configurations)) {
+                control.configurations = control.configurations.map(cfg => ({
+                    ...cfg,
+                    configurationId: NumberInt(cfg.configurationId)
+                }));
+            }
+            controls.push(control);
+        }
+        domainDocs.push({ domain, controls });
+    }
+    if (domainDocs.length > 0) {
+        db.controls.insertMany(domainDocs);
+        logSuccess(`Inserted controls for domains: ${domainDocs.map(d => d.domain).join(', ')}`);
+    }
+}
+
 logSection("Namespaces");
 // Insert namespaces if they don't exist
 if (db.namespaces.countDocuments() === 0) {
     db.namespaces.insertMany([
         { name: "finos", description: "FINOS namespace" },
         { name: "workshop", description: "Workshop namespace" },
-        { name: "traderx", description: "TraderX namespace" }
+        { name: "traderx", description: "TraderX namespace" },
+        { name: "ai-governance-v2", description: "AI Governance v2 namespace" }
     ]);
-    logSuccess("Initialized namespaces: finos, workshop, traderx");
+    logSuccess("Initialized namespaces: finos, workshop, traderx, ai-governance-v2");
 } else {
     logSkip("Namespaces already exist, no initialization needed");
 }
@@ -178,19 +218,27 @@ logSection("Domains");
 if (db.domains.countDocuments() === 0) {
     db.domains.insertMany([
         { name: "security" },
+<<<<<<< HEAD
         { name: "mcp-controls" },
         { name: "network" },
         { name: "compliance" },
         { name: "observability" }
     ]);
     logSuccess("Initialized domains: security, mcp-controls, network, compliance, observability");
+=======
+        { name: "ai-governance" }
+    ]);
+    logSuccess("Initialized domains: security, ai-governance");
+>>>>>>> origin/main
 } else {
     logSkip("Domains already exist, no initialization needed");
 }
 
 logSection("Controls");
-// Insert example controls for the security domain
+// Controls are loaded from files under CALM_CONTROLS_BASE_PATH (default: /controls).
+// Each subdirectory represents a domain; each JSON file within is one control.
 if (db.controls.countDocuments() === 0) {
+<<<<<<< HEAD
     db.controls.insertOne({
         domain: "security",
         controls: [
@@ -412,9 +460,13 @@ if (db.controls.countDocuments() === 0) {
         ]
     });
     logSuccess("Initialized controls for mcp-controls domain with MCP Guardrail control");
+=======
+    loadControlsFromDir(controlsBasePath);
+>>>>>>> origin/main
 } else {
     logSkip("Controls already exist, no initialization needed");
 }
+
 
 logSection("Patterns");
 if (db.patterns.countDocuments() === 0) {
@@ -1743,6 +1795,11 @@ if (db.architectures.countDocuments() === 0) {
                                     }
                                 }
                             ],
+                            "adrs": [
+                                "https://github.com/org/project/docs/adr/0001-use-load-balancer.md",
+                                "https://github.com/org/project/docs/adr/0002-use-kubernetes.md",
+                                "/calm/namespaces/workshop/adrs/1"
+                            ],
                             "$schema": "https://calm.finos.org/calm/namespaces/workshop/patterns/1/versions/1.0.0"
                         }
                     }
@@ -2216,9 +2273,456 @@ if (db.architectures.countDocuments() === 0) {
                     }
                 }
             }]
+        },
+        {
+            namespace: "ai-governance-v2",
+            architectures: [{
+                architectureId: NumberInt(2),
+                name: "mcp-api-pipeline",
+                description: "User → MCP Server (cloud-hosted) → API Service → Database. FINOS AIR AI Governance controls applied directly on nodes and relationships.",
+                versions: {
+                    "1-0-0": {
+                        "$schema": "https://calm.finos.org/draft/2025-03/meta/calm.json",
+                        "unique-id": "mcp-api-pipeline",
+                        "name": "MCP Server API Pipeline",
+                        "description": "User → MCP Server (cloud-hosted) → API Service → Database. FINOS AIR AI Governance controls applied directly on nodes and relationships.",
+                        "nodes": [
+                            {
+                                "unique-id": "user",
+                                "name": "User",
+                                "description": "Human end-user interacting with the MCP Server via a client application.",
+                                "node-type": "actor",
+                                "interfaces": [
+                                    {
+                                        "unique-id": "user-interface",
+                                        "name": "User Client Interface"
+                                    }
+                                ],
+                                "controls": [
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/12/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-020",
+                                        "name": "Reputational Risk",
+                                        "description": "The User receives all AI-generated outputs. Content filtering, output moderation, and AI disclosure must be applied to prevent harmful or misleading content reaching users at scale.",
+                                        "requirements": [
+                                            "Implement output content filtering before responses are returned to the User.",
+                                            "Display AI disclosure notices to the User at session start.",
+                                            "Monitor user feedback channels for harm signals from AI outputs.",
+                                            "Establish an AI incident response and user remediation process."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/9/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-017",
+                                        "name": "Lack of Explainability",
+                                        "description": "Users receiving AI-generated responses must be able to understand the basis of outputs, particularly for high-stakes decisions. Source citations and rationale must be surfaced in the User interface.",
+                                        "requirements": [
+                                            "Surface citations and source document references in all AI-generated responses shown to the User.",
+                                            "Provide human-readable rationales for AI recommendations in the User interface.",
+                                            "Enable Users to escalate any AI-generated decision to a human agent."
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "unique-id": "mcp-server",
+                                "name": "MCP Server",
+                                "description": "Cloud-hosted Model Context Protocol server. Orchestrates LLM interactions, manages tool calls, and proxies requests to the API Service.",
+                                "node-type": "service",
+                                "deployment-type": "cloud",
+                                "interfaces": [
+                                    {
+                                        "unique-id": "mcp-server-ingress",
+                                        "name": "MCP Server Ingress",
+                                        "protocol": "HTTPS",
+                                        "port": 443
+                                    },
+                                    {
+                                        "unique-id": "mcp-server-egress",
+                                        "name": "MCP Server API Egress",
+                                        "protocol": "HTTPS",
+                                        "port": 443
+                                    }
+                                ],
+                                "controls": [
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/15/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-SEC-010",
+                                        "name": "Prompt Injection",
+                                        "description": "The MCP Server ingress is the primary prompt injection attack surface. All user inputs must be validated and sanitised before passing to the LLM or downstream services.",
+                                        "requirements": [
+                                            "Deploy an AI firewall at the MCP Server ingress to detect and block prompt injection patterns.",
+                                            "Sanitise all user-supplied content before inclusion in LLM prompts.",
+                                            "Enforce strict system-prompt hierarchy so user messages cannot override system-level instructions.",
+                                            "Monitor MCP Server outputs for data exfiltration patterns or instruction-echoing.",
+                                            "Conduct regular red-team exercises targeting the MCP Server prompt injection surface."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/3/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-004",
+                                        "name": "Hallucination and Inaccurate Outputs",
+                                        "description": "The MCP Server is where LLM inference occurs. RAG grounding, output validation, and human-review gates must be applied before responses reach the User.",
+                                        "requirements": [
+                                            "Implement RAG grounding using verified data sourced from the API Service.",
+                                            "Apply output validation pipelines to MCP Server responses before delivery to the User.",
+                                            "Route high-stakes outputs through a human-review queue prior to delivery.",
+                                            "Log and monitor hallucination incidents by frequency and business impact."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/4/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-005",
+                                        "name": "Foundation Model Versioning",
+                                        "description": "The MCP Server integrates foundation models whose provider-side updates can cause silent behavioural changes propagating through the entire pipeline.",
+                                        "requirements": [
+                                            "Pin foundation model versions; only upgrade after regression testing and sign-off.",
+                                            "Maintain a model version registry covering all models used by the MCP Server.",
+                                            "Obtain advance notification of model changes from providers via contractual obligation.",
+                                            "Implement automated regression test suites triggered by model version changes.",
+                                            "Define and test rollback procedures to prior pinned model versions."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/6/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-007",
+                                        "name": "Availability of Foundational Model",
+                                        "description": "The MCP Server depends on GPU-backed third-party model infrastructure. Denial of Wallet attacks, TSP outages, and token exhaustion can render the MCP Server unavailable.",
+                                        "requirements": [
+                                            "Implement API rate limiting and token budget controls at the MCP Server.",
+                                            "Define SLAs with model providers and monitor compliance.",
+                                            "Design failover strategies including fallback to alternative model providers.",
+                                            "Apply prompt length controls and chunking strategies to prevent token exhaustion."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/16/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-SEC-024",
+                                        "name": "Agent Action Authorization Bypass",
+                                        "description": "The MCP Server acts as an AI agent invoking tools and calling the API Service. Injected instructions could trigger unauthorised operations without strict authorisation controls.",
+                                        "requirements": [
+                                            "Assign the MCP Server least-privilege permissions scoped to required tools and operations only.",
+                                            "Implement human-in-the-loop approval gates for irreversible or high-risk API actions.",
+                                            "Validate all MCP-to-API requests against an authorised action policy before execution.",
+                                            "Log all MCP-originated actions with full user context and authorisation decision."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/7/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-014",
+                                        "name": "Inadequate System Alignment",
+                                        "description": "MCP Server responses must remain aligned with the system's intended scope. Misalignment can cause scope boundary violations and regulatory exposure.",
+                                        "requirements": [
+                                            "Define the authorised scope of the MCP Server via system prompt guardrails.",
+                                            "Implement continuous alignment monitoring against golden evaluation datasets.",
+                                            "Perform prompt injection testing on all content retrieved and injected into prompts.",
+                                            "Implement alignment drift detection to trigger re-evaluation when quality degrades."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/8/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-016",
+                                        "name": "Bias and Discrimination",
+                                        "description": "LLM outputs generated by the MCP Server may reflect training data biases, producing discriminatory responses to users.",
+                                        "requirements": [
+                                            "Conduct bias audits on MCP Server outputs prior to production launch and at regular intervals.",
+                                            "Test for disparate impact across protected user characteristics.",
+                                            "Establish a bias incident response process including user remediation procedures."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/18/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-RC-023",
+                                        "name": "Intellectual Property and Copyright",
+                                        "description": "The MCP Server LLM may reproduce copyrighted content from training data in its outputs.",
+                                        "requirements": [
+                                            "Implement output filters to detect and suppress reproduction of copyrighted material.",
+                                            "Ensure model provider contracts include IP indemnification clauses.",
+                                            "Train operators on IP risks associated with AI-generated content."
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "unique-id": "api-service",
+                                "name": "API Service",
+                                "description": "Backend REST API service that processes requests from the MCP Server, applies business logic, and reads/writes data to the Database.",
+                                "node-type": "service",
+                                "deployment-type": "cloud",
+                                "interfaces": [
+                                    {
+                                        "unique-id": "api-service-ingress",
+                                        "name": "API Service Ingress",
+                                        "protocol": "HTTPS",
+                                        "port": 443
+                                    },
+                                    {
+                                        "unique-id": "api-service-db-egress",
+                                        "name": "API Service Database Egress",
+                                        "protocol": "TCP",
+                                        "port": 5432
+                                    }
+                                ],
+                                "controls": [
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/17/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-RC-022",
+                                        "name": "Regulatory Compliance and Oversight",
+                                        "description": "The API Service is the enforcement point for regulatory business rules. It must maintain audit trails and support regulatory examination of AI-assisted decisions.",
+                                        "requirements": [
+                                            "Maintain an audit log of all MCP Server-originated requests and API Service responses.",
+                                            "Enforce data classification and handling policies at the API Service layer.",
+                                            "Produce decision records for all AI-assisted actions routed through the API Service.",
+                                            "Retain request/response logs for the required regulatory retention period."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/11/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-019",
+                                        "name": "Data Quality and Drift",
+                                        "description": "The API Service is the data supply layer for the MCP Server RAG pipeline. Data quality issues or staleness here directly degrade AI output accuracy.",
+                                        "requirements": [
+                                            "Implement automated data quality checks (accuracy, completeness, timeliness) at the API Service ingestion layer.",
+                                            "Monitor statistical properties of data served to the MCP Server to detect drift.",
+                                            "Define data freshness SLAs per use case and enforce scheduled refresh cycles.",
+                                            "Maintain data lineage records to support auditability of AI model inputs."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/10/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-018",
+                                        "name": "Model Overreach / Expanded Use",
+                                        "description": "The API Service must enforce scope boundaries, rejecting MCP Server requests that exceed the AI system's authorised use cases.",
+                                        "requirements": [
+                                            "Validate all incoming MCP Server requests against an approved API action register.",
+                                            "Reject API calls corresponding to unauthorised or out-of-scope AI operations.",
+                                            "Log all scope boundary violations for review by the AI governance function."
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "unique-id": "database",
+                                "name": "Database",
+                                "description": "Persistent data store (relational and/or vector store for RAG) used by the API Service.",
+                                "node-type": "datastore",
+                                "deployment-type": "cloud",
+                                "interfaces": [
+                                    {
+                                        "unique-id": "database-ingress",
+                                        "name": "Database Ingress",
+                                        "protocol": "TCP",
+                                        "port": 5432
+                                    }
+                                ],
+                                "controls": [
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/14/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-SEC-002",
+                                        "name": "Information Leaked to Vector Store",
+                                        "description": "The Database may function as a vector store for the RAG pipeline. Embeddings can expose sensitive data via inversion or inference attacks without proper security controls.",
+                                        "requirements": [
+                                            "Enforce RBAC on the Database, scoping retrieval to the requesting user's authorisation.",
+                                            "Encrypt all data at rest using AES-256 or equivalent approved standard.",
+                                            "Implement comprehensive audit logging for all database queries.",
+                                            "Classify all stored data and enforce classification-based retrieval policies.",
+                                            "Conduct penetration testing targeting embedding inversion and membership inference attacks."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/11/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-019",
+                                        "name": "Data Quality and Drift",
+                                        "description": "The Database is the authoritative source of inference data for the RAG pipeline. Poor quality or stale data stored here propagates directly into AI outputs.",
+                                        "requirements": [
+                                            "Enforce data quality standards at write time including schema validation and completeness checks.",
+                                            "Implement scheduled data freshness reviews and automated stale-data flagging.",
+                                            "Maintain data lineage metadata for all records used in AI inference pipelines."
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "relationships": [
+                            {
+                                "unique-id": "user-to-mcp",
+                                "name": "User to MCP Server",
+                                "description": "User sends prompts and receives AI-generated responses via the MCP Server over HTTPS.",
+                                "relationship-type": {
+                                    "connects": {
+                                        "source": {
+                                            "node": "user",
+                                            "interface": "user-interface"
+                                        },
+                                        "destination": {
+                                            "node": "mcp-server",
+                                            "interface": "mcp-server-ingress"
+                                        }
+                                    }
+                                },
+                                "protocol": "HTTPS",
+                                "controls": [
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/15/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-SEC-010",
+                                        "name": "Prompt Injection",
+                                        "description": "This channel carries untrusted user input directly into the AI system — the highest-risk prompt injection vector. Input must be validated and firewall-inspected before any content reaches the LLM.",
+                                        "requirements": [
+                                            "Enforce TLS 1.2+ on the User-to-MCP channel.",
+                                            "Apply AI firewall inspection on all user messages before LLM processing.",
+                                            "Rate-limit user requests to prevent flooding or token-exhaustion attacks.",
+                                            "Authenticate and authorise all user sessions before granting MCP Server access."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/13/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-028",
+                                        "name": "Multi-Agent Trust Boundary Violations",
+                                        "description": "The User-to-MCP boundary is an external trust boundary. The MCP Server must treat all inbound user messages as untrusted and enforce strict session isolation.",
+                                        "requirements": [
+                                            "Treat all user-supplied input as untrusted at the MCP Server ingress.",
+                                            "Enforce strict context isolation so one user's session cannot influence another's agent context.",
+                                            "Implement session-level sandboxing to limit blast radius of any injected instruction."
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "unique-id": "mcp-to-api",
+                                "name": "MCP Server to API Service",
+                                "description": "MCP Server makes authenticated API calls to the API Service to fulfil tool calls and retrieve data for RAG grounding.",
+                                "relationship-type": {
+                                    "connects": {
+                                        "source": {
+                                            "node": "mcp-server",
+                                            "interface": "mcp-server-egress"
+                                        },
+                                        "destination": {
+                                            "node": "api-service",
+                                            "interface": "api-service-ingress"
+                                        }
+                                    }
+                                },
+                                "protocol": "HTTPS",
+                                "controls": [
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/16/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-SEC-024",
+                                        "name": "Agent Action Authorization Bypass",
+                                        "description": "This channel carries AI agent tool calls from the MCP Server to the API Service. Injected instructions could invoke unauthorised operations without enforcement here.",
+                                        "requirements": [
+                                            "Authenticate all MCP Server requests to the API Service using short-lived scoped credentials (mTLS or signed tokens).",
+                                            "Enforce least-privilege: MCP Server credentials must only permit specifically required API operations.",
+                                            "The API Service must validate each inbound request against the authorised action policy before execution.",
+                                            "Require human approval for high-risk or irreversible API operations triggered via the MCP Server.",
+                                            "Log all calls on this channel with full request context and authorisation outcome."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/13/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-028",
+                                        "name": "Multi-Agent Trust Boundary Violations",
+                                        "description": "This channel crosses the internal trust boundary between AI orchestration (MCP Server) and the data/logic layer (API Service). MCP Server compromise must not propagate unchecked into the API Service.",
+                                        "requirements": [
+                                            "Enforce mutual TLS (mTLS) on the MCP-to-API channel.",
+                                            "The API Service must independently validate request authorisation — not blindly trust MCP Server-supplied context.",
+                                            "Implement circuit breakers to halt MCP Server API calls during detected anomalies or security incidents."
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "unique-id": "api-to-db",
+                                "name": "API Service to Database",
+                                "description": "API Service reads and writes data to the Database using an authenticated, encrypted database connection.",
+                                "relationship-type": {
+                                    "connects": {
+                                        "source": {
+                                            "node": "api-service",
+                                            "interface": "api-service-db-egress"
+                                        },
+                                        "destination": {
+                                            "node": "database",
+                                            "interface": "database-ingress"
+                                        }
+                                    }
+                                },
+                                "protocol": "TCP",
+                                "controls": [
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/14/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-SEC-002",
+                                        "name": "Information Leaked to Vector Store",
+                                        "description": "This channel carries sensitive embedding queries and raw data between the API Service and the Database. Data in transit must be encrypted and access strictly scoped.",
+                                        "requirements": [
+                                            "Enforce TLS encryption on the API Service-to-Database connection.",
+                                            "Use parameterised queries to prevent SQL and vector injection attacks.",
+                                            "Scope database credentials to the minimum required tables and operations.",
+                                            "Propagate and audit user context on all data retrieval operations on this channel."
+                                        ]
+                                    },
+                                    {
+                                        "control-requirement": {
+                                            "$ref": "/calm/domains/ai-governance/controls/11/versions/1-0-0"
+                                        },
+                                        "control-id": "AIR-OP-019",
+                                        "name": "Data Quality and Drift",
+                                        "description": "Data flowing from the Database through this channel feeds the MCP Server RAG pipeline. Stale or degraded data directly impacts AI output accuracy.",
+                                        "requirements": [
+                                            "Implement query-time data freshness checks before returning data to the API Service.",
+                                            "Filter records failing quality thresholds before inclusion in RAG context.",
+                                            "Monitor query patterns for anomalies indicating data drift or unexpected schema changes."
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }]
         }
     ]);
-    logSuccess("Initialized architectures for finos and traderx namespaces");
+    logSuccess("Initialized architectures for finos, workshop, traderx and ai-governance-v2 namespaces");
 } else {
     logSkip("Architectures already initialized, skipping...");
 }
@@ -2359,8 +2863,56 @@ if (db.adrs.countDocuments() === 0) {
                 },
             ],
         },
+        {
+            namespace: 'workshop',
+            adrs: [
+                {
+                    adrId: NumberInt(1),
+                    revisions: {
+                        1: {
+                            title: 'Use Load Balancer for Traffic Distribution',
+                            status: 'accepted',
+                            creationDateTime: [2025, 3, 15, 10, 30, 0, 0],
+                            updateDateTime: [2025, 3, 20, 14, 0, 0, 0],
+                            contextAndProblemStatement: 'The conference signup system needs to handle variable traffic loads during registration periods. We need a strategy to distribute incoming requests across multiple service instances to ensure availability and performance.',
+                            decisionDrivers: [
+                                'High availability during peak registration periods',
+                                'Horizontal scalability of the attendees service',
+                                'Even distribution of load across service instances',
+                            ],
+                            consideredOptions: [
+                                {
+                                    name: 'DNS Round Robin',
+                                    description: 'Use DNS-based load balancing to distribute traffic across service instances.',
+                                    positiveConsequences: ['Simple to configure', 'No additional infrastructure required'],
+                                    negativeConsequences: ['No health checking', 'Uneven distribution with caching'],
+                                },
+                                {
+                                    name: 'Dedicated Load Balancer',
+                                    description: 'Deploy a dedicated load balancer (e.g. NGINX, HAProxy) in front of service instances.',
+                                    positiveConsequences: ['Health checking and automatic failover', 'Even traffic distribution', 'SSL termination'],
+                                    negativeConsequences: ['Additional infrastructure component', 'Requires configuration management'],
+                                },
+                            ],
+                            decisionOutcome: {
+                                chosenOption: {
+                                    name: 'Dedicated Load Balancer',
+                                    description: 'Deploy a dedicated load balancer in front of the attendees service for health-aware traffic distribution.',
+                                    positiveConsequences: ['Health checking and automatic failover', 'Even traffic distribution', 'SSL termination'],
+                                    negativeConsequences: ['Additional infrastructure component', 'Requires configuration management'],
+                                },
+                                rationale: 'A dedicated load balancer provides health checking and automatic failover which are critical for ensuring availability during peak conference registration periods.',
+                            },
+                            links: [
+                                { rel: 'Conference Signup Architecture', href: '/calm/namespaces/workshop/architectures/1/versions/1-0-0' },
+                            ],
+                        },
+                    },
+                },
+            ],
+        },
     ]);
-    logSuccess("Initialized ADRs for finos namespace");
+    logSuccess("Initialized ADRs for finos and workshop namespaces");
 } else {
     logSkip("ADRs already initialized, skipping...");
 }
@@ -2604,6 +3156,29 @@ if (db.interfaces.countDocuments() === 0) {
     logSuccess("Initialized interfaces for finos namespace");
 } else {
     logSkip("Interfaces already initialized, skipping...");
+}
+
+logSection("Resource Mappings");
+db.resource_mappings.createIndex({ namespace: 1, customId: 1 }, { unique: true });
+db.resource_mappings.createIndex({ namespace: 1, resourceType: 1, numericId: 1 });
+logSuccess("Created resource_mappings indexes");
+
+if (db.resource_mappings.countDocuments() === 0) {
+    db.resource_mappings.insertMany([
+        { namespace: "finos", customId: "api-gateway-pattern", resourceType: "PATTERN", numericId: NumberInt(1) },
+        { namespace: "finos", customId: "flow-1", resourceType: "FLOW", numericId: NumberInt(1) },
+        { namespace: "finos", customId: "flow-2", resourceType: "FLOW", numericId: NumberInt(2) },
+        { namespace: "finos", customId: "sample-architecture", resourceType: "ARCHITECTURE", numericId: NumberInt(1) },
+        { namespace: "traderx", customId: "add-update-account", resourceType: "FLOW", numericId: NumberInt(1) },
+        { namespace: "traderx", customId: "load-list-of-accounts", resourceType: "FLOW", numericId: NumberInt(2) },
+        { namespace: "traderx", customId: "traderx", resourceType: "ARCHITECTURE", numericId: NumberInt(1) },
+        { namespace: "workshop", customId: "conference-signup-pattern", resourceType: "PATTERN", numericId: NumberInt(1) },
+        { namespace: "workshop", customId: "conference-secure-signup-pattern", resourceType: "PATTERN", numericId: NumberInt(2) },
+        { namespace: "workshop", customId: "conference-signup-architecture", resourceType: "ARCHITECTURE", numericId: NumberInt(1) }
+    ]);
+    logSuccess("Initialized resource_mappings with seed data");
+} else {
+    logSkip("Resource mappings already exist, no initialization needed");
 }
 
 logSection("Initialization complete");

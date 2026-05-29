@@ -53,12 +53,20 @@ The storage implementation is selected based on the active Quarkus profile:
 To run the application in standalone mode:
 
 ```shell
-# Development mode with standalone storage
-../mvnw quarkus:dev -Dcalm.database.mode=standalone
+# Development mode with standalone storage (uses Maven -Pstandalone profile)
+../mvnw quarkus:dev -Pstandalone
 
 # Production mode with standalone storage
-java -Dcalm.database.mode=standalone -jar target/quarkus-app/quarkus-run.jar
+java -Dquarkus.profile=standalone -jar target/quarkus-app/quarkus-run.jar
 ```
+
+> **Note:** In dev mode use `-Pstandalone` (the Maven profile), not `-Dquarkus.profile=standalone`.
+> The `quarkus-maven-plugin` forks a separate JVM for dev mode and does not reliably propagate
+> `-D` flags from the Maven CLI into that process; the Maven profile `standalone` configures the
+> plugin's own `systemProperties` so `quarkus.profile=standalone` reaches the running app.
+> The `standalone` Quarkus profile activates `calm.database.mode=standalone` and suppresses
+> MongoDB health-checks and dev-services. For production (`java -jar …`) the JVM flag
+> `-Dquarkus.profile=standalone` is passed directly to the process and works as expected.
 
 ### Mongo Database Startup
 
@@ -169,6 +177,89 @@ The first time, you may need to run `npm install`.
 1. `npm start`
 
 The UI is now ready for hot reloading and development across the stack.
+
+### Running CalmHub MCP (Model Context Protocol)
+
+CalmHub embeds an [MCP](https://modelcontextprotocol.io/) server that exposes the
+same architecture/decorator/control/namespace data as the REST API to MCP-capable
+AI clients (e.g. Claude, VS Code Copilot connectors). It uses the
+[Quarkiverse MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/index.html)
+extension and is backed by the same store implementations selected via
+`calm.database.mode`, so it works with both MongoDB and standalone (Nitrite) modes.
+
+#### Tools exposed
+
+The tool implementations live in
+[`src/main/java/org/finos/calm/mcp/tools`](src/main/java/org/finos/calm/mcp/tools):
+
+- **ArchitectureTools** — list, create and read architectures (and their versions) for a namespace.
+- **ControlTools** — list and read control requirements; create control requirements and control configurations within a domain.
+- **DecoratorTools** — full CRUD over decorators.
+- **DomainTools** — list and create control domains.
+- **NamespaceTools** — list and create namespaces.
+- **SearchTools** — global cross-resource search with capped, grouped results.
+
+#### Endpoint
+
+When the application is running, the MCP server is available over Streamable HTTP at:
+
+```
+http://localhost:8080/mcp
+```
+
+In dev mode (`../mvnw quarkus:dev`) every JSON-RPC message is logged to the
+console (`%dev.quarkus.mcp.server.traffic-logging=true` in
+`application.properties`), and the Quarkus Dev UI ships a built-in MCP tester
+at [http://localhost:8080/q/dev-ui](http://localhost:8080/q/dev-ui).
+
+#### Enabling / disabling
+
+MCP is an **experimental feature** and is disabled by default. `calm.mcp.enabled` gates **tool invocations** — when `false`, every `@Tool` method returns a disabled error to the MCP client. The `/mcp` HTTP endpoint itself remains reachable regardless of this flag; network-level controls or authentication are needed to restrict endpoint access.
+
+```properties
+calm.mcp.enabled=false
+```
+
+Enable it from the command line or environment:
+
+```shell
+../mvnw quarkus:dev -Dcalm.mcp.enabled=true
+# or
+export CALM_MCP_ENABLED=true
+```
+
+#### Exposing your local MCP via ngrok
+
+To let a remote MCP client (e.g. the Claude desktop / web app) talk to your
+local CalmHub:
+
+1. Start CalmHub locally (`../mvnw quarkus:dev`).
+2. In another terminal, expose port `8080` with [ngrok](https://ngrok.com/):
+
+   ```shell
+   ngrok http 8080
+   ```
+
+3. Copy the `https://...ngrok-free.app` (or your reserved domain) URL ngrok
+   prints, and create a connector in your MCP client pointing at:
+
+   ```
+   https://<your-ngrok-host>/mcp
+   ```
+
+The ngrok URL changes each session unless you use a reserved domain.
+
+> **⚠ Security note** — when enabled, under the default profile the MCP endpoint runs
+> **without authentication**, the same as the default-profile REST API. The
+> `secure` profile enforces JWT authentication on `/mcp/*` (see
+> `application-secure.properties`), but does **not** yet apply per-tool
+> scope/role checks — adding scope-based RBAC for MCP tools (so the existing
+> `@PermittedScopes` model also covers `@Tool` invocations) is tracked as a
+> follow-up. Exposing CalmHub through ngrok publishes the endpoint to the
+> public internet, so when demoing protect the tunnel with ngrok-side controls
+> (for example `ngrok http 8080 --basic-auth 'user:password'`, an OAuth edge,
+> or an IP allowlist), tear the tunnel down when you're done, or keep
+> `calm.mcp.enabled=false` (the default) while the server is reachable.
 
 ### Building for Deployment
 

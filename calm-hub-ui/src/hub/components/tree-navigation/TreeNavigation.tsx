@@ -1,18 +1,29 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IoCompassOutline, IoChevronBackOutline, IoListOutline, IoGitBranchOutline } from 'react-icons/io5';
 import { CalmService } from '../../../service/calm-service.js';
 import { ControlService } from '../../../service/control-service.js';
 import { InterfaceService } from '../../../service/interface-service.js';
 import { AdrService } from '../../../service/adr-service/adr-service.js';
-import { Data, Adr, ResourceSummary, AdrSummary } from '../../../model/calm.js';
+import { Data, Adr, ResourceSummary, AdrSummary, ResourceMapping, isSlug } from '../../../model/calm.js';
+import { pickLatestVersion } from '../../../model/version.js';
+
+function mapCalmTypeToResourceType(type: string): string {
+    switch (type) {
+        case 'Architectures': return 'ARCHITECTURE';
+        case 'Patterns': return 'PATTERN';
+        case 'Flows': return 'FLOW';
+        case 'Standards': return 'STANDARD';
+        default: return '';
+    }
+}
 import { ControlDetail, ControlData } from '../../../model/control.js';
 import { InterfaceDetail, InterfaceData } from '../../../model/interface.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DomainItem } from './DomainItem.js';
 import { InterfaceItem } from './InterfaceItem.js';
 
-type TypeInUrl = 'architectures' | 'patterns' | 'flows' | 'adrs' | 'standards';
-type TypeInUI = 'Architectures' | 'Patterns' | 'Flows' | 'ADRs' | 'Standards';
+type TypeInUrl = 'architectures' | 'patterns' | 'flows' | 'adrs' | 'standards' | 'interfaces' | 'controls';
+type TypeInUI = 'Architectures' | 'Patterns' | 'Flows' | 'ADRs' | 'Standards' | 'Interfaces' | 'Controls';
 type HubParams = {
     namespace: string;
     type: TypeInUrl;
@@ -30,19 +41,6 @@ interface LoadResourceIdsOptions {
     setStandardSummaries: (summaries: ResourceSummary[]) => void;
     adrService: AdrService;
     setAdrSummaries: (summaries: AdrSummary[]) => void;
-}
-
-interface LoadVersionsOptions {
-    resourceID: string;
-    type: string;
-    namespace: string;
-    calmService: CalmService;
-    setArchitectureVersions: (versions: string[]) => void;
-    setPatternVersions: (versions: string[]) => void;
-    setFlowVersions: (versions: string[]) => void;
-    setStandardVersions: (versions: string[]) => void;
-    adrService: AdrService;
-    setAdrRevisions: (revisions: string[]) => void;
 }
 
 interface LoadResourceOptions {
@@ -67,21 +65,12 @@ interface TreeNavigationProps {
     onCollapse?: () => void;
 }
 
-interface VersionItemProps {
-    version: string;
-    isSelected: boolean;
-    onVersionClick: (version: string) => void;
-}
-
 interface ResourceItemProps {
     resourceID: string;
     displayName?: string;
     type: string;
     isSelected: boolean;
-    versions: string[];
-    selectedVersion: string;
     onResourceClick: (resourceID: string, type: string) => void;
-    onVersionClick: (version: string, type: string) => void;
 }
 
 interface ResourceTypeProps {
@@ -90,11 +79,8 @@ interface ResourceTypeProps {
     resourceIDs: string[];
     resourceNames?: Record<string, string>;
     selectedResourceID: string;
-    versions: string[];
-    selectedVersion: string;
     onTypeClick: (type: string) => void;
     onResourceClick: (resourceID: string, type: string) => void;
-    onVersionClick: (version: string, type: string) => void;
 }
 
 interface NamespaceItemProps {
@@ -102,16 +88,13 @@ interface NamespaceItemProps {
     selectedNamespace: string;
     selectedType: string;
     selectedResourceID: string;
-    selectedVersion: string;
     getResourceIDs: (type: string) => string[];
     getResourceNames: (type: string) => Record<string, string>;
-    getVersions: (type: string) => string[];
     namespaceInterfaces: InterfaceDetail[];
     selectedInterfaceId: number | null;
     onNamespaceClick: (namespace: string) => void;
     onTypeClick: (type: string) => void;
     onResourceClick: (resourceID: string, type: string) => void;
-    onVersionClick: (version: string, type: string) => void;
     onInterfaceClick: (iface: InterfaceDetail) => void;
 }
 
@@ -177,6 +160,10 @@ function mapTypeInUrlToTypeInUI(urlType: TypeInUrl): TypeInUI {
             return 'ADRs';
         case 'standards':
             return 'Standards';
+        case 'interfaces':
+            return 'Interfaces';
+        case 'controls':
+            return 'Controls';
         default:
             throw new Error(`Unhandled type: ${urlType}`);
     }
@@ -194,19 +181,13 @@ function mapTypeInUIToTypeInUrl(uiType: TypeInUI): TypeInUrl {
             return 'adrs';
         case 'Standards':
             return 'standards';
+        case 'Interfaces':
+            return 'interfaces';
+        case 'Controls':
+            return 'controls';
         default:
             throw new Error(`Unhandled type: ${uiType}`);
     }
-}
-
-function VersionItem({ version, isSelected, onVersionClick }: VersionItemProps) {
-    return (
-        <li>
-            <a className={isSelected ? 'active' : ''} onClick={() => onVersionClick(version)}>
-                {version}
-            </a>
-        </li>
-    );
 }
 
 function ResourceItem({
@@ -214,35 +195,17 @@ function ResourceItem({
     displayName,
     type,
     isSelected,
-    versions,
-    selectedVersion,
     onResourceClick,
-    onVersionClick,
 }: ResourceItemProps) {
     const label = displayName ?? resourceID;
-    if (isSelected) {
-        return (
-            <li>
-                <details open={true}>
-                    <summary className="active">{label}</summary>
-                    <ul>
-                        {versions.map((version) => (
-                            <VersionItem
-                                key={version}
-                                version={version}
-                                isSelected={selectedVersion === version}
-                                onVersionClick={(v) => onVersionClick(v, type)}
-                            />
-                        ))}
-                    </ul>
-                </details>
-            </li>
-        );
-    }
-
     return (
         <li>
-            <a onClick={() => onResourceClick(resourceID, type)}>{label}</a>
+            <a
+                className={isSelected ? 'active' : ''}
+                onClick={() => onResourceClick(resourceID, type)}
+            >
+                {label}
+            </a>
         </li>
     );
 }
@@ -253,11 +216,8 @@ function ResourceType({
     resourceIDs,
     resourceNames,
     selectedResourceID,
-    versions,
-    selectedVersion,
     onTypeClick,
     onResourceClick,
-    onVersionClick,
 }: ResourceTypeProps) {
     if (isSelected) {
         return (
@@ -272,10 +232,7 @@ function ResourceType({
                                 displayName={resourceNames?.[resourceID]}
                                 type={type}
                                 isSelected={selectedResourceID === resourceID}
-                                versions={versions}
-                                selectedVersion={selectedVersion}
                                 onResourceClick={onResourceClick}
-                                onVersionClick={onVersionClick}
                             />
                         ))}
                     </ul>
@@ -296,16 +253,13 @@ function NamespaceItem({
     selectedNamespace,
     selectedType,
     selectedResourceID,
-    selectedVersion,
     getResourceIDs,
     getResourceNames,
-    getVersions,
     namespaceInterfaces,
     selectedInterfaceId,
     onNamespaceClick,
     onTypeClick,
     onResourceClick,
-    onVersionClick,
     onInterfaceClick,
 }: NamespaceItemProps) {
     const resourceTypes = ['Architectures', 'Patterns', 'Flows', 'Standards', 'ADRs', 'Interfaces'];
@@ -378,11 +332,8 @@ function NamespaceItem({
                                     resourceIDs={getResourceIDs(type)}
                                     resourceNames={getResourceNames(type)}
                                     selectedResourceID={selectedResourceID}
-                                    versions={getVersions(type)}
-                                    selectedVersion={selectedVersion}
                                     onTypeClick={onTypeClick}
                                     onResourceClick={onResourceClick}
-                                    onVersionClick={onVersionClick}
                                 />
                             );
                         })}
@@ -393,16 +344,13 @@ function NamespaceItem({
                                 selectedNamespace={selectedNamespace}
                                 selectedType={selectedType}
                                 selectedResourceID={selectedResourceID}
-                                selectedVersion={selectedVersion}
                                 getResourceIDs={getResourceIDs}
                                 getResourceNames={getResourceNames}
-                                getVersions={getVersions}
                                 namespaceInterfaces={namespaceInterfaces}
                                 selectedInterfaceId={selectedInterfaceId}
                                 onNamespaceClick={onNamespaceClick}
                                 onTypeClick={onTypeClick}
                                 onResourceClick={onResourceClick}
-                                onVersionClick={onVersionClick}
                                 onInterfaceClick={onInterfaceClick}
                             />
                         ))}
@@ -418,11 +366,11 @@ function loadResourceIds({
     namespace,
     calmService,
     setArchitectureSummaries, 
-    setPatternSummaries, 
-    setFlowSummaries, 
+    setPatternSummaries,
+    setFlowSummaries,
     setStandardSummaries,
-    adrService, 
-    setAdrSummaries 
+    adrService,
+    setAdrSummaries
 }: LoadResourceIdsOptions) {
     if (type === 'Architectures') {
         calmService.fetchArchitectureSummaries(namespace).then(setArchitectureSummaries);
@@ -437,30 +385,42 @@ function loadResourceIds({
     }
 }
 
-function loadVersions({ 
-    resourceID, 
-    type, 
-    namespace,
-    calmService,
-    setArchitectureVersions, 
-    setPatternVersions, 
-    setFlowVersions, 
-    setStandardVersions,
-    adrService, 
-    setAdrRevisions 
-}: LoadVersionsOptions) {
-    if (type === 'Architectures') {
-        calmService.fetchArchitectureVersions(namespace, resourceID).then(setArchitectureVersions);
-    } else if (type === 'Patterns') {
-        calmService.fetchPatternVersions(namespace, resourceID).then(setPatternVersions);
-    } else if (type === 'Flows') {
-        calmService.fetchFlowVersions(namespace, resourceID).then(setFlowVersions);
-    } else if (type === 'Standards') {
-        calmService.fetchStandardVersions(namespace, resourceID).then(setStandardVersions);
-    } else if (type === 'ADRs') {
-        adrService
-            .fetchAdrRevisions(namespace, resourceID)
-            .then((revisions) => setAdrRevisions(revisions.map((rev) => rev.toString())));
+function loadResourceForId(
+    version: string,
+    type: string,
+    namespace: string,
+    resourceID: string,
+    calmService: CalmService,
+    onDataLoad: (data: Data) => void,
+) {
+    if (isSlug(resourceID)) {
+        calmService.fetchResourceByCustomId(namespace, resourceID, version, type).then(onDataLoad);
+    }
+}
+
+async function fetchVersionsForResource(
+    resourceID: string,
+    type: string,
+    namespace: string,
+    calmService: CalmService,
+    adrService: AdrService,
+): Promise<string[]> {
+    if (isSlug(resourceID) && type !== 'ADRs') {
+        return calmService.fetchVersionsByCustomId(namespace, resourceID);
+    }
+    switch (type) {
+        case 'Architectures':
+            return calmService.fetchArchitectureVersions(namespace, resourceID);
+        case 'Patterns':
+            return calmService.fetchPatternVersions(namespace, resourceID);
+        case 'Flows':
+            return calmService.fetchFlowVersions(namespace, resourceID);
+        case 'Standards':
+            return calmService.fetchStandardVersions(namespace, resourceID);
+        case 'ADRs':
+            return (await adrService.fetchAdrRevisions(namespace, resourceID)).map((rev) => rev.toString());
+        default:
+            return [];
     }
 }
 
@@ -470,9 +430,9 @@ function loadResource({
     namespace, 
     resourceID,
     calmService,
-    onDataLoad, 
-    onAdrLoad, 
-    adrService 
+    onDataLoad,
+    onAdrLoad,
+    adrService
 }: LoadResourceOptions) {
     if (type === 'Architectures') {
         calmService.fetchArchitecture(namespace, resourceID, version).then(onDataLoad);
@@ -491,23 +451,24 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
     const navigate = useNavigate();
     const params = useParams<HubParams>();
 
+    // Stable ref for onInterfaceLoad to avoid re-triggering the deep-link useEffect
+    const onInterfaceLoadRef = useRef(onInterfaceLoad);
+    onInterfaceLoadRef.current = onInterfaceLoad;
+
+    // Stable ref for onControlLoad to avoid re-triggering the deep-link useEffect
+    const onControlLoadRef = useRef(onControlLoad);
+    onControlLoadRef.current = onControlLoad;
+
     const [namespaces, setNamespaces] = useState<string[]>([]);
     const [selectedNamespace, setSelectedNamespace] = useState<string>(EMPTY_STR_VALUE);
     const [selectedType, setSelectedType] = useState<string>(EMPTY_STR_VALUE);
     const [selectedResourceID, setSelectedResourceID] = useState<string>(EMPTY_STR_VALUE);
-    const [selectedVersion, setSelectedVersion] = useState<string>(EMPTY_STR_VALUE);
 
     const [architectureSummaries, setArchitectureSummaries] = useState<ResourceSummary[]>([]);
     const [patternSummaries, setPatternSummaries] = useState<ResourceSummary[]>([]);
     const [flowSummaries, setFlowSummaries] = useState<ResourceSummary[]>([]);
     const [standardSummaries, setStandardSummaries] = useState<ResourceSummary[]>([]);
     const [adrSummaries, setAdrSummaries] = useState<AdrSummary[]>([]);
-
-    const [architectureVersions, setArchitectureVersions] = useState<string[]>([]);
-    const [patternVersions, setPatternVersions] = useState<string[]>([]);
-    const [flowVersions, setFlowVersions] = useState<string[]>([]);
-    const [standardVersions, setStandardVersions] = useState<string[]>([]);
-    const [adrRevisions, setAdrRevisions] = useState<string[]>([]);
 
     // Domain / Controls state
     const [domains, setDomains] = useState<string[]>([]);
@@ -523,6 +484,23 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
     const controlService = useMemo(() => new ControlService(), []);
     const interfaceService = useMemo(() => new InterfaceService(), []);
     const adrService = useMemo(() => new AdrService(), []);
+
+    // Resource mappings: merge customId into summaries after fetching
+    const mergeMappings = useCallback((summaries: ResourceSummary[], mappings: ResourceMapping[]): ResourceSummary[] => {
+        const byNumericId = new Map(mappings.map(m => [m.numericId, m.customId]));
+        return summaries.map(s => ({
+            ...s,
+            customId: byNumericId.get(s.id) ?? undefined,
+        }));
+    }, []);
+
+    const enrichWithMappings = useCallback((type: string, summaries: ResourceSummary[], setter: (s: ResourceSummary[]) => void) => {
+        const resourceType = mapCalmTypeToResourceType(type);
+        if (!resourceType) { setter(summaries); return; }
+        calmService.fetchMappings(selectedNamespace, resourceType).then(mappings => {
+            setter(mergeMappings(summaries, mappings));
+        }).catch(() => setter(summaries));
+    }, [calmService, selectedNamespace, mergeMappings]);
     const [viewMode, setViewMode] = useState<'flat' | 'hierarchical'>('hierarchical');
     const namespaceTree = useMemo(() => {
         if (viewMode === 'hierarchical') return buildNamespaceTree(namespaces);
@@ -536,10 +514,58 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
 
     useEffect(() => {
         if (params.namespace && params.type && params.id && params.version) {
+            const uiType = mapTypeInUrlToTypeInUI(params.type);
             setSelectedNamespace(params.namespace);
-            setSelectedType(mapTypeInUrlToTypeInUI(params.type));
+            setSelectedType(uiType);
+
+            if (uiType === 'Interfaces') {
+                const interfaceId = Number(params.id);
+                interfaceService.fetchInterfacesForNamespace(params.namespace)
+                    .then((interfaces) => {
+                        setNamespaceInterfaces(interfaces);
+                        const match = interfaces.find((i) => i.id === interfaceId);
+                        if (match) {
+                            setSelectedInterfaceId(match.id);
+                            onInterfaceLoadRef.current({
+                                namespace: params.namespace!,
+                                interfaceId: match.id,
+                                interfaceName: match.name,
+                                interfaceDescription: match.description,
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        setNamespaceInterfaces([]);
+                    });
+                return;
+            }
+
+            if (uiType === 'Controls') {
+                const controlId = Number(params.id);
+                const domain = params.namespace;
+                controlService.fetchControlsForDomain(domain)
+                    .then((controls) => {
+                        setDomainControls(controls);
+                        setSelectedDomain(domain);
+                        const match = controls.find((c) => c.id === controlId);
+                        if (match) {
+                            setSelectedControlId(match.id);
+                            onControlLoadRef.current({
+                                domain,
+                                controlId: match.id,
+                                controlName: match.name,
+                                controlDescription: match.description,
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        setDomainControls([]);
+                    });
+                return;
+            }
+
             loadResourceIds({
-                type: mapTypeInUrlToTypeInUI(params.type),
+                type: uiType,
                 namespace: params.namespace,
                 calmService,
                 setArchitectureSummaries,
@@ -550,31 +576,22 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
                 setAdrSummaries,
             });
             setSelectedResourceID(params.id);
-            loadVersions({
-                resourceID: params.id,
-                type: mapTypeInUrlToTypeInUI(params.type),
-                namespace: params.namespace,
-                calmService,
-                setArchitectureVersions,
-                setPatternVersions,
-                setFlowVersions,
-                setStandardVersions,
-                adrService,
-                setAdrRevisions,
-            });
-            setSelectedVersion(params.version);
-            loadResource({
-                version: params.version,
-                type: mapTypeInUrlToTypeInUI(params.type),
-                namespace: params.namespace,
-                resourceID: params.id,
-                calmService,
-                onDataLoad,
-                onAdrLoad,
-                adrService,
-            });
+            if (isSlug(params.id)) {
+                loadResourceForId(params.version, uiType, params.namespace, params.id, calmService, onDataLoad);
+            } else {
+                loadResource({
+                    version: params.version,
+                    type: uiType,
+                    namespace: params.namespace,
+                    resourceID: params.id,
+                    calmService,
+                    onDataLoad,
+                    onAdrLoad,
+                    adrService,
+                });
+            }
         }
-    }, [params, calmService, adrService, onDataLoad, onAdrLoad]);
+    }, [params, calmService, adrService, interfaceService, controlService, onDataLoad, onAdrLoad]);
 
     const handleNamespaceClick = useCallback((namespace: string) => {
         if (selectedNamespace === namespace) {
@@ -584,7 +601,6 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
         }
         setSelectedType(EMPTY_STR_VALUE);
         setSelectedResourceID(EMPTY_STR_VALUE);
-        setSelectedVersion(EMPTY_STR_VALUE);
         // Clear domain selection when navigating namespaces
         setSelectedDomain('');
         setSelectedControlId(null);
@@ -605,7 +621,6 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
         setSelectedNamespace(EMPTY_STR_VALUE);
         setSelectedType(EMPTY_STR_VALUE);
         setSelectedResourceID(EMPTY_STR_VALUE);
-        setSelectedVersion(EMPTY_STR_VALUE);
         // Clear interface selection when navigating domains
         setNamespaceInterfaces([]);
         setSelectedInterfaceId(null);
@@ -641,56 +656,52 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
                     console.error('Failed to fetch interfaces', error);
                     setNamespaceInterfaces([]);
                 });
+            } else if (type === 'ADRs') {
+                adrService.fetchAdrSummaries(selectedNamespace).then(setAdrSummaries);
             } else {
-                loadResourceIds({
-                    type,
-                    namespace: selectedNamespace,
-                    calmService,
-                    setArchitectureSummaries,
-                    setPatternSummaries,
-                    setFlowSummaries,
-                    setStandardSummaries,
-                    adrService,
-                    setAdrSummaries,
+                const setter = type === 'Architectures' ? setArchitectureSummaries
+                    : type === 'Patterns' ? setPatternSummaries
+                    : type === 'Flows' ? setFlowSummaries
+                    : setStandardSummaries;
+                const fetcher = type === 'Architectures' ? calmService.fetchArchitectureSummaries.bind(calmService)
+                    : type === 'Patterns' ? calmService.fetchPatternSummaries.bind(calmService)
+                    : type === 'Flows' ? calmService.fetchFlowSummaries.bind(calmService)
+                    : calmService.fetchStandardSummaries.bind(calmService);
+                fetcher(selectedNamespace).then((summaries: ResourceSummary[]) => {
+                    enrichWithMappings(type, summaries, setter);
                 });
             }
         }
         setSelectedResourceID(EMPTY_STR_VALUE);
-        setSelectedVersion(EMPTY_STR_VALUE);
         setSelectedInterfaceId(null);
-    }, [selectedNamespace, selectedType, calmService, adrService, interfaceService]);
+    }, [selectedNamespace, selectedType, calmService, adrService, interfaceService, enrichWithMappings]);
 
-    const handleResourceClick = useCallback((resourceID: string, type: string) => {
+    const handleResourceClick = useCallback(async (resourceID: string, type: string) => {
         setSelectedResourceID(resourceID);
-        setSelectedVersion(EMPTY_STR_VALUE);
-        loadVersions({
-            resourceID,
-            type,
-            namespace: selectedNamespace,
-            calmService,
-            setArchitectureVersions,
-            setPatternVersions,
-            setFlowVersions,
-            setStandardVersions,
-            adrService,
-            setAdrRevisions,
-        });
-    }, [selectedNamespace, calmService, adrService]);
-
-    const handleVersionClick = useCallback((version: string, type: string) => {
-        navigate(`${basePath}/${selectedNamespace}/${mapTypeInUIToTypeInUrl(type as TypeInUI)}/${selectedResourceID}/${version}`);
-    }, [navigate, selectedNamespace, selectedResourceID]);
+        const versions = await fetchVersionsForResource(resourceID, type, selectedNamespace, calmService, adrService);
+        const latest = pickLatestVersion(versions);
+        if (!latest) {
+            // arg1 is %s to prevent format string injection from `resourceID`.
+            console.warn('No versions found for resource %s; nothing to load', resourceID);
+            return;
+        }
+        // Route with the displayed id (slug when present) so the deep-link loads the
+        // same resource and the tree keeps it highlighted. The loader resolves slug vs
+        // numeric ids itself.
+        navigate(`${basePath}/${selectedNamespace}/${mapTypeInUIToTypeInUrl(type as TypeInUI)}/${resourceID}/${latest}`);
+    }, [navigate, selectedNamespace, calmService, adrService]);
 
     const getResourceIDs = (type: string): string[] => {
+        const toId = (s: ResourceSummary) => s.customId ?? s.id.toString();
         switch (type) {
             case 'Architectures':
-                return architectureSummaries.map((s) => s.id.toString());
+                return architectureSummaries.map(toId);
             case 'Patterns':
-                return patternSummaries.map((s) => s.id.toString());
+                return patternSummaries.map(toId);
             case 'Flows':
-                return flowSummaries.map((s) => s.id.toString());
+                return flowSummaries.map(toId);
             case 'Standards':
-                return standardSummaries.map((s) => s.id.toString());
+                return standardSummaries.map(toId);
             case 'ADRs':
                 return adrSummaries.map((s) => s.id.toString());
             default:
@@ -699,46 +710,22 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
     };
 
     const getResourceNames = (type: string): Record<string, string> => {
+        const toEntry = (s: ResourceSummary): [string, string] => [(s.customId ?? s.id.toString()), s.name];
         switch (type) {
             case 'Architectures':
-                return Object.fromEntries(
-                    architectureSummaries.map((s) => [s.id.toString(), s.name])
-                );
+                return Object.fromEntries(architectureSummaries.map(toEntry));
             case 'Patterns':
-                return Object.fromEntries(
-                    patternSummaries.map((s) => [s.id.toString(), s.name])
-                );
+                return Object.fromEntries(patternSummaries.map(toEntry));
             case 'Flows':
-                return Object.fromEntries(
-                    flowSummaries.map((s) => [s.id.toString(), s.name])
-                );
+                return Object.fromEntries(flowSummaries.map(toEntry));
             case 'Standards':
-                return Object.fromEntries(
-                    standardSummaries.map((s) => [s.id.toString(), s.name])
-                );
+                return Object.fromEntries(standardSummaries.map(toEntry));
             case 'ADRs':
                 return Object.fromEntries(
                     adrSummaries.map((s) => [s.id.toString(), s.title + ' (' + s.status + ')'])
                 );
             default:
                 return {};
-        }
-    };
-
-    const getVersions = (type: string): string[] => {
-        switch (type) {
-            case 'Architectures':
-                return architectureVersions;
-            case 'Patterns':
-                return patternVersions;
-            case 'Flows':
-                return flowVersions;
-            case 'Standards':
-                return standardVersions;
-            case 'ADRs':
-                return adrRevisions;
-            default:
-                return [];
         }
     };
 
@@ -792,16 +779,13 @@ export function TreeNavigation({ onDataLoad, onAdrLoad, onControlLoad, onInterfa
                                     selectedNamespace={selectedNamespace}
                                     selectedType={selectedType}
                                     selectedResourceID={selectedResourceID}
-                                    selectedVersion={selectedVersion}
                                     getResourceIDs={getResourceIDs}
                                     getResourceNames={getResourceNames}
-                                    getVersions={getVersions}
                                     namespaceInterfaces={namespaceInterfaces}
                                     selectedInterfaceId={selectedInterfaceId}
                                     onNamespaceClick={handleNamespaceClick}
                                     onTypeClick={handleTypeClick}
                                     onResourceClick={handleResourceClick}
-                                    onVersionClick={handleVersionClick}
                                     onInterfaceClick={handleInterfaceClick}
                                 />
                             ))}

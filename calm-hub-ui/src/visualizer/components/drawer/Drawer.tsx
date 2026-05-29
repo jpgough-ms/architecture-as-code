@@ -7,6 +7,7 @@ import { MetadataPanel } from '../reactflow/MetadataPanel.js';
 import { toSidebarNodeData, toSidebarEdgeData } from '../reactflow/utils/patternClickHandlers.js';
 import { CalmService } from '../../../service/calm-service.js';
 import type { DrawerProps, Flow, Control, Decorator } from '../../contracts/contracts.js';
+import { isSlug } from '../../../model/calm.js';
 
 /**
  * Detect whether JSON data is a CALM pattern (JSON Schema) or an architecture instance.
@@ -47,6 +48,10 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
+    // Identifies the diagram (ignoring version) so its viewport can be remembered
+    // across version/moment switches and refreshes. A dropped file has no identity.
+    const viewportKey = !fileInstance && data ? `${data.name}/${data.id}` : undefined;
+
     useEffect(() => {
         const source = fileInstance ?? data?.data;
         const isPattern = !!source && (isPatternData(source) || (!fileInstance && data?.calmType === 'Patterns'));
@@ -62,7 +67,9 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
             return;
         }
         const versionPath = data.version.replace(/\./g, '-');
-        const target = `/calm/namespaces/${data.name}/architectures/${data.id}/versions/${versionPath}`;
+        const target = isSlug(data.id)
+            ? `/calm/namespaces/${data.name}/${data.id}/versions/${versionPath}`
+            : `/calm/namespaces/${data.name}/architectures/${data.id}/versions/${versionPath}`;
         calmService.fetchDecoratorValues(data.name, target, 'deployment').then(setDecoratorsState);
     }, [data, fileInstance, decoratorsProp, calmService]);
 
@@ -72,6 +79,19 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
     const flows = useMemo((): Flow[] => {
         const calmData = calmInstance as CalmArchitectureSchema & { flows?: Flow[] };
         return calmData?.flows || [];
+    }, [calmInstance]);
+
+    // Extract ADR links from CALM data
+    const adrs = useMemo((): string[] => {
+        const calmData = calmInstance as CalmArchitectureSchema & { adrs?: unknown };
+        const rawAdrs = calmData?.adrs;
+        if (!Array.isArray(rawAdrs)) {
+            return [];
+        }
+        return rawAdrs
+            .filter((adr): adr is string => typeof adr === 'string')
+            .map((adr) => adr.trim())
+            .filter((adr) => adr.length > 0);
     }, [calmInstance]);
 
     // Extract controls from CALM data (from root, nodes, and relationships)
@@ -123,7 +143,7 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
         return { ...nodeControls, ...relationshipControls, ...rootControls };
     }, [calmInstance]);
 
-    const hasMetadata = flows.length > 0 || Object.keys(controls).length > 0 || decorators.length > 0;
+    const hasMetadata = flows.length > 0 || Object.keys(controls).length > 0 || decorators.length > 0 || adrs.length > 0;
 
     const hasContent = !!(calmInstance || patternInstance);
 
@@ -188,6 +208,7 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
                                 onNodeClick={handlePatternNodeClick}
                                 onEdgeClick={handlePatternEdgeClick}
                                 onBackgroundClick={closeSidebar}
+                                viewportKey={viewportKey}
                             />
                         ) : calmInstance ? (
                             <ReactFlowVisualizer
@@ -195,6 +216,7 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
                                 onNodeClick={handleNodeClick}
                                 onEdgeClick={handleEdgeClick}
                                 onBackgroundClick={closeSidebar}
+                                viewportKey={viewportKey}
                             />
                         ) : null}
                     </div>
@@ -209,6 +231,7 @@ export function Drawer({ data, onItemSelect, decorators: decoratorsProp }: Drawe
                                 flows={flows}
                                 controls={controls}
                                 decorators={decorators}
+                                adrs={adrs}
                                 onTransitionClick={handleTransitionClick}
                                 onNodeClick={handleControlNodeClick}
                                 isCollapsed={isMetadataCollapsed}

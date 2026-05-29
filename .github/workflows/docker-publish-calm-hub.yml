@@ -4,13 +4,24 @@ permissions:
     contents: read
 
 on:
-    # Only manual trigger from GitHub UI
+    push:
+        branches:
+            - main
+        paths:
+            - 'calm-hub/**'
+            - 'calm-hub-ui/**'
+            - '.github/workflows/docker-publish-calm-hub.yml'
+    # Manual trigger from GitHub UI (allows custom tag)
     workflow_dispatch:
         inputs:
             tag:
                 description: 'Image tag (default: latest)'
                 required: false
                 default: 'latest'
+
+concurrency:
+    group: docker-publish-calm-hub
+    cancel-in-progress: false
 
 jobs:
     build-and-push:
@@ -31,7 +42,7 @@ jobs:
 
             # Step 3: Cache Maven Dependencies
             - name: Cache Maven Dependencies
-              uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5
+              uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
               with:
                   path: ~/.m2
                   key: ${{ runner.os }}-m2-${{ hashFiles('calm-hub/pom.xml') }}
