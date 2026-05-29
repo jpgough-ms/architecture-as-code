@@ -62,11 +62,11 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${CYAN}🤖 The Vision:${NC}"
     echo "   Agents aren't just consuming APIs anymore — they're coordinating with each other."
     echo "   Agent-to-Agent (A2A) protocol enables autonomous agents to discover and invoke"
-    echo "   tools, making decisions without human intervention."
+    echo "   skills, making decisions without human intervention."
     echo ""
     echo -e "${CYAN}📈 The Demo:${NC}"
-    echo "   1. Deploy A2A server that exposes portfolio management tools"
-    echo "   2. QCON UI Agent — Human-facing interface to explore tools"
+    echo "   1. Deploy A2A server that exposes portfolio management skills"
+    echo "   2. QCON UI Agent — Human-facing interface to explore skills"
     echo "   3. Rebalancer Agent — Autonomous agent running OBSERVE → DECIDE → ACT loop"
     echo "   4. Flood portfolio with trades → Watch rebalancer correct imbalances"
     echo ""
@@ -308,8 +308,8 @@ stage "Step 5 — Start QCON UI Agent"
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "Starting the QCON Agent UI..."
-    info "Why: Provides a human-facing interface to explore A2A tools"
-    info "The UI connects to the A2A server and displays available tools"
+    info "Why: Provides a human-facing interface to explore A2A skills"
+    info "The UI connects to the A2A server and displays available skills"
 fi
 
 echo -e "${YELLOW_BOLD}In a SEPARATE terminal, run:${NC}"
@@ -322,8 +322,8 @@ echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then
     info "💡 In the UI:"
     echo "   1. Click 'Connect' to connect to the A2A server"
-    echo "   2. Explore available tools (get-portfolio, book-trade, rebalance, etc.)"
-    echo "   3. Try invoking tools to see agent-to-agent communication in action"
+    echo "   2. Explore available skills (get-portfolio, book-trade, rebalance, etc.)"
+    echo "   3. Try invoking skills to see agent-to-agent communication in action"
     echo ""
 fi
 echo -e "${YELLOW_BOLD}Press Enter once you've explored the UI...${NC}"
@@ -398,7 +398,7 @@ if [ $? -eq 0 ]; then
     if [ "$VERBOSE_MODE" == "true" ]; then
         info "🎯 The Key Insight:"
         echo "   The rebalancer agent doesn't need human approval or coordination."
-        echo "   It discovers tools via A2A, analyzes the portfolio, and acts autonomously."
+        echo "   It discovers skills via A2A, analyzes the portfolio, and acts autonomously."
         echo "   This is the future of API consumption — agents as first-class citizens."
         echo ""
         info "💡 Check the rebalancer terminal to see it correcting the imbalance!"
@@ -411,6 +411,7 @@ else
 fi
 
 echo ""
+echo -e "${YELLOW_BOLD}Once you've observed the rebalancer for a while, press Enter to continue...${NC}"
 read
 
 # ============================================================================
@@ -420,8 +421,8 @@ read
 
 if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}What We Demonstrated:${NC}"
-    echo "   1. A2A Protocol — Agents discover tools via agent card"
-    echo "   2. UI Agent — Human-facing tool exploration"
+    echo "   1. A2A Protocol — Agents discover skills via agent card"
+    echo "   2. UI Agent — Human-facing skill exploration"
     echo "   3. Autonomous Agent — Rebalancer runs without human oversight"
     echo "   4. Agent Coordination — Multiple agents using same A2A backend"
     echo ""
@@ -453,14 +454,13 @@ echo -e "${GREEN}║                   ✓ Scenario 5 Complete!                 
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-if [ "$VERBOSE_MODE" == "true" ]; then
-    echo -e "${CYAN}To clean up:${NC}"
-    echo "   1. Stop rebalancer agent (Ctrl+C in its terminal)"
-    echo "   2. Stop UI agent: docker rm -f qcon-agent-ui"
-    echo "   3. Stop port-forward (Ctrl+C in its terminal)"
-    echo "   4. Delete deployments: kubectl delete -k ."
-    echo ""
-fi
+echo -e "${CYAN}To clean up:${NC}"
+echo "   1. Stop rebalancer agent (Ctrl+C in its terminal)"
+echo "   2. Stop UI agent: docker rm -f qcon-agent-ui"
+echo "   3. Stop port-forward (Ctrl+C in its terminal)"
+echo "   4. Delete deployments (from the scenario5 folder):"
+echo "      cd $(pwd) && kubectl delete -k ."
+echo ""
 
 echo "Press Enter to exit..."
 read

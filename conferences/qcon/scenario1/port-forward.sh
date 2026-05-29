@@ -38,6 +38,9 @@ kubectl port-forward service/trades-mcp-server 8080:80 > /dev/null 2>&1 &
 echo -e "  • Trades API:     http://localhost:8081"
 kubectl port-forward service/trades 8081:80 > /dev/null 2>&1 &
 
+echo -e "  • A2A Server:     http://localhost:9103"
+kubectl port-forward service/trades-a2a-server 9103:80 > /dev/null 2>&1 &
+
 echo ""
 echo -e "${GREEN}✓ Port-forwarding active${NC}"
 echo ""
