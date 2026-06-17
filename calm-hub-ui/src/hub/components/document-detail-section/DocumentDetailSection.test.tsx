@@ -11,7 +11,7 @@ vi.mock('react-router-dom', async () => {
     const actual = await vi.importActual('react-router-dom');
     return {
         ...actual,
-        useNavigate: vi.fn(() => mockNavigate),
+        useNavigate: vi.fn(function () { return mockNavigate; }),
     };
 });
 
@@ -24,11 +24,11 @@ const mockFetchFlowVersions = vi.fn();
 const mockFetchVersionsByCustomId = vi.fn();
 
 vi.mock('../../../service/calm-service.js', () => ({
-    CalmService: vi.fn().mockImplementation(() => ({
+    CalmService: vi.fn().mockImplementation(function () { return {
         fetchStandardVersions: mockFetchStandardVersions,
         fetchFlowVersions: mockFetchFlowVersions,
         fetchVersionsByCustomId: mockFetchVersionsByCustomId,
-    })),
+    }; }),
 }));
 
 describe('DocumentDetailSection', () => {
@@ -208,7 +208,7 @@ describe('DocumentDetailSection', () => {
             expect(screen.getByRole('combobox', { name: 'Version' })).toBeInTheDocument();
         });
 
-        expect(mockFetchVersionsByCustomId).toHaveBeenCalledWith('test-ns', 'my-payment-standard');
+        expect(mockFetchVersionsByCustomId).toHaveBeenCalledWith('test-ns', 'my-payment-standard', 'Standards');
         expect(mockFetchStandardVersions).not.toHaveBeenCalled();
     });
 });

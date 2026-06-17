@@ -42,7 +42,7 @@ vi.mock('@finos/calm-shared', () => {
         listControlConfigurationVersions: vi.fn()
     };
     return {
-        CalmHubClient: vi.fn(() => mockClient),
+        CalmHubClient: vi.fn(function () { return mockClient; }),
         HubClientError: class HubClientError extends Error {
             constructor(public status: number, public error: string, public request: string) {
                 super(`${status} ${error}`);
@@ -78,10 +78,10 @@ describe('hub-commands', () => {
         vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ nodes: [] }) as unknown as Uint8Array);
         vi.mocked(fs.writeFile).mockResolvedValue(undefined);
         // Silence output helpers
-        vi.mocked(hubOutput.printJsonSuccess).mockImplementation(() => undefined);
-        vi.mocked(hubOutput.printTableSuccess).mockImplementation(() => undefined);
-        vi.mocked(hubOutput.printError).mockImplementation(() => undefined);
-        vi.mocked(hubOutput.parseOutputFormat).mockImplementation((v) => v === 'pretty' ? 'pretty' : 'json');
+        vi.mocked(hubOutput.printJsonSuccess).mockImplementation(function () { return undefined; });
+        vi.mocked(hubOutput.printTableSuccess).mockImplementation(function () { return undefined; });
+        vi.mocked(hubOutput.printError).mockImplementation(function () { return undefined; });
+        vi.mocked(hubOutput.parseOutputFormat).mockImplementation(function (v) { return v === 'pretty' ? 'pretty' : 'json'; });
     });
 
     afterEach(() => {
@@ -327,7 +327,7 @@ describe('hub-commands', () => {
         it('prints JSON to stdout by default', async () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.pullArchitecture).mockResolvedValue({ id: 1, architecture: '{}' });
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(function () { return undefined; });
 
             await runPullArchitecture({ calmHubOptions: { calmHubUrl: 'http://hub' }, namespace: 'finos', id: '1', version: '1.0.0' });
 
@@ -786,7 +786,7 @@ describe('hub-commands', () => {
         it('prints JSON to stdout by default', async () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.pullPattern).mockResolvedValue({ id: 10, patternJson: '{}' });
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(function () { return undefined; });
 
             const { runPullPattern } = await import('./hub-commands');
             await runPullPattern({ calmHubOptions: { calmHubUrl: 'http://hub' }, namespace: 'finos', id: '10', version: '1.0.0' });
@@ -1028,7 +1028,7 @@ describe('hub-commands', () => {
         it('prints JSON to stdout by default', async () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.pullStandard).mockResolvedValue({ id: 20, standardJson: 'raw' });
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(function () { return undefined; });
 
             const { runPullStandard } = await import('./hub-commands');
             await runPullStandard({ calmHubOptions: { calmHubUrl: 'http://hub' }, namespace: 'finos', id: '20', version: '1.0.0' });
@@ -1115,10 +1115,10 @@ describe('hub-commands', () => {
 
     describe('printIdCreateResult', () => {
         it('calls printTableSuccess with STATUS/ID/LOCATION when format is pretty', () => {
-            printIdCreateResult({ id: 7, location: '/calm/domains/7' }, 'pretty');
+            printIdCreateResult({ id: 7, location: '/api/calm/domains/7' }, 'pretty');
 
             expect(hubOutput.printTableSuccess).toHaveBeenCalledWith(
-                [{ STATUS: 'Created', ID: 7, LOCATION: '/calm/domains/7' }],
+                [{ STATUS: 'Created', ID: 7, LOCATION: '/api/calm/domains/7' }],
                 [
                     { key: 'STATUS', header: 'STATUS' },
                     { key: 'ID', header: 'ID' },
@@ -1128,9 +1128,9 @@ describe('hub-commands', () => {
         });
 
         it('calls printJsonSuccess with id and location when format is json', () => {
-            printIdCreateResult({ id: 7, location: '/calm/domains/7' }, 'json');
+            printIdCreateResult({ id: 7, location: '/api/calm/domains/7' }, 'json');
 
-            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ id: 7, location: '/calm/domains/7' });
+            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ id: 7, location: '/api/calm/domains/7' });
             expect(hubOutput.printTableSuccess).not.toHaveBeenCalled();
         });
     });
@@ -1140,17 +1140,17 @@ describe('hub-commands', () => {
     describe('runCreateDomain', () => {
         it('calls createDomain and prints JSON result', async () => {
             const { mockClient } = await getSharedMocks();
-            vi.mocked(mockClient.createDomain).mockResolvedValue({ name: 'risk', location: '/calm/domains/risk' });
+            vi.mocked(mockClient.createDomain).mockResolvedValue({ name: 'risk', location: '/api/calm/domains/risk' });
 
             await runCreateDomain({ calmHubOptions: { calmHubUrl: 'http://hub' }, name: 'risk' });
 
             expect(mockClient.createDomain).toHaveBeenCalledWith('risk');
-            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ name: 'risk', location: '/calm/domains/risk' });
+            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ name: 'risk', location: '/api/calm/domains/risk' });
         });
 
         it('renders table when format is pretty', async () => {
             const { mockClient } = await getSharedMocks();
-            vi.mocked(mockClient.createDomain).mockResolvedValue({ name: 'risk', location: '/calm/domains/risk' });
+            vi.mocked(mockClient.createDomain).mockResolvedValue({ name: 'risk', location: '/api/calm/domains/risk' });
 
             await runCreateDomain({ calmHubOptions: { calmHubUrl: 'http://hub' }, name: 'risk', format: 'pretty' });
 
@@ -1160,7 +1160,7 @@ describe('hub-commands', () => {
         it('exits on 409 conflict', async () => {
             const { mockClient, shared } = await getSharedMocks();
             vi.mocked(mockClient.createDomain).mockRejectedValue(
-                new shared.HubClientError(409, 'Domain already exists', 'POST /calm/domains')
+                new shared.HubClientError(409, 'Domain already exists', 'POST /api/calm/domains')
             );
 
             await expect(runCreateDomain({ calmHubOptions: { calmHubUrl: 'http://hub' }, name: 'risk' }))
@@ -1209,7 +1209,7 @@ describe('hub-commands', () => {
     describe('runCreateControlRequirement', () => {
         it('calls createControl and prints JSON result', async () => {
             const { mockClient } = await getSharedMocks();
-            vi.mocked(mockClient.createControl).mockResolvedValue({ id: 42, location: '/calm/domains/risk/controls/42' });
+            vi.mocked(mockClient.createControl).mockResolvedValue({ id: 42, location: '/api/calm/domains/risk/controls/42' });
 
             await runCreateControlRequirement({
                 calmHubOptions: { calmHubUrl: 'http://hub' },
@@ -1220,12 +1220,12 @@ describe('hub-commands', () => {
             });
 
             expect(mockClient.createControl).toHaveBeenCalledWith('risk', 'my-control', 'A control', expect.any(String));
-            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ id: 42, location: '/calm/domains/risk/controls/42' });
+            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ id: 42, location: '/api/calm/domains/risk/controls/42' });
         });
 
         it('renders table when format is pretty', async () => {
             const { mockClient } = await getSharedMocks();
-            vi.mocked(mockClient.createControl).mockResolvedValue({ id: 42, location: '/calm/domains/risk/controls/42' });
+            vi.mocked(mockClient.createControl).mockResolvedValue({ id: 42, location: '/api/calm/domains/risk/controls/42' });
 
             await runCreateControlRequirement({
                 calmHubOptions: { calmHubUrl: 'http://hub' },
@@ -1294,7 +1294,7 @@ describe('hub-commands', () => {
         it('exits on 409 conflict', async () => {
             const { mockClient, shared } = await getSharedMocks();
             vi.mocked(mockClient.createControl).mockRejectedValue(
-                new shared.HubClientError(409, 'Control already exists', 'POST /calm/domains/risk/controls')
+                new shared.HubClientError(409, 'Control already exists', 'POST /api/calm/domains/risk/controls')
             );
 
             await expect(runCreateControlRequirement({
@@ -1394,7 +1394,7 @@ describe('hub-commands', () => {
         it('calls pushControlRequirement and prints result', async () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.pushControlRequirement).mockResolvedValue({
-                id: 1, version: '1.0.0', location: '/calm/domains/risk/controls/1/requirement/versions/1.0.0'
+                id: 1, version: '1.0.0', location: '/api/calm/domains/risk/controls/1/requirement/versions/1.0.0'
             });
 
             await runPushControlRequirement({
@@ -1416,7 +1416,7 @@ describe('hub-commands', () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.listControls).mockResolvedValue([{ id: 1, name: 'fallback-name', description: 'fallback-description' }]);
             vi.mocked(mockClient.pushControlRequirement).mockResolvedValue({
-                id: 1, version: '1.0.0', location: '/calm/domains/risk/controls/1/requirement/versions/1.0.0'
+                id: 1, version: '1.0.0', location: '/api/calm/domains/risk/controls/1/requirement/versions/1.0.0'
             });
 
             await runPushControlRequirement({
@@ -1442,7 +1442,7 @@ describe('hub-commands', () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.listControls).mockResolvedValue([{ id: 1, name: 'fallback-name', description: 'fallback-description' }]);
             vi.mocked(mockClient.pushControlRequirement).mockResolvedValue({
-                id: 1, version: '1.0.0', location: '/calm/domains/risk/controls/1/requirement/versions/1.0.0'
+                id: 1, version: '1.0.0', location: '/api/calm/domains/risk/controls/1/requirement/versions/1.0.0'
             });
 
             await runPushControlRequirement({
@@ -1469,7 +1469,7 @@ describe('hub-commands', () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.listControls).mockResolvedValue([{ id: 1, name: 'fallback-name', description: 'fallback-description' }]);
             vi.mocked(mockClient.pushControlRequirement).mockResolvedValue({
-                id: 1, version: '1.0.0', location: '/calm/domains/risk/controls/1/requirement/versions/1.0.0'
+                id: 1, version: '1.0.0', location: '/api/calm/domains/risk/controls/1/requirement/versions/1.0.0'
             });
 
             await runPushControlRequirement({
@@ -1496,7 +1496,7 @@ describe('hub-commands', () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.listControls).mockResolvedValue([{ id: 1, name: 'fallback-name', description: 'fallback-description' }]);
             vi.mocked(mockClient.pushControlRequirement).mockResolvedValue({
-                id: 1, version: '1.0.0', location: '/calm/domains/risk/controls/1/requirement/versions/1.0.0'
+                id: 1, version: '1.0.0', location: '/api/calm/domains/risk/controls/1/requirement/versions/1.0.0'
             });
 
             await runPushControlRequirement({
@@ -1634,7 +1634,7 @@ describe('hub-commands', () => {
         it('exits on Hub error', async () => {
             const { mockClient, shared } = await getSharedMocks();
             vi.mocked(mockClient.pushControlRequirement).mockRejectedValue(
-                new shared.HubClientError(400, 'Bad request', 'POST /calm/domains/risk/controls/1/requirement/versions/1.0.0')
+                new shared.HubClientError(400, 'Bad request', 'POST /api/calm/domains/risk/controls/1/requirement/versions/1.0.0')
             );
 
             await expect(runPushControlRequirement({
@@ -1655,7 +1655,7 @@ describe('hub-commands', () => {
     describe('runPullControlRequirement', () => {
         it('writes JSON to stdout', async () => {
             const { mockClient } = await getSharedMocks();
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(function () { return undefined; });
             vi.mocked(mockClient.pullControlRequirement).mockResolvedValue({ type: 'control-requirement', requirements: [] });
 
             await runPullControlRequirement({
@@ -1697,7 +1697,7 @@ describe('hub-commands', () => {
         it('exits on Hub error', async () => {
             const { mockClient, shared } = await getSharedMocks();
             vi.mocked(mockClient.pullControlRequirement).mockRejectedValue(
-                new shared.HubClientError(404, 'Not found', 'GET /calm/domains/risk/controls/99/requirement/versions/1.0.0')
+                new shared.HubClientError(404, 'Not found', 'GET /api/calm/domains/risk/controls/99/requirement/versions/1.0.0')
             );
 
             await expect(runPullControlRequirement({
@@ -1716,7 +1716,7 @@ describe('hub-commands', () => {
         it('calls pushControlConfiguration and prints result', async () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.pushControlConfiguration).mockResolvedValue({
-                id: 1, version: '1.0.0', location: '/calm/domains/risk/controls/1/configurations/5/versions/1.0.0'
+                id: 1, version: '1.0.0', location: '/api/calm/domains/risk/controls/1/configurations/5/versions/1.0.0'
             });
 
             await runPushControlConfiguration({
@@ -1788,7 +1788,7 @@ describe('hub-commands', () => {
         it('exits on Hub error', async () => {
             const { mockClient, shared } = await getSharedMocks();
             vi.mocked(mockClient.pushControlConfiguration).mockRejectedValue(
-                new shared.HubClientError(400, 'Bad request', 'POST /calm/domains/risk/controls/1/configurations/5/versions/1.0.0')
+                new shared.HubClientError(400, 'Bad request', 'POST /api/calm/domains/risk/controls/1/configurations/5/versions/1.0.0')
             );
 
             await expect(runPushControlConfiguration({
@@ -1808,7 +1808,7 @@ describe('hub-commands', () => {
     describe('runPullControlConfiguration', () => {
         it('writes JSON to stdout', async () => {
             const { mockClient } = await getSharedMocks();
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(function () { return undefined; });
             vi.mocked(mockClient.pullControlConfiguration).mockResolvedValue({ type: 'control-configuration', config: {} });
 
             await runPullControlConfiguration({
@@ -1866,7 +1866,7 @@ describe('hub-commands', () => {
         it('exits on Hub error', async () => {
             const { mockClient, shared } = await getSharedMocks();
             vi.mocked(mockClient.pullControlConfiguration).mockRejectedValue(
-                new shared.HubClientError(404, 'Not found', 'GET /calm/domains/risk/controls/99/configurations/5/versions/1.0.0')
+                new shared.HubClientError(404, 'Not found', 'GET /api/calm/domains/risk/controls/99/configurations/5/versions/1.0.0')
             );
 
             await expect(runPullControlConfiguration({
@@ -1886,7 +1886,7 @@ describe('hub-commands', () => {
         it('calls createControlConfiguration and prints JSON result', async () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.createControlConfiguration).mockResolvedValue({
-                id: 5, location: '/calm/domains/risk/controls/1/configurations/5'
+                id: 5, location: '/api/calm/domains/risk/controls/1/configurations/5'
             });
 
             await runCreateControlConfiguration({
@@ -1897,13 +1897,13 @@ describe('hub-commands', () => {
             });
 
             expect(mockClient.createControlConfiguration).toHaveBeenCalledWith('risk', 1, expect.any(String));
-            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ id: 5, location: '/calm/domains/risk/controls/1/configurations/5' });
+            expect(hubOutput.printJsonSuccess).toHaveBeenCalledWith({ id: 5, location: '/api/calm/domains/risk/controls/1/configurations/5' });
         });
 
         it('renders table when format is pretty', async () => {
             const { mockClient } = await getSharedMocks();
             vi.mocked(mockClient.createControlConfiguration).mockResolvedValue({
-                id: 5, location: '/calm/domains/risk/controls/1/configurations/5'
+                id: 5, location: '/api/calm/domains/risk/controls/1/configurations/5'
             });
 
             await runCreateControlConfiguration({
@@ -1942,7 +1942,7 @@ describe('hub-commands', () => {
         it('exits on Hub error', async () => {
             const { mockClient, shared } = await getSharedMocks();
             vi.mocked(mockClient.createControlConfiguration).mockRejectedValue(
-                new shared.HubClientError(404, 'Control not found', 'POST /calm/domains/risk/controls/99/configurations')
+                new shared.HubClientError(404, 'Control not found', 'POST /api/calm/domains/risk/controls/99/configurations')
             );
 
             await expect(runCreateControlConfiguration({
@@ -2080,7 +2080,7 @@ describe('hub-commands', () => {
             vi.mocked(mockClient.listControlConfigurations).mockResolvedValue([1, 2]);
             vi.mocked(mockClient.listControlConfigurationVersions)
                 .mockResolvedValueOnce(['1.0.0'])
-                .mockRejectedValueOnce(new shared.HubClientError(404, 'Not found', 'GET /calm/domains/risk/controls/1/configurations/2/versions'));
+                .mockRejectedValueOnce(new shared.HubClientError(404, 'Not found', 'GET /api/calm/domains/risk/controls/1/configurations/2/versions'));
 
             await expect(runListControlConfigurations({
                 calmHubOptions: { calmHubUrl: 'http://hub' },
