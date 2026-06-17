@@ -1,5 +1,6 @@
 {
   "$schema": "https://calm.finos.org/qcon/qcon.pattern.json",
+  "$id": "https://calm.finos.org/calm/namespaces/qcon/architectures/qcon/versions/1.0.0",
   "unique-id": "qcon-architecture",
   "name": "QCon Architecture (Non-Conforming)",
   "description": "Non-conforming architecture missing permitted-connection control on mcp-client-to-mcp-server relationship",

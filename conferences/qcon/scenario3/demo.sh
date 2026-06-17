@@ -264,29 +264,14 @@ fi
 echo "Pattern referenced: ${PATTERN_NAME_BAD}"
 echo ""
 
-info "Checking CALM Hub for pattern '${PATTERN_NAME_BAD}'..."
-PATTERNS_RESPONSE=$(curl -s "${CALM_HUB_URL}/calm/namespaces/${NAMESPACE}/patterns" 2>/dev/null || echo "[]")
-
-if [ -z "$PATTERNS_RESPONSE" ] || [ "$PATTERNS_RESPONSE" = "[]" ]; then
-    error_msg "❌ Cannot retrieve patterns from CALM Hub"
-    exit 1
+info "Attempting to pull pattern '${PATTERN_NAME_BAD}' from CALM Hub..."
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "📖 Using calm hub CLI to fetch the pattern by slug:"
 fi
-
-PATTERN_IDS=$(echo "$PATTERNS_RESPONSE" | jq -r '.values[]' 2>/dev/null)
-PATTERN_FOUND=""
-
-for pattern_id in $PATTERN_IDS; do
-    PATTERN_DATA=$(curl -s "${CALM_HUB_URL}/calm/namespaces/${NAMESPACE}/patterns/${pattern_id}/versions/1.0.0" 2>/dev/null)
-    EXTRACTED_NAME=$(echo "$PATTERN_DATA" | jq -r '."$id"' 2>/dev/null | xargs basename 2>/dev/null | sed 's/.pattern.json//')
-    
-    if [ "$EXTRACTED_NAME" = "$PATTERN_NAME_BAD" ]; then
-        PATTERN_FOUND="yes"
-        break
-    fi
-done
-
-if [ -n "$PATTERN_FOUND" ]; then
-    success "✅ Pattern found in CALM Hub"
+echo -e "${YELLOW}> calm hub pull pattern --namespace ${NAMESPACE} --mapping ${PATTERN_NAME_BAD} --ver 1.0.0 --calm-hub-url ${CALM_HUB_URL}${NC}"
+echo ""
+if calm hub pull pattern --namespace "${NAMESPACE}" --mapping "${PATTERN_NAME_BAD}" --ver 1.0.0 --calm-hub-url "${CALM_HUB_URL}" > /dev/null 2>&1; then
+    success "✅ Pattern found in CALM Hub (unexpected)"
 else
     error_msg "❌ GATE 1 REJECTED: Pattern '${PATTERN_NAME_BAD}' NOT FOUND in CALM Hub"
     echo ""
@@ -324,28 +309,13 @@ fi
 echo "Pattern referenced: ${PATTERN_NAME}"
 echo ""
 
-info "Checking CALM Hub for pattern '${PATTERN_NAME}'..."
-PATTERNS_RESPONSE=$(curl -s "${CALM_HUB_URL}/calm/namespaces/${NAMESPACE}/patterns" 2>/dev/null || echo "[]")
-
-if [ -z "$PATTERNS_RESPONSE" ] || [ "$PATTERNS_RESPONSE" = "[]" ]; then
-    error_msg "❌ Cannot retrieve patterns from CALM Hub"
-    exit 1
+info "Attempting to pull pattern '${PATTERN_NAME}' from CALM Hub..."
+if [ "$VERBOSE_MODE" == "true" ]; then
+    info "📖 Using calm hub CLI to fetch the pattern by slug:"
 fi
-
-PATTERN_IDS=$(echo "$PATTERNS_RESPONSE" | jq -r '.values[]' 2>/dev/null)
-PATTERN_FOUND=""
-
-for pattern_id in $PATTERN_IDS; do
-    PATTERN_DATA=$(curl -s "${CALM_HUB_URL}/calm/namespaces/${NAMESPACE}/patterns/${pattern_id}/versions/1.0.0" 2>/dev/null)
-    EXTRACTED_NAME=$(echo "$PATTERN_DATA" | jq -r '."$id"' 2>/dev/null | xargs basename 2>/dev/null | sed 's/.pattern.json//')
-    
-    if [ "$EXTRACTED_NAME" = "$PATTERN_NAME" ]; then
-        PATTERN_FOUND="yes"
-        break
-    fi
-done
-
-if [ -n "$PATTERN_FOUND" ]; then
+echo -e "${YELLOW}> calm hub pull pattern --namespace ${NAMESPACE} --mapping ${PATTERN_NAME} --ver 1.0.0 --calm-hub-url ${CALM_HUB_URL}${NC}"
+echo ""
+if calm hub pull pattern --namespace "${NAMESPACE}" --mapping "${PATTERN_NAME}" --ver 1.0.0 --calm-hub-url "${CALM_HUB_URL}" > /dev/null 2>&1; then
     success "✅ GATE 1 PASSED: Pattern '${PATTERN_NAME}' found in CALM Hub"
     if [ "$VERBOSE_MODE" == "true" ]; then
         info "   Pattern is registered in namespace: ${NAMESPACE}"
@@ -389,26 +359,38 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 fi
 echo ""
 
-info "Let's review the complete architecture to see all nodes, relationships, and controls..."
-echo ""
-echo -e "${YELLOW}> bat calm/trades-api-and-mcp-non-conforming.architecture.json${NC}"
-echo ""
-bat calm/trades-api-and-mcp-non-conforming.architecture.json --language json 2>/dev/null || \
-    jq -C '.' calm/trades-api-and-mcp-non-conforming.architecture.json
-echo ""
-
-error_msg "⚠️  Notice: The 'mcp-client-to-mcp-server' relationship (line ~88) has NO controls!"
+error_msg "⚠️  Two structural validation issues to spot in this architecture:"
+error_msg "   1. The 'trades-api' image is an unresolved placeholder '[[ IMAGE ]]' (line 52)"
+error_msg "   2. The 'mcp-client-to-mcp-server' relationship has NO controls (lines 85-102)"
 error_msg "   Pattern requires 'permitted-connection' control on all connections"
 echo ""
 
-info "Running CALM validation..."
-echo "" 
+info "Issue 1 — Unresolved image placeholder on the 'trades-api' node:"
+echo ""
+echo -e "${YELLOW}> bat calm/trades-api-and-mcp-non-conforming.architecture.json --line-range 40:58${NC}"
+echo ""
+bat calm/trades-api-and-mcp-non-conforming.architecture.json --line-range 40:58 --language json --highlight-line 52 2>/dev/null || \
+    sed -n '40,58p' calm/trades-api-and-mcp-non-conforming.architecture.json
+echo ""
 
-# Extract pattern file path from $schema  
+info "Issue 2 — Missing 'permitted-connection' control on the broken relationship:"
+echo ""
+echo -e "${YELLOW}> bat calm/trades-api-and-mcp-non-conforming.architecture.json --line-range 84:102${NC}"
+echo ""
+bat calm/trades-api-and-mcp-non-conforming.architecture.json --line-range 84:102 --language json --highlight-line 85:102 2>/dev/null || \
+    sed -n '84,102p' calm/trades-api-and-mcp-non-conforming.architecture.json
+echo ""
+
+# Extract pattern file path from $schema
 PATTERN_NAME_NONCONF=$(jq -r '.["$schema"] // empty' calm/trades-api-and-mcp-non-conforming.architecture.json | sed 's/.*\///;s/\.pattern\.json$//')
 PATTERN_FILE_NONCONF="calm/${PATTERN_NAME_NONCONF}.pattern.json"
 
-if calm validate --pattern "$PATTERN_FILE_NONCONF" --architecture calm/trades-api-and-mcp-non-conforming.architecture.json 2>&1; then
+info "Running CALM validation..."
+echo ""
+echo -e "${YELLOW}> calm validate --format pretty --pattern $PATTERN_FILE_NONCONF --architecture calm/trades-api-and-mcp-non-conforming.architecture.json${NC}"
+echo ""
+
+if calm validate --format pretty --pattern "$PATTERN_FILE_NONCONF" --architecture calm/trades-api-and-mcp-non-conforming.architecture.json 2>&1; then
     success "Validation passed (unexpected)"
 else
     error_msg "❌ GATE 2 REJECTED: Architecture does not conform to pattern"
@@ -427,25 +409,27 @@ if [ "$VERBOSE_MODE" == "true" ]; then
 fi
 echo ""
 
-info "Let's review the complete architecture to see all nodes, relationships, and controls..."
-echo ""
-echo -e "${YELLOW}> bat calm/trades-api-and-mcp-conforming.architecture.json${NC}"
-echo ""
-bat calm/trades-api-and-mcp-conforming.architecture.json --language json 2>/dev/null || \
-    jq -C '.' calm/trades-api-and-mcp-conforming.architecture.json
+success "✅ Notice: The 'mcp-client-to-mcp-server' relationship now includes the required 'permitted-connection' control"
 echo ""
 
-success "✅ Notice: All relationships now include the required 'permitted-connection' control"
+info "Showing the same relationship in the conforming architecture..."
 echo ""
-
-info "Running CALM validation..."
+echo -e "${YELLOW}> bat calm/trades-api-and-mcp-conforming.architecture.json --line-range 84:113${NC}"
+echo ""
+bat calm/trades-api-and-mcp-conforming.architecture.json --line-range 84:113 --language json --highlight-line 102:112 2>/dev/null || \
+    sed -n '84,113p' calm/trades-api-and-mcp-conforming.architecture.json
 echo ""
 
 # Extract pattern file path from $schema of conforming architecture
 PATTERN_NAME_CONF=$(jq -r '.["$schema"] // empty' calm/trades-api-and-mcp-conforming.architecture.json | sed 's/.*\///;s/\.pattern\.json$//')
 PATTERN_FILE_CONF="calm/${PATTERN_NAME_CONF}.pattern.json"
 
-if calm validate --pattern "$PATTERN_FILE_CONF" --architecture calm/trades-api-and-mcp-conforming.architecture.json 2>&1; then
+info "Running CALM validation..."
+echo ""
+echo -e "${YELLOW}> calm validate --format pretty --pattern $PATTERN_FILE_CONF --architecture calm/trades-api-and-mcp-conforming.architecture.json${NC}"
+echo ""
+
+if calm validate --format pretty --pattern "$PATTERN_FILE_CONF" --architecture calm/trades-api-and-mcp-conforming.architecture.json 2>&1; then
     success "✅ GATE 2 PASSED: Architecture conforms to pattern"
 else
     error_msg "Validation failed (unexpected)"

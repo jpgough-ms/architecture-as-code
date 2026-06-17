@@ -305,7 +305,8 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     info "Why: Services run as ClusterIP and need port-forward for local access"
 fi
 echo ""
-echo -e "${YELLOW_BOLD}Run this in a separate terminal :${NC}"
+echo -e "${YELLOW_BOLD}In a SEPARATE terminal, run (from the scenario1 folder):${NC}"
+echo -e "${GREEN}  cd $(pwd)${NC}"
 echo -e "${GREEN}  ./port-forward.sh${NC}"
 echo ""
 if [ "$VERBOSE_MODE" == "true" ]; then

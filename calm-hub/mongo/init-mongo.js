@@ -1423,7 +1423,7 @@ if (db.patterns.countDocuments() === 0) {
                     versions: {
                         "1-0-0": {
                             "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
-                            "$id": "https://calm.finos.org/calm/namespaces/qcon/patterns/1/versions/1.0.0",
+                            "$id": "https://calm.finos.org/calm/namespaces/qcon/patterns/trades-api-and-mcp/versions/1.0.0",
                             "title": "Secure Trades API and MCP Pattern with Network Controls",
                             "description": "A pattern for an MCP-based architecture with enforced network segmentation and connection controls. The Kubernetes cluster must have micro-segmentation enabled, and all connections must be explicitly permitted through controls.",
                             "type": "object",
@@ -2960,8 +2960,8 @@ if (db.architectures.countDocuments() === 0) {
                 description: "Conforming architecture with all required controls: micro-segmentation on cluster, permitted connections on all relationships, and MCP guardrail on MCP server",
                 versions: {
                     "1-0-0": {
-                        "$schema": "https://calm.finos.org/calm/namespaces/qcon/patterns/1/versions/1.0.0",
-                        "$id": "https://calm.finos.org/calm/namespaces/qcon/architectures/1/versions/1.0.0",
+                        "$schema": "https://calm.finos.org/calm/namespaces/qcon/patterns/trades-api-and-mcp/versions/1.0.0",
+                        "$id": "https://calm.finos.org/calm/namespaces/qcon/architectures/trades-api-and-mcp-conforming/versions/1.0.0",
                         "title": "Trades API and MCP Architecture (Conforming)",
                         "unique-id": "trades-api-and-mcp-conforming-architecture",
                         "name": "Trades API and MCP Architecture (Conforming)",
