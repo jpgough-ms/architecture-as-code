@@ -90,60 +90,28 @@ extract_pattern_from_schema() {
 
 check_pattern_in_hub() {
     local pattern_name=$1
-    
+
     if [ -z "$pattern_name" ]; then
         error "No pattern specified in architecture \$schema field"
         return 1
     fi
-    
-    info "Checking if pattern '${pattern_name}' is registered in CALM Hub..."
+
+    info "Attempting to pull pattern '${pattern_name}' from CALM Hub..."
     info "Namespace: ${NAMESPACE}"
     echo ""
-    
-    # Get list of pattern IDs from CALM Hub
-    local patterns_response=$(curl -s "${CALM_HUB_URL}/calm/namespaces/${NAMESPACE}/patterns" 2>/dev/null)
-    
-    if [ -z "$patterns_response" ]; then
-        error "❌ GATE 1 REJECTED: Cannot retrieve patterns from CALM Hub"
-        error "   Namespace: ${NAMESPACE}"
-        error "   URL: ${CALM_HUB_URL}"
-        return 1
-    fi
-    
-    # Extract pattern IDs from response
-    local pattern_ids=$(echo "$patterns_response" | jq -r '.values[]' 2>/dev/null)
-    
-    if [ -z "$pattern_ids" ]; then
-        error "❌ GATE 1 REJECTED: No patterns found in CALM Hub"
-        info "   Namespace: ${NAMESPACE}"
-        return 1
-    fi
-    
-    info "Found pattern IDs: $pattern_ids"
+
+    info "> calm hub pull pattern --namespace ${NAMESPACE} --mapping ${pattern_name} --ver 1.0.0 --calm-hub-url ${CALM_HUB_URL}"
     echo ""
-    
-    # Check each pattern to find matching name
-    for pattern_id in $pattern_ids; do
-        local pattern_data=$(curl -s "${CALM_HUB_URL}/calm/namespaces/${NAMESPACE}/patterns/${pattern_id}/versions/1.0.0" 2>/dev/null)
-        
-        if [ -n "$pattern_data" ]; then
-            local pattern_id_field=$(echo "$pattern_data" | jq -r '."$id" // ""' 2>/dev/null)
-            local extracted_name=$(basename "$pattern_id_field" .pattern.json 2>/dev/null)
-            
-            info "Pattern ID ${pattern_id}: ${extracted_name}"
-            
-            if [ "$extracted_name" = "$pattern_name" ]; then
-                success "✅ GATE 1 PASSED: Pattern '${pattern_name}' found in CALM Hub (namespace: ${NAMESPACE})"
-                info "   Pattern is centrally managed - all teams reference the same validated pattern"
-                return 0
-            fi
-        fi
-    done
-    
+
+    if calm hub pull pattern --namespace "${NAMESPACE}" --mapping "${pattern_name}" --ver 1.0.0 --calm-hub-url "${CALM_HUB_URL}" > /dev/null 2>&1; then
+        success "✅ GATE 1 PASSED: Pattern '${pattern_name}' found in CALM Hub (namespace: ${NAMESPACE})"
+        info "   Pattern is centrally managed - all teams reference the same validated pattern"
+        return 0
+    fi
+
     error "❌ GATE 1 REJECTED: Pattern '${pattern_name}' not found in CALM Hub"
     info "   Namespace: ${NAMESPACE}"
     info "   Governance requirement: All patterns must be pre-approved and registered"
-    info "   Available patterns: ${CALM_HUB_URL}/calm/namespaces/${NAMESPACE}/patterns"
     return 1
 }
 
@@ -182,10 +150,6 @@ validate_architecture() {
         return 1
     fi
 }
-        echo ""
-        error "❌ GATE 2 REJECTED: Architecture validation failed"
-        info "   Architecture does not conform to pattern requirements"
-        info "   Common issues: missing controls, incorrect node types, relationship violations"
 
 # ============================================================================
 # Main Execution

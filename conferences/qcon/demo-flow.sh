@@ -112,8 +112,9 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo "   • Self-service controls teams can apply immediately"
     echo "   • Automated validation gates that scale"
     echo ""
-    echo -e "${CYAN}Note: Port-forwarding is handled by ./port-forward.sh${NC}"
-    echo -e "${CYAN}Start it in a separate terminal after Scenario 1 completes.${NC}"
+    echo -e "${CYAN}Note: Port-forwarding is handled by scenario1/port-forward.sh${NC}"
+    echo -e "${CYAN}Start it in a separate terminal after Scenario 1 completes:${NC}"
+    echo -e "${GREEN}  cd $(pwd)/scenario1 && ./port-forward.sh${NC}"
     echo ""
 fi
 read -p "Press Enter to begin..."
@@ -157,7 +158,7 @@ if [ "$VERBOSE_MODE" == "true" ]; then
     echo -e "${GREEN}Achievement: API infrastructure deployed from architecture definition${NC}"
     echo ""
     echo -e "${CYAN}Reminder: Start port-forwarding in separate terminal if you haven't already:${NC}"
-    echo -e "${GREEN}  ./port-forward.sh${NC}"
+    echo -e "${GREEN}  cd $(pwd)/scenario1 && ./port-forward.sh${NC}"
     echo ""
 fi
 echo -e "${YELLOW_BOLD}Press Enter to continue to Scenario 2...${NC}"

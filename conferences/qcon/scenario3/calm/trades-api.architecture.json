@@ -1,5 +1,6 @@
 {
   "$schema": "https://calm.finos.org/qcon/trades-api.pattern.json",
+  "$id": "https://calm.finos.org/calm/namespaces/qcon/architectures/trades-api/versions/1.0.0",
   "unique-id": "trades-api-architecture",
   "name": "Trades API Architecture",
   "description": "Concrete instantiation of the Trades API pattern, deploying the trades REST service on a local Minikube cluster",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://calm.finos.org/release/1.0/meta/calm.json",
-  "$id": "https://calm.finos.org/qcon/trades-api-and-mcp.pattern.json",
+  "$id": "https://calm.finos.org/calm/namespaces/qcon/patterns/trades-api-and-mcp/versions/1.0.0",
   "title": "Secure Trades API and MCP Pattern with Network Controls",
   "description": "A pattern for an MCP-based architecture with enforced network segmentation and connection controls. The Kubernetes cluster must have micro-segmentation enabled, and all connections must be explicitly permitted through controls.",
   "type": "object",

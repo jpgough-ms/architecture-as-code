@@ -1,5 +1,6 @@
 {
   "$schema": "https://calm.finos.org/qcon/trades-api-and-mcp.pattern.json",
+  "$id": "https://calm.finos.org/calm/namespaces/qcon/architectures/trades-api-and-mcp-non-conforming/versions/1.0.0",
   "unique-id": "trades-api-and-mcp-non-conforming-architecture",
   "name": "Trades API and MCP Architecture (Non-Conforming)",
   "description": "Non-conforming architecture missing permitted-connection control on mcp-client-to-mcp-server relationship",
