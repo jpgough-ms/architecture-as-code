@@ -30,6 +30,9 @@
 #   GET    /api/calm/namespaces/finos.traderx/architectures  -> 200 + body contains "name"
 #   GET    /api/calm/namespaces/finos.fluxnova/architectures -> 200 + body contains all six "FluxNova: *" names
 #   GET    /calm/namespaces/finos.fluxnova/architectures/fluxnova-platform/versions/1.0.0 -> 200 (slug mapping)
+#   GET    /api/calm/namespaces/finos.payments/architectures -> 200 + body contains "Payments API"
+#   GET    /api/calm/namespaces/finos.payments/flows         -> 200 + body contains "Submit Payment"
+#   GET    /calm/namespaces/finos.payments/architectures/payments-api/versions/1.0.0 -> 200 (slug mapping)
 #   GET    /api/calm/domains/finos-sdlc-common-controls/controls -> 200 + body contains "sdlc-prev-001-code-review"
 #   GET    /calm/namespaces/finos.sdlc-common-controls/standards/sdlc-control-requirement/versions/1.0.0 -> 200
 #   GET    /calm/namespaces/finos.agentic-sdlc/standards/governed-node/versions/1.0.0 -> 200 (slug mapping)
@@ -196,6 +199,12 @@ if [[ "${MODE}" == "readonly" ]]; then
     # Slug mappings must be baked into the read-only image (the fluxnova seeds go
     # through the name-based API): resolve one architecture by its customId.
     assert GET /calm/namespaces/finos.fluxnova/architectures/fluxnova-platform/versions/1.0.0 200
+
+    # finos.payments — the payments example that the threat model decorator describes
+    assert_body_contains GET /api/calm/namespaces '"finos.payments"'
+    assert_body_contains_all GET /api/calm/namespaces/finos.payments/architectures '"Payments API"'
+    assert_body_contains_all GET /api/calm/namespaces/finos.payments/flows '"Submit Payment"'
+    assert GET /calm/namespaces/finos.payments/architectures/payments-api/versions/1.0.0 200
 
     # The SDLC Common Controls Catalog: its control domain, the Standard its documents declare, and the
     # Agentic SDLC Blueprint's pattern and Standard that enforce it (all seeded from calm-hub/mongo/).

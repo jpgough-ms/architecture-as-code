@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IoGridOutline, IoGitNetworkOutline, IoPlayOutline, IoCodeOutline, IoCubeOutline } from 'react-icons/io5';
+import { IoGridOutline, IoGitNetworkOutline, IoPlayOutline, IoCodeOutline, IoCubeOutline, IoShieldCheckmarkOutline } from 'react-icons/io5';
 import Markdown from 'react-markdown';
 import { CalmCore } from '@finos/calm-models/model';
 import type { Architecture } from '@finos/calm-models/model';
@@ -14,8 +14,11 @@ import { TimelineBar } from '../diagram-section/timeline/TimelineBar.js';
 import { momentsFromVersions } from '../diagram-section/timeline/timelineMoments.js';
 import { FlowSequenceDiagram } from '../flow-sequence-diagram/FlowSequenceDiagram.js';
 import { FlowArchitectureDiagram } from '../flow-sequence-diagram/FlowArchitectureDiagram.js';
+import { FlowThreatView } from '../flow-threat-view/FlowThreatView.js';
+import { selectThreatModelForFlow } from '../flow-threat-view/threat-view-model.js';
+import type { ThreatModelDecorator } from '../../../visualizer/contracts/decorator-contracts.js';
 
-type FlowViewMode = 'sequence' | 'architecture' | 'raw';
+type FlowViewMode = 'sequence' | 'architecture' | 'threats' | 'raw';
 
 type ArchitectureViewState =
     | { status: 'loading' }
@@ -54,6 +57,7 @@ export function DocumentDetailSection({ data }: DocumentDetailSectionProps) {
     const [versions, setVersions] = useState<string[]>([]);
     const [flowView, setFlowView] = useState<FlowViewMode>('sequence');
     const [architectureViewState, setArchitectureViewState] = useState<ArchitectureViewState>({ status: 'loading' });
+    const [threatModel, setThreatModel] = useState<ThreatModelDecorator | null>(null);
 
     useEffect(() => {
         if (!data) return;
@@ -137,6 +141,19 @@ export function DocumentDetailSection({ data }: DocumentDetailSectionProps) {
         return () => { cancelled = true; };
     }, [calmService, data]);
 
+    // A threat model is a decorator of type threat-model. Hub looks decorators up by exact target
+    // string, which is not reliable for a flow, so fetch by type and match on the flow id.
+    useEffect(() => {
+        setThreatModel(null);
+        if (!data || data.calmType !== 'Flows') return;
+        const flowId = (data.data as { 'unique-id'?: string } | undefined)?.['unique-id'];
+        let cancelled = false;
+        calmService.fetchDecoratorValues(data.name, undefined, 'threat-model')
+            .then((decorators) => { if (!cancelled) setThreatModel(selectThreatModelForFlow(decorators, flowId)); })
+            .catch(() => { if (!cancelled) setThreatModel(null); });
+        return () => { cancelled = true; };
+    }, [calmService, data]);
+
     // This hook must stay above any early return. The hook count must not change
     // between renders.
     const architectureData = architectureViewState.status === 'ready' ? architectureViewState.data : null;
@@ -195,6 +212,10 @@ export function DocumentDetailSection({ data }: DocumentDetailSectionProps) {
                 title="Architecture View" className={tabClass('architecture')} onClick={() => setFlowView('architecture')}>
                 <IoCubeOutline size={14} /> Architecture
             </button>
+            <button type="button" role="tab" aria-label="Threats" aria-selected={flowView === 'threats'}
+                title="Threats" className={tabClass('threats')} onClick={() => setFlowView('threats')}>
+                <IoShieldCheckmarkOutline size={14} /> Threats
+            </button>
             <button type="button" role="tab" aria-label="Raw JSON" aria-selected={flowView === 'raw'}
                 title="Raw JSON" className={tabClass('raw')} onClick={() => setFlowView('raw')}>
                 <IoCodeOutline size={14} /> JSON
@@ -225,6 +246,12 @@ export function DocumentDetailSection({ data }: DocumentDetailSectionProps) {
                             ? <div className="flex items-center justify-center h-full text-base-content/50">Loading architecture...</div>
                             : architectureViewState.status === 'ready'
                                 ? <FlowArchitectureDiagram flowJson={data.data ?? {}} architectureJson={architectureData} architecture={architecture} />
+                                : <div className="flex items-center justify-center h-full text-base-content/50">{architectureViewState.message}</div>
+                    ) : isFlow && flowView === 'threats' ? (
+                        architectureViewState.status === 'loading'
+                            ? <div className="flex items-center justify-center h-full text-base-content/50">Loading architecture...</div>
+                            : architectureViewState.status === 'ready'
+                                ? <FlowThreatView flowJson={data.data ?? {}} architectureJson={architectureData} architecture={architecture} threatModel={threatModel} />
                                 : <div className="flex items-center justify-center h-full text-base-content/50">{architectureViewState.message}</div>
                     ) : isMarkdown ? (
                         <div className="prose prose-sm max-w-none p-6 bg-base-100">

@@ -16,6 +16,19 @@ This draft includes the deployment decorator schema, which provides a standardiz
 - `meta/` - Core CALM meta-schemas
 - `standards/deployment/` - Deployment decorator standard and examples
 
+## Threat Model Decorator Standards
+
+This draft includes a method-neutral threat model decorator standard and a STRIDE extension. They
+record trust boundaries and threats against a CALM flow.
+
+### Related Issues
+
+- **[#3343](https://github.com/finos/architecture-as-code/issues/3343)** - Make threat models a first-class citizen in CALM
+
+### Contents
+
+- `standards/threat-model/` - Threat model decorator standards and examples
+
 ## Status
 
 **Draft** - This specification is under active development and subject to change.

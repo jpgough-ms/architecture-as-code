@@ -341,18 +341,18 @@ if (db.counters.countDocuments({ _id: "patternStoreCounter" }) === 0) {
 if (db.counters.countDocuments({ _id: "architectureStoreCounter" }) === 0) {
     db.counters.insertOne({
         _id: "architectureStoreCounter",
-        sequence_value: 11
+        sequence_value: 12
     });
-    logSuccess("Initialized architectureStoreCounter with sequence_value 11");
+    logSuccess("Initialized architectureStoreCounter with sequence_value 12");
 } else {
     const architectureUpgrade = db.counters.updateOne(
-        { _id: "architectureStoreCounter", sequence_value: { $lt: 11 } },
-        { $set: { sequence_value: 11 } }
+        { _id: "architectureStoreCounter", sequence_value: { $lt: 12 } },
+        { $set: { sequence_value: 12 } }
     );
     if (architectureUpgrade.modifiedCount > 0) {
-        logSuccess("Upgraded architectureStoreCounter to sequence_value 11 (was below minimum)");
+        logSuccess("Upgraded architectureStoreCounter to sequence_value 12 (was below minimum)");
     } else {
-        logSkip("architectureStoreCounter already exists with sequence_value >= 11, no update needed");
+        logSkip("architectureStoreCounter already exists with sequence_value >= 12, no update needed");
     }
 }
 
@@ -520,10 +520,11 @@ if (db.namespaces.countDocuments() === 0) {
         { name: "ai-governance-v2", description: "AI Governance v2 namespace" },
         { name: "qcon", description: "QCon scenario 3 namespace" },
         { name: "finos.fluxnova", description: "FluxNova BPM example architectures" },
+        { name: "finos.payments", description: "Payments API example with a STRIDE threat model" },
         { name: "finos.sdlc-common-controls", description: "The Standard the SDLC Common Controls Catalog control requirements conform to" },
         { name: "finos.agentic-sdlc", description: "Agentic SDLC Blueprint: the pattern and Standards that enforce the SDLC Common Controls on its estate" }
     ]);
-    logSuccess("Initialized namespaces: finos, workshop, traderx, ai-governance-v2, qcon, finos.fluxnova, finos.sdlc-common-controls, finos.agentic-sdlc");
+    logSuccess("Initialized namespaces: finos, workshop, traderx, ai-governance-v2, qcon, finos.fluxnova, finos.payments, finos.sdlc-common-controls, finos.agentic-sdlc");
 } else {
     logSkip("Namespaces already exist, no initialization needed");
 }
@@ -2191,12 +2192,62 @@ if (isEmptyDatabase && db.flows.countDocuments() === 0) {
                     }
                 }
             ]
+        },
+        {
+            // Source of truth: examples/payments-api/submit-payment.flow.json — keep this insert
+            // in sync with that file (and with the heredoc in calm-hub/nitrite/init-nitrite.sh).
+            namespace: "finos.payments",
+            flows: [
+                {
+                    flowId: NumberInt(1),
+                    name: "Submit Payment",
+                    description: "A customer submits a payment through the gateway to the payments service.",
+                    versions: {
+                        "1.0.0": {
+                            "$schema": "https://calm.finos.org/release/1.2/meta/flow.json",
+                            "$id": "https://calm.finos.org/samples/payments-api/flows/submit-payment.json",
+                            "unique-id": "flow-submit-payment",
+                            "name": "Submit Payment",
+                            "description": "A customer submits a payment in the mobile app. The gateway forwards it to the payments service, which stores it and returns the result.",
+                            "transitions": [
+                                {
+                                    "relationship-unique-id": "mobile-app-to-api-gateway",
+                                    "sequence-number": 1,
+                                    "description": "Submit payment request"
+                                },
+                                {
+                                    "relationship-unique-id": "api-gateway-to-payments-api",
+                                    "sequence-number": 2,
+                                    "description": "Forward validated request"
+                                },
+                                {
+                                    "relationship-unique-id": "payments-api-to-payments-db",
+                                    "sequence-number": 3,
+                                    "description": "Persist the payment"
+                                },
+                                {
+                                    "relationship-unique-id": "api-gateway-to-payments-api",
+                                    "sequence-number": 4,
+                                    "description": "Return payment result",
+                                    "direction": "destination-to-source"
+                                },
+                                {
+                                    "relationship-unique-id": "mobile-app-to-api-gateway",
+                                    "sequence-number": 5,
+                                    "description": "Return payment confirmation",
+                                    "direction": "destination-to-source"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
         }
     ];
 
     const seededFlows = seedVersionedResource(
         flowsByNamespace, "flows", "flowVersions", "flows", "flowId");
-    logSuccess(`Initialized ${seededFlows.headers} flows and ${seededFlows.versions} versions for finos and traderx namespaces`);
+    logSuccess(`Initialized ${seededFlows.headers} flows and ${seededFlows.versions} versions for finos, traderx and finos.payments namespaces`);
 } else if (!isEmptyDatabase) {
     logSkip("Existing database — not seeding flows; the new shape needs the index swap "
         + "that SchemaMigrationRunner will perform on startup");
@@ -6398,11 +6449,240 @@ if (isEmptyDatabase && db.architectures.countDocuments() === 0) {
                     }
                 }
             ]
+        },
+        {
+            // Source of truth: examples/payments-api/payments-api.architecture.json — keep this insert
+            // in sync with that file (and with the heredoc in calm-hub/nitrite/init-nitrite.sh).
+            namespace: "finos.payments",
+            architectures: [
+                {
+                    architectureId: NumberInt(12),
+                    name: "Payments API",
+                    description: "A mobile app submits card payments through an API gateway to a payments service that stores them in a database. Used to demonstrate threat modelling on a flow.",
+                    versions: {
+                        "1.0.0": {
+                            "$schema": "https://calm.finos.org/release/1.2/meta/calm.json",
+                            "$id": "https://raw.githubusercontent.com/finos/architecture-as-code/main/examples/payments-api/payments-api.architecture.json",
+                            "title": "Payments API",
+                            "description": "A mobile app submits card payments through an API gateway to a payments service that stores them in a database. Used to demonstrate threat modelling on a flow.",
+                            "nodes": [
+                                {
+                                    "unique-id": "customer",
+                                    "node-type": "actor",
+                                    "name": "Customer",
+                                    "description": "Bank customer who pays from the mobile app"
+                                },
+                                {
+                                    "unique-id": "mobile-app",
+                                    "node-type": "webclient",
+                                    "name": "Mobile App",
+                                    "description": "Customer mobile banking app on an untrusted device",
+                                    "controls": {
+                                        "certificate-pinning": {
+                                            "description": "The app trusts only the pinned API gateway certificate",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-certificate-pinning",
+                                                        "name": "Certificate Pinning",
+                                                        "description": "The app trusts only the pinned API gateway certificate"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "api-gateway",
+                                    "node-type": "service",
+                                    "name": "API Gateway",
+                                    "description": "Public entry point that authenticates callers and validates requests before routing them",
+                                    "controls": {
+                                        "oauth2-authentication": {
+                                            "description": "Callers present short-lived OAuth 2.0 access tokens that are bound to the device",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-oauth2-authentication",
+                                                        "name": "OAuth 2.0 Authentication",
+                                                        "description": "Callers present short-lived OAuth 2.0 access tokens that are bound to the device"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "request-validation": {
+                                            "description": "The gateway checks request schema, size and payee fields before routing",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-request-validation",
+                                                        "name": "Request Validation",
+                                                        "description": "The gateway checks request schema, size and payee fields before routing"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "payments-api",
+                                    "node-type": "service",
+                                    "name": "Payments API",
+                                    "description": "Service that validates, records and settles payments",
+                                    "controls": {
+                                        "authorization-checks": {
+                                            "description": "The service checks that the caller owns the payer account",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-authorization-checks",
+                                                        "name": "Authorization Checks",
+                                                        "description": "The service checks that the caller owns the payer account"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "payments-db",
+                                    "node-type": "database",
+                                    "name": "Payments DB",
+                                    "description": "Relational database that holds payment records",
+                                    "controls": {
+                                        "encryption-at-rest": {
+                                            "description": "Database storage and backups are encrypted with keys held in the bank key management service",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-encryption-at-rest",
+                                                        "name": "Encryption At Rest",
+                                                        "description": "Database storage and backups are encrypted with keys held in the bank key management service"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "relationships": [
+                                {
+                                    "unique-id": "customer-uses-mobile-app",
+                                    "description": "Customer authenticates and pays with the mobile app",
+                                    "relationship-type": {
+                                        "interacts": {
+                                            "actor": "customer",
+                                            "nodes": [
+                                                "mobile-app"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "mobile-app-to-api-gateway",
+                                    "description": "App submits payment requests to the gateway over the internet",
+                                    "relationship-type": {
+                                        "connects": {
+                                            "source": {
+                                                "node": "mobile-app"
+                                            },
+                                            "destination": {
+                                                "node": "api-gateway"
+                                            }
+                                        }
+                                    },
+                                    "protocol": "HTTPS",
+                                    "controls": {
+                                        "transport-security": {
+                                            "description": "TLS 1.3 protects traffic between the app and the gateway",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-transport-security",
+                                                        "name": "Transport Security",
+                                                        "description": "TLS 1.3 protects traffic between the app and the gateway"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "api-gateway-to-payments-api",
+                                    "description": "Gateway forwards validated requests to the payments service",
+                                    "relationship-type": {
+                                        "connects": {
+                                            "source": {
+                                                "node": "api-gateway"
+                                            },
+                                            "destination": {
+                                                "node": "payments-api"
+                                            }
+                                        }
+                                    },
+                                    "protocol": "mTLS",
+                                    "controls": {
+                                        "mutual-tls": {
+                                            "description": "The gateway and the payments service authenticate each other with certificates",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-mutual-tls",
+                                                        "name": "Mutual TLS",
+                                                        "description": "The gateway and the payments service authenticate each other with certificates"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "payments-api-to-payments-db",
+                                    "description": "Payments service stores payment records",
+                                    "relationship-type": {
+                                        "connects": {
+                                            "source": {
+                                                "node": "payments-api"
+                                            },
+                                            "destination": {
+                                                "node": "payments-db"
+                                            }
+                                        }
+                                    },
+                                    "protocol": "JDBC"
+                                }
+                            ],
+                            "controls": {
+                                "audit-logging": {
+                                    "description": "Every payment state change is written to an append-only audit log",
+                                    "requirements": [
+                                        {
+                                            "requirement-url": "https://calm.finos.org/release/1.2/meta/control-requirement.json",
+                                            "config": {
+                                                "control-id": "payments-audit-logging",
+                                                "name": "Audit Logging",
+                                                "description": "Every payment state change is written to an append-only audit log"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
         }
     ];
     const seededArchitectures = seedVersionedResource(
         architecturesByNamespace, "architectures", "architectureVersions", "architectures", "architectureId");
-    logSuccess(`Initialized ${seededArchitectures.headers} architectures and ${seededArchitectures.versions} versions for finos, workshop, traderx, ai-governance-v2, qcon, and finos.fluxnova namespaces`);
+    logSuccess(`Initialized ${seededArchitectures.headers} architectures and ${seededArchitectures.versions} versions for finos, workshop, traderx, ai-governance-v2, qcon, finos.fluxnova, and finos.payments namespaces`);
 } else if (!isEmptyDatabase) {
     logSkip("Existing database — not seeding architectures; the new shape needs the index swap "
         + "that SchemaMigrationRunner will perform on startup");
@@ -6801,9 +7081,231 @@ if (db.decorators.countDocuments() === 0) {
                     }
                 }
             ]
+        },
+        {
+            // Source of truth: examples/payments-api/submit-payment.stride.decorator.json — keep this
+            // insert in sync with that file (and with the heredoc in calm-hub/nitrite/init-nitrite.sh).
+            namespace: "finos.payments",
+            decorators: [
+                {
+                    decoratorId: NumberInt(1),
+                    decorator: {
+                        "$schema": "https://calm.finos.org/draft/2026-03/standards/threat-model/stride.threat-model.decorator.standard.json",
+                        "unique-id": "submit-payment-stride-threat-model",
+                        "type": "threat-model",
+                        "target": [
+                            "/calm/namespaces/finos.payments/flows/submit-payment/versions/1.0.0"
+                        ],
+                        "applies-to": [
+                            "flow-submit-payment",
+                            "mobile-app-to-api-gateway",
+                            "api-gateway-to-payments-api",
+                            "payments-api-to-payments-db"
+                        ],
+                        "data": {
+                            "methodology": "STRIDE",
+                            "assessed-on": "2026-10-13",
+                            "assessor": "payments-security-architecture",
+                            "trust-boundaries": [
+                                {
+                                    "unique-id": "tb-internet-dmz",
+                                    "name": "Internet to DMZ",
+                                    "description": "An untrusted customer device crosses into the bank-controlled API perimeter.",
+                                    "relationships": [
+                                        "mobile-app-to-api-gateway"
+                                    ]
+                                },
+                                {
+                                    "unique-id": "tb-dmz-core",
+                                    "name": "DMZ to core services",
+                                    "description": "The gateway hands a request to services that hold payment logic.",
+                                    "relationships": [
+                                        "api-gateway-to-payments-api"
+                                    ]
+                                },
+                                {
+                                    "unique-id": "tb-core-data",
+                                    "name": "Core services to data tier",
+                                    "description": "The payments service reaches the store that holds card and payment data.",
+                                    "relationships": [
+                                        "payments-api-to-payments-db"
+                                    ]
+                                }
+                            ],
+                            "threats": [
+                                {
+                                    "unique-id": "t-token-replay",
+                                    "name": "Access token replay",
+                                    "description": "An attacker replays a stolen access token to submit payments as the customer.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "Spoofing"
+                                        }
+                                    ],
+                                    "applies-to": {
+                                        "relationships": [
+                                            "mobile-app-to-api-gateway"
+                                        ]
+                                    },
+                                    "likelihood": "medium",
+                                    "impact": "high",
+                                    "status": "mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "oauth2-authentication",
+                                            "state": "verified",
+                                            "note": "Short-lived tokens bound to the device."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-amount-tamper",
+                                    "name": "Payment tampering in transit",
+                                    "description": "An attacker changes the amount or the payee on the wire between the app and the gateway.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "Tampering"
+                                        }
+                                    ],
+                                    "applies-to": {
+                                        "relationships": [
+                                            "mobile-app-to-api-gateway"
+                                        ]
+                                    },
+                                    "likelihood": "medium",
+                                    "impact": "high",
+                                    "status": "mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "transport-security",
+                                            "state": "verified"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-submit-flood",
+                                    "name": "Payment endpoint flooding",
+                                    "description": "Automated clients flood the payment endpoint and exhaust its capacity.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "Denial of service"
+                                        }
+                                    ],
+                                    "applies-to": {
+                                        "relationships": [
+                                            "mobile-app-to-api-gateway"
+                                        ]
+                                    },
+                                    "likelihood": "high",
+                                    "impact": "medium",
+                                    "status": "identified",
+                                    "mitigations": [
+                                        {
+                                            "control": "rate-limiting",
+                                            "state": "planned",
+                                            "note": "Gateway rate limits are not configured yet."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-bola",
+                                    "name": "Payment from an account the caller does not own",
+                                    "description": "A caller changes the payer account identifier and pays from an account they do not own.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "Elevation of privilege"
+                                        }
+                                    ],
+                                    "applies-to": {
+                                        "relationships": [
+                                            "api-gateway-to-payments-api"
+                                        ]
+                                    },
+                                    "likelihood": "medium",
+                                    "impact": "critical",
+                                    "status": "partially-mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "authorization-checks",
+                                            "state": "implemented",
+                                            "note": "The ownership check covers the payer account only."
+                                        },
+                                        {
+                                            "control": "mutual-tls",
+                                            "state": "implemented",
+                                            "note": "Authenticates the gateway, not the end user."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-pan-at-rest",
+                                    "name": "Card data exposed from storage",
+                                    "description": "Card data can be read if database storage or its backups are exposed.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "Information disclosure"
+                                        }
+                                    ],
+                                    "applies-to": {
+                                        "relationships": [
+                                            "payments-api-to-payments-db"
+                                        ]
+                                    },
+                                    "likelihood": "low",
+                                    "impact": "critical",
+                                    "status": "partially-mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "encryption-at-rest",
+                                            "state": "implemented",
+                                            "note": "The database is encrypted. Card numbers still appear in application logs."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-no-audit",
+                                    "name": "Payment cannot be traced to a user",
+                                    "description": "A payment record cannot be linked to the user who made it.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "Repudiation"
+                                        }
+                                    ],
+                                    "applies-to": {
+                                        "relationships": [
+                                            "payments-api-to-payments-db"
+                                        ]
+                                    },
+                                    "likelihood": "low",
+                                    "impact": "medium",
+                                    "status": "accepted",
+                                    "mitigations": [
+                                        {
+                                            "control": "audit-logging",
+                                            "state": "planned"
+                                        }
+                                    ],
+                                    "residual-risk": {
+                                        "rating": "medium",
+                                        "justification": "Audit logging is planned for the next release. Gateway access logs give partial traceability until then.",
+                                        "accepted-by": "payments-security-lead",
+                                        "review-by": "2027-03-31"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
         }
     ]);
-    logSuccess("Initialized decorators for finos and workshop namespaces");
+    logSuccess("Initialized decorators for finos, workshop and finos.payments namespaces");
 } else {
     logSkip("Decorators already initialized, skipping...");
 }
@@ -6921,7 +7423,8 @@ if (db.resource_mappings.countDocuments() === 0) {
         { namespace: "finos.fluxnova", customId: "fluxnova-kyc-onboarding", resourceType: "ARCHITECTURE", numericId: NumberInt(8) },
         { namespace: "finos.fluxnova", customId: "fluxnova-settlement", resourceType: "ARCHITECTURE", numericId: NumberInt(9) },
         { namespace: "finos.fluxnova", customId: "fluxnova-flash-risk", resourceType: "ARCHITECTURE", numericId: NumberInt(10) },
-        { namespace: "finos.fluxnova", customId: "fluxnova-ai-agent", resourceType: "ARCHITECTURE", numericId: NumberInt(11) }
+        { namespace: "finos.fluxnova", customId: "fluxnova-ai-agent", resourceType: "ARCHITECTURE", numericId: NumberInt(11) },
+        { namespace: "finos.payments", customId: "payments-api", resourceType: "ARCHITECTURE", numericId: NumberInt(12) }
     ]);
     logSuccess("Initialized resource_mappings with seed data");
 } else {

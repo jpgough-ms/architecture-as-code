@@ -1,0 +1,60 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://calm.finos.org/draft/2026-03/standards/threat-model/stride.threat-model.decorator.standard.json",
+    "title": "CALM STRIDE Threat Model Decorator Standard",
+    "description": "Threat model decorator standard for the STRIDE method. Extends the method-neutral threat model standard and fixes the methodology and the classification taxonomy.",
+    "allOf": [
+        {
+            "$ref": "https://calm.finos.org/draft/2026-03/standards/threat-model/threat-model.decorator.standard.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "methodology": {
+                            "const": "STRIDE",
+                            "description": "Must be 'STRIDE' for STRIDE threat models"
+                        },
+                        "threats": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "classification": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "scheme": {
+                                                    "const": "STRIDE"
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Spoofing",
+                                                        "Tampering",
+                                                        "Repudiation",
+                                                        "Information disclosure",
+                                                        "Denial of service",
+                                                        "Elevation of privilege"
+                                                    ],
+                                                    "description": "STRIDE category"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "classification"
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

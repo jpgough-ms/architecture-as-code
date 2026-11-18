@@ -611,6 +611,15 @@ describe('CalmService', () => {
             expect(actual).toEqual(decorators);
         });
 
+        it('should send only the type query param when no target is given', async () => {
+            mock.onGet(`/api/calm/namespaces/${namespace}/decorators/values?type=threat-model`).reply(200, {
+                values: [{ uniqueId: 'tm-1', type: 'threat-model' }],
+            });
+            const actual = await calmService.fetchDecoratorValues(namespace, undefined, 'threat-model');
+            expect(actual).toEqual([{ uniqueId: 'tm-1', type: 'threat-model' }]);
+            expect(mock.history.get[0].url).not.toContain('target');
+        });
+
         it('should return an empty array when backend returns error status', async () => {
             mock.onGet(`/api/calm/namespaces/${namespace}/decorators/values`).reply(500, {
                 message: 'Error',

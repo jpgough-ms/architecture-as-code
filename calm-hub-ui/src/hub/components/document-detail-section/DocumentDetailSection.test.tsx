@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { DocumentDetailSection } from './DocumentDetailSection.js';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Data } from '../../../model/calm.js';
+import { architectureJson, decorator, flowJson } from '../flow-threat-view/payments-fixtures.js';
 
 const mockNavigate = vi.fn();
 
@@ -25,6 +26,7 @@ const mockFetchVersionsByCustomId = vi.fn();
 const mockFetchArchitectureSummaries = vi.fn();
 const mockFetchArchitectureVersions = vi.fn();
 const mockFetchArchitecture = vi.fn();
+const mockFetchDecoratorValues = vi.fn();
 
 vi.mock('../../../service/calm-service.js', () => ({
     CalmService: vi.fn().mockImplementation(function () { return {
@@ -34,6 +36,7 @@ vi.mock('../../../service/calm-service.js', () => ({
         fetchArchitectureSummaries: mockFetchArchitectureSummaries,
         fetchArchitectureVersions: mockFetchArchitectureVersions,
         fetchArchitecture: mockFetchArchitecture,
+        fetchDecoratorValues: mockFetchDecoratorValues,
     }; }),
 }));
 
@@ -46,6 +49,7 @@ describe('DocumentDetailSection', () => {
         mockFetchArchitectureSummaries.mockClear().mockResolvedValue([]);
         mockFetchArchitectureVersions.mockClear().mockResolvedValue([]);
         mockFetchArchitecture.mockClear();
+        mockFetchDecoratorValues.mockClear().mockResolvedValue([]);
     });
 
     it('renders null when data is undefined', () => {
@@ -220,6 +224,83 @@ describe('DocumentDetailSection', () => {
         fireEvent.click(screen.getByRole('tab', { name: 'Architecture View' }));
 
         expect(await screen.findByText('Failed to load architecture')).toBeInTheDocument();
+    });
+
+    describe('Threats tab', () => {
+        const paymentsFlow: Data = {
+            id: '5', version: '1.0.0', name: 'finos.payments', calmType: 'Flows',
+            data: flowJson as unknown as Extract<Data, { calmType: 'Flows' }>['data'],
+        };
+
+        function mockPaymentsArchitecture() {
+            mockFetchArchitectureSummaries.mockResolvedValue([{ id: 9 }]);
+            mockFetchArchitectureVersions.mockResolvedValue(['1.0.0']);
+            mockFetchArchitecture.mockResolvedValue({ data: architectureJson });
+        }
+
+        it('is offered for flows only', () => {
+            const pattern: Data = { id: 'p', version: '1.0.0', name: 'ns', calmType: 'Patterns', data: undefined };
+            const { unmount } = render(<MemoryRouter><DocumentDetailSection data={paymentsFlow} /></MemoryRouter>);
+            expect(screen.getByRole('tab', { name: 'Threats' })).toBeInTheDocument();
+            unmount();
+
+            render(<MemoryRouter><DocumentDetailSection data={pattern} /></MemoryRouter>);
+            expect(screen.queryByRole('tab', { name: 'Threats' })).not.toBeInTheDocument();
+        });
+
+        it('looks up threat models by decorator type only, in the namespace of the flow', async () => {
+            render(<MemoryRouter><DocumentDetailSection data={paymentsFlow} /></MemoryRouter>);
+
+            await waitFor(() => expect(mockFetchDecoratorValues).toHaveBeenCalledWith('finos.payments', undefined, 'threat-model'));
+        });
+
+        it('does not look up decorators for anything but a flow', () => {
+            const pattern: Data = { id: 'p', version: '1.0.0', name: 'ns', calmType: 'Patterns', data: undefined };
+            render(<MemoryRouter><DocumentDetailSection data={pattern} /></MemoryRouter>);
+
+            expect(mockFetchDecoratorValues).not.toHaveBeenCalled();
+        });
+
+        it('shows the lanes, boundaries and threats of the threat model that applies to the flow', async () => {
+            mockPaymentsArchitecture();
+            mockFetchDecoratorValues.mockResolvedValue([decorator]);
+
+            render(<MemoryRouter><DocumentDetailSection data={paymentsFlow} /></MemoryRouter>);
+            fireEvent.click(screen.getByRole('tab', { name: 'Threats' }));
+
+            expect(await screen.findByTestId('lane-mobile-app')).toBeInTheDocument();
+            expect(screen.getByTestId('boundary-tb-dmz-core')).toBeInTheDocument();
+            await waitFor(() => expect(screen.getByTestId('chip-t-token-replay')).toBeInTheDocument());
+        });
+
+        it('ignores a threat model that applies to another flow', async () => {
+            mockPaymentsArchitecture();
+            mockFetchDecoratorValues.mockResolvedValue([{ ...decorator, appliesTo: ['another-flow'] }]);
+
+            render(<MemoryRouter><DocumentDetailSection data={paymentsFlow} /></MemoryRouter>);
+            fireEvent.click(screen.getByRole('tab', { name: 'Threats' }));
+
+            expect(await screen.findByText(/No threat model applies to this flow/)).toBeInTheDocument();
+        });
+
+        it('says so when the architecture of the flow cannot be found', async () => {
+            mockFetchArchitectureSummaries.mockResolvedValue([]);
+
+            render(<MemoryRouter><DocumentDetailSection data={paymentsFlow} /></MemoryRouter>);
+            fireEvent.click(screen.getByRole('tab', { name: 'Threats' }));
+
+            expect(await screen.findByText('No architectures found in this namespace')).toBeInTheDocument();
+        });
+
+        it('shows no threat model when the decorator lookup returns nothing', async () => {
+            mockPaymentsArchitecture();
+            mockFetchDecoratorValues.mockResolvedValue([]);
+
+            render(<MemoryRouter><DocumentDetailSection data={paymentsFlow} /></MemoryRouter>);
+            fireEvent.click(screen.getByRole('tab', { name: 'Threats' }));
+
+            expect(await screen.findByText(/No threat model applies to this flow/)).toBeInTheDocument();
+        });
     });
 
     it('renders JsonRenderer with correct data', () => {

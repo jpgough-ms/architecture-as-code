@@ -48,6 +48,7 @@ src/
 │       ├── interface-detail-section/
 │       ├── document-detail-section/
 │       ├── diagram-section/
+│       ├── flow-threat-view/   # Threats tab of a flow: lanes, trust boundaries, STRIDE threats
 │       ├── json-renderer/
 │       ├── adr-renderer/
 │       ├── section-header/

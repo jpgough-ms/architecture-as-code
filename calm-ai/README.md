@@ -37,6 +37,7 @@ calm-ai/
 │   ├── pattern-creation.md
 │   ├── relationship-creation.md
 │   ├── standards-creation.md
+│   ├── threat-model-creation.md
 │   └── timeline-creation.md
 └── package.json           # Package metadata
 ```
@@ -60,6 +61,7 @@ Individual markdown files providing detailed guidance for specific CALM modeling
 | `pattern-creation.md` | Guide for defining reusable architectural patterns |
 | `relationship-creation.md` | Guide for creating relationships between nodes |
 | `standards-creation.md` | Guide for creating JSON Schema Standards extending CALM with organizational requirements |
+| `threat-model-creation.md` | Guide for creating STRIDE threat model decorators for a flow. Not yet installed by `calm init-ai` |
 | `timeline-creation.md` | Guide for creating architecture timelines |
 
 Each tool prompt follows a consistent structure:

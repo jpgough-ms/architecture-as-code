@@ -1,0 +1,285 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://calm.finos.org/draft/2026-03/standards/threat-model/threat-model.decorator.standard.json",
+    "title": "CALM Threat Model Decorator Standard",
+    "description": "Method-neutral threat model for a CALM flow or architecture. Extends the base CALM decorator standard with trust boundaries on relationships and threats that reference relationships and the controls that mitigate them. Method-specific standards, such as STRIDE, extend this one.",
+    "allOf": [
+        {
+            "$ref": "https://calm.finos.org/draft/2026-03/meta/decorators.json#/defs/decorator"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "threat-model",
+                    "description": "Must be 'threat-model' for threat model decorators"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "methodology": {
+                            "type": "string",
+                            "description": "Threat modelling method used, for example STRIDE, PASTA or LINDDUN"
+                        },
+                        "assessed-on": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "Date of the assessment"
+                        },
+                        "assessor": {
+                            "type": "string",
+                            "description": "Person or team that carried out the assessment"
+                        },
+                        "trust-boundaries": {
+                            "type": "array",
+                            "description": "Places where data crosses between zones of different trust. Each boundary is marked on the relationships that cross it.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "unique-id": {
+                                        "type": "string",
+                                        "description": "Unique identifier of the trust boundary within this decorator"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Human-readable name, for example 'Internet to DMZ'"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "What changes in trust when data crosses this boundary"
+                                    },
+                                    "relationships": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "unique-ids of the relationships that cross this boundary"
+                                    }
+                                },
+                                "required": [
+                                    "unique-id",
+                                    "name",
+                                    "relationships"
+                                ],
+                                "additionalProperties": false
+                            }
+                        },
+                        "threats": {
+                            "type": "array",
+                            "description": "Threats identified against the relationships of the target",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "unique-id": {
+                                        "type": "string",
+                                        "description": "Unique identifier of the threat within this decorator"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "classification": {
+                                        "type": "array",
+                                        "description": "Categories from any taxonomy. A method-specific standard can restrict the scheme and values.",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "scheme": {
+                                                    "type": "string",
+                                                    "description": "Taxonomy, for example STRIDE, MITRE-ATTACK, CWE or OWASP-API"
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                },
+                                                "reference": {
+                                                    "type": "string",
+                                                    "format": "uri"
+                                                }
+                                            },
+                                            "required": [
+                                                "scheme",
+                                                "value"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "applies-to": {
+                                        "type": "object",
+                                        "description": "Where the threat applies. A relationship can appear more than once in a flow, so sequence-numbers can narrow the threat to some of its transitions.",
+                                        "properties": {
+                                            "relationships": {
+                                                "type": "array",
+                                                "minItems": 1,
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "description": "unique-ids of the relationships the threat applies to"
+                                            },
+                                            "sequence-numbers": {
+                                                "type": "array",
+                                                "minItems": 1,
+                                                "items": {
+                                                    "type": "integer"
+                                                },
+                                                "description": "Optional sequence numbers of the flow transitions the threat applies to"
+                                            }
+                                        },
+                                        "required": [
+                                            "relationships"
+                                        ],
+                                        "additionalProperties": false
+                                    },
+                                    "likelihood": {
+                                        "$ref": "#/$defs/rating"
+                                    },
+                                    "impact": {
+                                        "$ref": "#/$defs/rating"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "identified",
+                                            "mitigated",
+                                            "partially-mitigated",
+                                            "accepted"
+                                        ],
+                                        "description": "Treatment state of the threat"
+                                    },
+                                    "mitigations": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "control": {
+                                                    "type": "string",
+                                                    "description": "Key of a control declared on a node or relationship of the flow, or on the architecture. A key that is not declared is shown as a gap."
+                                                },
+                                                "state": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "planned",
+                                                        "implemented",
+                                                        "verified"
+                                                    ]
+                                                },
+                                                "note": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "control",
+                                                "state"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "residual-risk": {
+                                        "type": "object",
+                                        "properties": {
+                                            "rating": {
+                                                "$ref": "#/$defs/rating"
+                                            },
+                                            "justification": {
+                                                "type": "string"
+                                            },
+                                            "accepted-by": {
+                                                "type": "string"
+                                            },
+                                            "review-by": {
+                                                "type": "string",
+                                                "format": "date"
+                                            }
+                                        },
+                                        "required": [
+                                            "rating"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "unique-id",
+                                    "name",
+                                    "applies-to",
+                                    "status"
+                                ],
+                                "allOf": [
+                                    {
+                                        "if": {
+                                            "properties": {
+                                                "status": {
+                                                    "const": "mitigated"
+                                                }
+                                            },
+                                            "required": [
+                                                "status"
+                                            ]
+                                        },
+                                        "then": {
+                                            "required": [
+                                                "mitigations"
+                                            ],
+                                            "properties": {
+                                                "mitigations": {
+                                                    "minItems": 1
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "if": {
+                                            "properties": {
+                                                "status": {
+                                                    "const": "accepted"
+                                                }
+                                            },
+                                            "required": [
+                                                "status"
+                                            ]
+                                        },
+                                        "then": {
+                                            "required": [
+                                                "residual-risk"
+                                            ],
+                                            "properties": {
+                                                "residual-risk": {
+                                                    "required": [
+                                                        "rating",
+                                                        "accepted-by"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    },
+                    "required": [
+                        "methodology",
+                        "threats"
+                    ],
+                    "additionalProperties": true
+                }
+            },
+            "required": [
+                "type",
+                "data"
+            ]
+        }
+    ],
+    "$defs": {
+        "rating": {
+            "type": "string",
+            "enum": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+            ]
+        }
+    }
+}

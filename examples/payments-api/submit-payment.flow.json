@@ -1,0 +1,36 @@
+{
+  "$schema": "https://calm.finos.org/release/1.2/meta/flow.json",
+  "$id": "https://calm.finos.org/samples/payments-api/flows/submit-payment.json",
+  "unique-id": "flow-submit-payment",
+  "name": "Submit Payment",
+  "description": "A customer submits a payment in the mobile app. The gateway forwards it to the payments service, which stores it and returns the result.",
+  "transitions": [
+    {
+      "relationship-unique-id": "mobile-app-to-api-gateway",
+      "sequence-number": 1,
+      "description": "Submit payment request"
+    },
+    {
+      "relationship-unique-id": "api-gateway-to-payments-api",
+      "sequence-number": 2,
+      "description": "Forward validated request"
+    },
+    {
+      "relationship-unique-id": "payments-api-to-payments-db",
+      "sequence-number": 3,
+      "description": "Persist the payment"
+    },
+    {
+      "relationship-unique-id": "api-gateway-to-payments-api",
+      "sequence-number": 4,
+      "description": "Return payment result",
+      "direction": "destination-to-source"
+    },
+    {
+      "relationship-unique-id": "mobile-app-to-api-gateway",
+      "sequence-number": 5,
+      "description": "Return payment confirmation",
+      "direction": "destination-to-source"
+    }
+  ]
+}
