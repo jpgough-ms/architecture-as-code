@@ -52,7 +52,7 @@ class TestExtensionResourceConfiguredShould {
                 .get("/api/calm/extensions")
                 .then()
                 .statusCode(200)
-                .body("values.id", contains("control-evaluation", "deployment", "example-services"))
+                .body("values.id", contains("control-evaluation", "deployment", "example-services", "threat-model"))
                 .body("values.find { it.id == 'example-services' }.version", equalTo("0.1.0"))
                 .body("values.find { it.id == 'example-services' }.hubApi", equalTo(0))
                 .body("values.find { it.id == 'example-services' }.routes.id", contains("screen", "namespace-services", "search", "add-service"))

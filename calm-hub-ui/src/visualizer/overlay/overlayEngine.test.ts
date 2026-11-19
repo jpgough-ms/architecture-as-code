@@ -347,3 +347,77 @@ describe('view identity', () => {
         expect(result.get('n1')!.entries[0]).toMatchObject({ value: 'high', status: 'error', label: 'Risky', time: '2026-11-06T10:00:00Z' });
     });
 });
+
+describe('overlayByElement with the threat-model view (overlay items)', () => {
+    const threatView = viewById('threat-model');
+    const threat = (id: string, status: string, appliesTo: string[]) => ({ 'unique-id': id, name: `Threat ${id}`, status, 'applies-to': appliesTo });
+    const model = (uniqueId: string, appliesTo: string[], threats: unknown, flow = 'flow-1', assessedOn = '2026-10-13'): Decorator => ({
+        uniqueId,
+        type: 'threat-model',
+        target: ['/api/calm/namespaces/ns/architectures/1/versions/1-0-0'],
+        appliesTo,
+        data: { flow, methodology: 'STRIDE', 'assessed-on': assessedOn, threats },
+    });
+
+    it('gives each element the worst status of its own threats, not of the whole model', () => {
+        const map = overlayByElement(threatView, [model('tm', ['flow-1', 'gw', 'api', 'db'], [
+            threat('a', 'mitigated', ['gw', 'api']),
+            threat('b', 'identified', ['gw']),
+            threat('c', 'partially-mitigated', ['db']),
+        ])]);
+        expect(map.get('gw')?.status).toBe('error');
+        expect(map.get('gw')?.entries.map((e) => e.label)).toEqual(['Threat b', 'Threat a']);
+        expect(map.get('api')?.status).toBe('ok');
+        expect(map.get('db')?.status).toBe('warn');
+        expect(map.get('db')?.value).toBe('partially-mitigated');
+        expect(map.has('flow-1')).toBe(false);
+    });
+
+    it('draws a threat only on elements that the decorator applies-to also names', () => {
+        const map = overlayByElement(threatView, [model('tm', ['gw'], [threat('a', 'identified', ['gw', 'secret-node'])])]);
+        expect(map.has('secret-node')).toBe(false);
+        expect(map.get('gw')?.status).toBe('error');
+    });
+
+    it('hides a not-applicable threat and maps a transferred one to info', () => {
+        const map = overlayByElement(threatView, [model('tm', ['gw', 'api'], [
+            threat('a', 'not-applicable', ['gw']),
+            threat('b', 'transferred', ['api']),
+        ])]);
+        expect(map.has('gw')).toBe(false);
+        expect(map.get('api')?.status).toBe('info');
+    });
+
+    it('draws nothing when the items are not a list, and skips items with no known status', () => {
+        expect(overlayByElement(threatView, [model('tm', ['gw'], { a: threat('a', 'identified', ['gw']) })]).size).toBe(0);
+        const map = overlayByElement(threatView, [model('tm', ['gw'], [null, threat('a', 'bogus', ['gw']), threat('b', 'mitigated', ['gw'])])]);
+        expect(map.get('gw')?.entries).toHaveLength(1);
+        expect(map.get('gw')?.status).toBe('ok');
+    });
+
+    it('counts the newest model of each flow, and counts a threat once on the container that draws its elements', () => {
+        const drawnAs = new Map([['api-in-cluster', 'cluster']]);
+        const map = overlayByElement(threatView, [
+            model('tm1', ['api-in-cluster', 'cluster'], [threat('a', 'mitigated', ['api-in-cluster', 'cluster'])], 'flow-1'),
+            model('tm2', ['cluster'], [threat('a', 'identified', ['cluster'])], 'flow-2'),
+        ], drawnAs);
+        expect(map.get('cluster')?.entries.map((e) => [e.decorator.uniqueId, e.value])).toEqual([['tm2', 'identified'], ['tm1', 'mitigated']]);
+    });
+
+    it('draws only the newest assessment of a flow, so an element it no longer names has no badge', () => {
+        const map = overlayByElement(threatView, [
+            model('old', ['x', 'y'], [threat('a', 'identified', ['x']), threat('b', 'identified', ['y'])], 'flow-1', '2026-09-01'),
+            model('new', ['y'], [threat('b', 'mitigated', ['y'])], 'flow-1', '2026-10-13'),
+        ]);
+        expect(map.has('x')).toBe(false);
+        expect(map.get('y')?.entries.map((e) => [e.decorator.uniqueId, e.value])).toEqual([['new', 'mitigated']]);
+    });
+
+    it('breaks a tie on the same assessment date by the greater uniqueId', () => {
+        const map = overlayByElement(threatView, [
+            model('tm-b', ['x'], [threat('a', 'mitigated', ['x'])], 'flow-1', '2026-10-13'),
+            model('tm-a', ['x'], [threat('a', 'identified', ['x'])], 'flow-1', '2026-10-13'),
+        ]);
+        expect(map.get('x')?.entries.map((e) => e.decorator.uniqueId)).toEqual(['tm-b']);
+    });
+});

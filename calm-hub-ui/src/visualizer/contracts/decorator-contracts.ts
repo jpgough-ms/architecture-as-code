@@ -46,3 +46,51 @@ export interface ElementEvaluation {
     status: 'met' | 'not-met';
     latest: ControlEvaluationDecorator[];
 }
+
+/** The `threat-model` decorator standard 1.0. Hub does not require any field, so every read is guarded. */
+export type ThreatStatus = 'identified' | 'mitigated' | 'partially-mitigated' | 'accepted' | 'transferred' | 'not-applicable';
+export type ThreatRating = 'low' | 'medium' | 'high' | 'critical';
+
+export interface TrustBoundary {
+    'unique-id': string;
+    name: string;
+    description?: string;
+    elements: string[];
+}
+
+export interface ThreatMitigation {
+    control: string;
+    state: 'planned' | 'implemented' | 'verified';
+    'attached-to'?: string;
+    note?: string;
+    evidence?: string[];
+}
+
+export interface Threat {
+    'unique-id': string;
+    name: string;
+    description?: string;
+    classification?: { scheme: string; value: string; reference?: string }[];
+    'applies-to': string[];
+    'sequence-numbers'?: number[];
+    likelihood?: ThreatRating;
+    impact?: ThreatRating;
+    status: ThreatStatus;
+    justification?: string;
+    mitigations?: ThreatMitigation[];
+    'residual-risk'?: { rating: ThreatRating; 'accepted-by'?: string; 'review-by'?: string };
+}
+
+export interface ThreatModelDecoratorData extends DecoratorData {
+    flow: string;
+    methodology: string;
+    'assessed-on': string;
+    assessor?: string;
+    'trust-boundaries'?: TrustBoundary[];
+    threats: Threat[];
+}
+
+export interface ThreatModelDecorator extends Decorator {
+    type: 'threat-model';
+    data: ThreatModelDecoratorData;
+}

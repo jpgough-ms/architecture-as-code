@@ -180,6 +180,12 @@ if [[ "${MODE}" == "readonly" ]]; then
     assert_body_contains GET /api/calm/namespaces/workshop/architectures '"name"'
     assert_body_contains GET /api/calm/namespaces/workshop/architectures '"description"'
 
+    # workshop — the threat model example and its decorator (native reflection guard for overlay items too)
+    assert_body_contains GET /api/calm/namespaces/workshop/architectures '"Payments API"'
+    assert_body_contains GET '/api/calm/namespaces/workshop/decorators/values?type=threat-model' '"threat-model"'
+    assert_body_contains GET /api/calm/extensions '"items":"/threats"'
+    assert_body_contains GET /api/calm/extensions '"applies-to":"/applies-to"'
+
     # finos.traderx — TraderX architecture must be present
     assert GET /api/calm/namespaces/finos.traderx/architectures 200
     assert_body_contains GET /api/calm/namespaces/finos.traderx/architectures '"name"'

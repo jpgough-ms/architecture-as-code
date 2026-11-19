@@ -329,9 +329,12 @@ public record ExtensionManifest(
     @JsonbPropertyOrder({"type", "schema"})
     public record Match(String type, String schema) {}
 
-    /** {@code status} and {@code label} are JSON Pointers into decorator data. Levels are ok, warn, error and info. */
+    /**
+     * {@code status} and {@code label} are JSON Pointers into decorator data, or into each element of the array at
+     * {@code items}, whose {@code appliesTo} pointer names its elements. Levels are ok, warn, error and info.
+     */
     @RegisterForReflection
-    @JsonbPropertyOrder({"status", "map", "defaultLevel", "label", "hide", "key", "time"})
+    @JsonbPropertyOrder({"status", "map", "defaultLevel", "label", "hide", "key", "time", "items", "appliesTo"})
     public record Overlay(
             String status,
             Map<String, String> map,
@@ -339,6 +342,8 @@ public record ExtensionManifest(
             String label,
             List<String> hide,
             String key,
-            String time
+            String time,
+            String items,
+            @JsonProperty("applies-to") @JsonbProperty("applies-to") String appliesTo
     ) {}
 }

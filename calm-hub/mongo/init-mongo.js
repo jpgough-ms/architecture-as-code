@@ -346,18 +346,18 @@ if (db.counters.countDocuments({ _id: "patternStoreCounter" }) === 0) {
 if (db.counters.countDocuments({ _id: "architectureStoreCounter" }) === 0) {
     db.counters.insertOne({
         _id: "architectureStoreCounter",
-        sequence_value: 11
+        sequence_value: 12
     });
-    logSuccess("Initialized architectureStoreCounter with sequence_value 11");
+    logSuccess("Initialized architectureStoreCounter with sequence_value 12");
 } else {
     const architectureUpgrade = db.counters.updateOne(
-        { _id: "architectureStoreCounter", sequence_value: { $lt: 11 } },
-        { $set: { sequence_value: 11 } }
+        { _id: "architectureStoreCounter", sequence_value: { $lt: 12 } },
+        { $set: { sequence_value: 12 } }
     );
     if (architectureUpgrade.modifiedCount > 0) {
-        logSuccess("Upgraded architectureStoreCounter to sequence_value 11 (was below minimum)");
+        logSuccess("Upgraded architectureStoreCounter to sequence_value 12 (was below minimum)");
     } else {
-        logSkip("architectureStoreCounter already exists with sequence_value >= 11, no update needed");
+        logSkip("architectureStoreCounter already exists with sequence_value >= 12, no update needed");
     }
 }
 
@@ -2504,6 +2504,265 @@ if (isEmptyDatabase && db.architectures.countDocuments() === 0) {
                                 "/calm/namespaces/workshop/adrs/1"
                             ],
                             "$schema": "https://calm.finos.org/calm/namespaces/workshop/patterns/1/versions/1.0.0"
+                        }
+                    }
+                },
+                {
+                    // The payments example of the threat-model decorator standard 1.0. Keep in sync with
+                    // create_threat_model_demo in calm-hub/nitrite/init-nitrite.sh.
+                    architectureId: NumberInt(12),
+                    name: "Payments API",
+                    description: "A mobile app submits card payments through an API gateway, with a STRIDE threat model on the Submit Payment flow",
+                    versions: {
+                        "1.0.0": {
+                            "$schema": "https://calm.finos.org/release/1.3/meta/calm.json",
+                            "title": "Payments API",
+                            "description": "A mobile app submits card payments through an API gateway to a payments service that stores them in a database. Used to demonstrate threat modelling on a flow.",
+                            "nodes": [
+                                {
+                                    "unique-id": "customer",
+                                    "node-type": "actor",
+                                    "name": "Customer",
+                                    "description": "Bank customer who pays from the mobile app"
+                                },
+                                {
+                                    "unique-id": "mobile-app",
+                                    "node-type": "webclient",
+                                    "name": "Mobile App",
+                                    "description": "Customer mobile banking app on an untrusted device",
+                                    "controls": {
+                                        "certificate-pinning": {
+                                            "description": "The app trusts only the pinned API gateway certificate",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-certificate-pinning",
+                                                        "name": "Certificate Pinning",
+                                                        "description": "The app trusts only the pinned API gateway certificate"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "api-gateway",
+                                    "node-type": "service",
+                                    "name": "API Gateway",
+                                    "description": "Public entry point that authenticates callers and validates requests before routing them",
+                                    "controls": {
+                                        "oauth2-authentication": {
+                                            "description": "Callers present short-lived OAuth 2.0 access tokens that are bound to the device",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-oauth2-authentication",
+                                                        "name": "OAuth 2.0 Authentication",
+                                                        "description": "Callers present short-lived OAuth 2.0 access tokens that are bound to the device"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "request-validation": {
+                                            "description": "The gateway checks request schema, size and payee fields before routing",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-request-validation",
+                                                        "name": "Request Validation",
+                                                        "description": "The gateway checks request schema, size and payee fields before routing"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "payments-api",
+                                    "node-type": "service",
+                                    "name": "Payments API",
+                                    "description": "Service that validates, records and settles payments",
+                                    "controls": {
+                                        "authorization-checks": {
+                                            "description": "The service checks that the caller owns the payer account",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-authorization-checks",
+                                                        "name": "Authorization Checks",
+                                                        "description": "The service checks that the caller owns the payer account"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "payments-db",
+                                    "node-type": "database",
+                                    "name": "Payments DB",
+                                    "description": "Relational database that holds payment records",
+                                    "controls": {
+                                        "encryption-at-rest": {
+                                            "description": "Database storage and backups are encrypted with keys held in the bank key management service",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-encryption-at-rest",
+                                                        "name": "Encryption At Rest",
+                                                        "description": "Database storage and backups are encrypted with keys held in the bank key management service"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "relationships": [
+                                {
+                                    "unique-id": "customer-uses-mobile-app",
+                                    "description": "Customer authenticates and pays with the mobile app",
+                                    "relationship-type": {
+                                        "interacts": {
+                                            "actor": "customer",
+                                            "nodes": [
+                                                "mobile-app"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "mobile-app-to-api-gateway",
+                                    "description": "App submits payment requests to the gateway over the internet",
+                                    "relationship-type": {
+                                        "connects": {
+                                            "source": {
+                                                "node": "mobile-app"
+                                            },
+                                            "destination": {
+                                                "node": "api-gateway"
+                                            }
+                                        }
+                                    },
+                                    "protocol": "HTTPS",
+                                    "controls": {
+                                        "transport-security": {
+                                            "description": "TLS 1.3 protects traffic between the app and the gateway",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-transport-security",
+                                                        "name": "Transport Security",
+                                                        "description": "TLS 1.3 protects traffic between the app and the gateway"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "api-gateway-to-payments-api",
+                                    "description": "Gateway forwards validated requests to the payments service",
+                                    "relationship-type": {
+                                        "connects": {
+                                            "source": {
+                                                "node": "api-gateway"
+                                            },
+                                            "destination": {
+                                                "node": "payments-api"
+                                            }
+                                        }
+                                    },
+                                    "protocol": "mTLS",
+                                    "controls": {
+                                        "mutual-tls": {
+                                            "description": "The gateway and the payments service authenticate each other with certificates",
+                                            "requirements": [
+                                                {
+                                                    "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                                    "config": {
+                                                        "control-id": "payments-mutual-tls",
+                                                        "name": "Mutual TLS",
+                                                        "description": "The gateway and the payments service authenticate each other with certificates"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "unique-id": "payments-api-to-payments-db",
+                                    "description": "Payments service stores payment records",
+                                    "relationship-type": {
+                                        "connects": {
+                                            "source": {
+                                                "node": "payments-api"
+                                            },
+                                            "destination": {
+                                                "node": "payments-db"
+                                            }
+                                        }
+                                    },
+                                    "protocol": "JDBC"
+                                }
+                            ],
+                            "flows": [
+                                {
+                                    "unique-id": "flow-submit-payment",
+                                    "name": "Submit Payment",
+                                    "description": "A customer submits a payment in the mobile app. The gateway forwards it to the payments service, which stores it and returns the result.",
+                                    "transitions": [
+                                        {
+                                            "relationship-unique-id": "mobile-app-to-api-gateway",
+                                            "sequence-number": 1,
+                                            "description": "Submit payment request"
+                                        },
+                                        {
+                                            "relationship-unique-id": "api-gateway-to-payments-api",
+                                            "sequence-number": 2,
+                                            "description": "Forward validated request"
+                                        },
+                                        {
+                                            "relationship-unique-id": "payments-api-to-payments-db",
+                                            "sequence-number": 3,
+                                            "description": "Persist the payment"
+                                        },
+                                        {
+                                            "relationship-unique-id": "api-gateway-to-payments-api",
+                                            "sequence-number": 4,
+                                            "description": "Return payment result",
+                                            "direction": "destination-to-source"
+                                        },
+                                        {
+                                            "relationship-unique-id": "mobile-app-to-api-gateway",
+                                            "sequence-number": 5,
+                                            "description": "Return payment confirmation",
+                                            "direction": "destination-to-source"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "controls": {
+                                "audit-logging": {
+                                    "description": "Every payment state change is written to an append-only audit log",
+                                    "requirements": [
+                                        {
+                                            "requirement-url": "https://calm.finos.org/release/1.3/meta/control-requirement.json",
+                                            "config": {
+                                                "control-id": "payments-audit-logging",
+                                                "name": "Audit Logging",
+                                                "description": "Every payment state change is written to an append-only audit log"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         }
                     }
                 }
@@ -6958,6 +7217,243 @@ if (db.decorators.countDocuments() === 0) {
                         "data": {
                             "dashboard-url": "https://datadog.example.com/dashboard/workshop-conference",
                             "notes": "Monitoring dashboard for workshop conference system"
+                        }
+                    }
+                },
+                {
+                    decoratorId: NumberInt(4),
+                    decorator: {
+                        "$schema": "https://calm.finos.org/standards/threat-model/1.0/stride.threat-model.decorator.standard.json",
+                        "unique-id": "submit-payment-stride-threat-model",
+                        "type": "threat-model",
+                        "target-type": [
+                            "architecture"
+                        ],
+                        "target": [
+                            "/api/calm/namespaces/workshop/architectures/12/versions/1-0-0"
+                        ],
+                        "applies-to": [
+                            "flow-submit-payment",
+                            "mobile-app-to-api-gateway",
+                            "api-gateway-to-payments-api",
+                            "payments-api-to-payments-db",
+                            "api-gateway",
+                            "payments-api",
+                            "payments-db"
+                        ],
+                        "data": {
+                            "flow": "flow-submit-payment",
+                            "methodology": "STRIDE",
+                            "assessed-on": "2026-10-13",
+                            "assessor": "payments-security-architecture",
+                            "trust-boundaries": [
+                                {
+                                    "unique-id": "tb-internet-dmz",
+                                    "name": "Internet to DMZ",
+                                    "description": "An untrusted customer device crosses into the bank-controlled API perimeter.",
+                                    "elements": [
+                                        "mobile-app-to-api-gateway"
+                                    ]
+                                },
+                                {
+                                    "unique-id": "tb-dmz-core",
+                                    "name": "DMZ to core services",
+                                    "description": "The gateway hands a request to services that hold payment logic.",
+                                    "elements": [
+                                        "api-gateway-to-payments-api"
+                                    ]
+                                },
+                                {
+                                    "unique-id": "tb-core-data",
+                                    "name": "Core services to data tier",
+                                    "description": "The payments service reaches the store that holds card and payment data.",
+                                    "elements": [
+                                        "payments-api-to-payments-db"
+                                    ]
+                                }
+                            ],
+                            "threats": [
+                                {
+                                    "unique-id": "t-token-replay",
+                                    "name": "Access token replay",
+                                    "description": "An attacker replays a stolen access token to submit payments as the customer.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "spoofing"
+                                        }
+                                    ],
+                                    "applies-to": [
+                                        "mobile-app-to-api-gateway",
+                                        "api-gateway"
+                                    ],
+                                    "sequence-numbers": [
+                                        1
+                                    ],
+                                    "likelihood": "medium",
+                                    "impact": "high",
+                                    "status": "mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "oauth2-authentication",
+                                            "attached-to": "api-gateway",
+                                            "state": "verified",
+                                            "note": "Short-lived tokens bound to the device."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-amount-tamper",
+                                    "name": "Payment tampering in transit",
+                                    "description": "An attacker changes the amount or the payee on the wire between the app and the gateway.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "tampering"
+                                        }
+                                    ],
+                                    "applies-to": [
+                                        "mobile-app-to-api-gateway"
+                                    ],
+                                    "sequence-numbers": [
+                                        1
+                                    ],
+                                    "likelihood": "medium",
+                                    "impact": "high",
+                                    "status": "mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "transport-security",
+                                            "attached-to": "mobile-app-to-api-gateway",
+                                            "state": "verified",
+                                            "evidence": [
+                                                "https://security.example.com/reports/payments-tls-scan-2026-10"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-submit-flood",
+                                    "name": "Payment endpoint flooding",
+                                    "description": "Automated clients flood the payment endpoint and exhaust its capacity.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "denial-of-service"
+                                        }
+                                    ],
+                                    "applies-to": [
+                                        "mobile-app-to-api-gateway",
+                                        "api-gateway"
+                                    ],
+                                    "likelihood": "high",
+                                    "impact": "medium",
+                                    "status": "identified",
+                                    "mitigations": [
+                                        {
+                                            "control": "rate-limiting",
+                                            "attached-to": "api-gateway",
+                                            "state": "planned",
+                                            "note": "Gateway rate limits are not configured yet. The architecture does not declare this control."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-bola",
+                                    "name": "Payment from an account the caller does not own",
+                                    "description": "A caller changes the payer account identifier and pays from an account they do not own.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "elevation-of-privilege"
+                                        },
+                                        {
+                                            "scheme": "CWE",
+                                            "value": "CWE-639",
+                                            "reference": "https://cwe.mitre.org/data/definitions/639.html"
+                                        }
+                                    ],
+                                    "applies-to": [
+                                        "api-gateway-to-payments-api",
+                                        "payments-api"
+                                    ],
+                                    "likelihood": "medium",
+                                    "impact": "critical",
+                                    "status": "partially-mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "authorization-checks",
+                                            "attached-to": "payments-api",
+                                            "state": "implemented",
+                                            "note": "The ownership check covers the payer account only."
+                                        },
+                                        {
+                                            "control": "mutual-tls",
+                                            "attached-to": "api-gateway-to-payments-api",
+                                            "state": "implemented",
+                                            "note": "Authenticates the gateway, not the end user."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-pan-at-rest",
+                                    "name": "Card data exposed from storage",
+                                    "description": "Card data can be read if database storage or its backups are exposed.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "information-disclosure"
+                                        }
+                                    ],
+                                    "applies-to": [
+                                        "payments-db",
+                                        "payments-api-to-payments-db"
+                                    ],
+                                    "sequence-numbers": [
+                                        3
+                                    ],
+                                    "likelihood": "low",
+                                    "impact": "critical",
+                                    "status": "partially-mitigated",
+                                    "mitigations": [
+                                        {
+                                            "control": "encryption-at-rest",
+                                            "attached-to": "payments-db",
+                                            "state": "implemented",
+                                            "note": "The database is encrypted. Card numbers still appear in application logs."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "unique-id": "t-no-audit",
+                                    "name": "Payment cannot be traced to a user",
+                                    "description": "A payment record cannot be linked to the user who made it.",
+                                    "classification": [
+                                        {
+                                            "scheme": "STRIDE",
+                                            "value": "repudiation"
+                                        }
+                                    ],
+                                    "applies-to": [
+                                        "payments-api-to-payments-db"
+                                    ],
+                                    "likelihood": "low",
+                                    "impact": "medium",
+                                    "status": "accepted",
+                                    "justification": "Audit logging is planned for the next release. Gateway access logs give partial traceability until then.",
+                                    "mitigations": [
+                                        {
+                                            "control": "audit-logging",
+                                            "state": "planned"
+                                        }
+                                    ],
+                                    "residual-risk": {
+                                        "rating": "medium",
+                                        "accepted-by": "payments-security-lead",
+                                        "review-by": "2027-03-31"
+                                    }
+                                }
+                            ]
                         }
                     }
                 }

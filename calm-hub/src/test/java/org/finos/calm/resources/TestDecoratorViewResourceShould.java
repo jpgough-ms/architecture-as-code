@@ -27,7 +27,7 @@ class TestDecoratorViewResourceShould {
     @TestSecurity(user = "alice")
     void expose_an_operator_view_without_routes_or_backend_in_operator_order() {
         given().when().get("/api/calm/extensions").then().statusCode(200)
-                .body("values.id", contains("scanner", "control-evaluation", "deployment"))
+                .body("values.id", contains("scanner", "control-evaluation", "deployment", "threat-model"))
                 .body("values[0].routes.size()", equalTo(0))
                 .body("values[0].contributes.decorator-views[0].match.type", equalTo("security-scan"))
                 .body("values[0].contributes.decorator-views[0].overlay.map.unsafe", equalTo("error"));

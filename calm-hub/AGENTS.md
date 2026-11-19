@@ -467,6 +467,9 @@ from; it fails if there is none.
   new per-id key there, in `ExtensionsConfig.Extension`, and in the settings table of `docs/docs/calm-hub/index.md`
 - A field change in `domain/extensions/ExtensionManifest` needs the same change in the schema: the
   schema rejects unknown fields
+- A new built-in extension goes in `builtin/index.txt`, in calm-hub-ui `BUILTIN_EXTENSION_IDS` and
+  `builtinDecoratorViews.ts`, and in the id lists of the `TestExtensionResource*`, `TestDecoratorViewResourceShould` and
+  `TestExtensionManifestLoaderShould` tests
 - `ExtensionProxyService` holds every rule of a proxied call: route match, path checks, scope, read-only,
   identity assertion, header allow-lists, limits and audit. `ExtensionProxyResource` and the MCP tools
   must both call it, because MCP does not pass through the JAX-RS filters (ADR 0011)
@@ -570,6 +573,9 @@ from; it fails if there is none.
   directory, and requires a hub `$id`. Each subdirectory of `mongo/standards/finos.calm/` holds copies
   of the decorator standards of one calm-schema release, with their calm.finos.org `$id`, so
   `create_standards` seeds them through the numeric API instead, `deployment/` first
+- A decorator `target` must be the exact `/api/calm/namespaces/{ns}/architectures/{numericId}/versions/{x-y-z}`
+  string, because the UI reads decorators by that target. The threat model example (`create_threat_model_demo`)
+  builds it from the id that Nitrite gives the architecture; `init-mongo.js` uses the seeded id 12
 - A version write (`POST .../architectures/{id}/versions/{version}`) takes
   `{name, description, architectureJson: "<document as a JSON string>"}`, not the CALM document
   itself. Patterns and flows take `patternJson` and `flowJson`. See `init-nitrite.sh`

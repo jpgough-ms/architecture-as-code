@@ -31,4 +31,20 @@ export const BUILTIN_DECORATOR_VIEWS: readonly DecoratorView[] = [
         },
         source: { id: 'deployment', name: 'Deployments', builtIn: true },
     },
+    {
+        id: 'threat-model',
+        match: { type: 'threat-model' },
+        label: 'Threat models',
+        overlay: {
+            items: '/threats',
+            'applies-to': '/applies-to',
+            status: '/status',
+            map: { identified: 'error', 'partially-mitigated': 'warn', mitigated: 'ok', accepted: 'info', transferred: 'info' },
+            hide: ['not-applicable'],
+            label: '/name',
+            key: '/flow',
+            time: '/assessed-on',
+        },
+        source: { id: 'threat-model', name: 'Threat models', builtIn: true },
+    },
 ];

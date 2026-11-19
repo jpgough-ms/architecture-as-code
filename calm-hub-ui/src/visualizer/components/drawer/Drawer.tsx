@@ -8,11 +8,11 @@ import { toSidebarNodeData, toSidebarEdgeData } from '../reactflow/utils/pattern
 import { buildViewportKey } from '../../services/node-position-service.js';
 import { DropzoneEmptyState } from './DropzoneEmptyState.js';
 import { colors } from '../../../theme/colors.js';
-import { DecoratorOverlayContext, isControlEvaluationView, type DecoratorOverlayState } from '../../context/DecoratorOverlayContext.js';
+import { DecoratorOverlayContext, isControlEvaluationView, isThreatModelView, type DecoratorOverlayState } from '../../context/DecoratorOverlayContext.js';
 import { containersOfContainment, hasOverlay, matchesView, overlayByElement } from '../../overlay/overlayEngine.js';
 import { useDecoratorViews } from '../../overlay/decoratorViews.js';
 import { useOverlayVisibility } from '../../overlay/useOverlayVisibility.js';
-import type { DrawerProps, Control, ControlEvaluationDecorator, Decorator, ViewOverlay } from '../../contracts/contracts.js';
+import type { DrawerProps, Control, ControlEvaluationDecorator, Decorator, ThreatModelDecorator, ViewOverlay } from '../../contracts/contracts.js';
 
 const NO_DECORATORS: Decorator[] = [];
 
@@ -125,6 +125,11 @@ export function Drawer({
         () => (evaluationView ? overlayDecorators.filter((d) => matchesView(evaluationView, d)) as ControlEvaluationDecorator[] : []),
         [evaluationView, overlayDecorators],
     );
+    const threatModelView = useMemo(() => views.find(isThreatModelView), [views]);
+    const threatModels = useMemo(
+        () => (threatModelView ? overlayDecorators.filter((d) => matchesView(threatModelView, d)) as ThreatModelDecorator[] : []),
+        [threatModelView, overlayDecorators],
+    );
 
     const adrs = useMemo((): string[] => {
         const calmData = calmInstance as CalmArchitectureSchema & { adrs?: unknown };
@@ -184,7 +189,7 @@ export function Drawer({
     }, [calmInstance]);
 
     const hasMetadata =
-        Object.keys(controls).length > 0 || adrs.length > 0 || evaluations.length > 0;
+        Object.keys(controls).length > 0 || adrs.length > 0 || evaluations.length > 0 || threatModels.length > 0;
 
     const hasContent = !!(calmInstance || patternInstance);
 
@@ -217,6 +222,16 @@ export function Drawer({
             }
         },
         [calmInstance, handleNodeClick]
+    );
+
+    const handleElementClick = useCallback(
+        (id: string) => {
+            const node = calmInstance?.nodes?.find((n) => n['unique-id'] === id);
+            if (node) return handleNodeClick(node);
+            const relationship = calmInstance?.relationships?.find((r) => r['unique-id'] === id);
+            if (relationship) handleEdgeClick(relationship);
+        },
+        [calmInstance, handleNodeClick, handleEdgeClick]
     );
 
     return (
@@ -288,6 +303,10 @@ export function Drawer({
                                 adrs={adrs}
                                 evaluations={evaluations}
                                 evaluationOverlay={evaluationView?.overlay}
+                                threatModels={threatModels}
+                                threatModelOverlay={threatModelView?.overlay}
+                                architecture={calmInstance}
+                                onElementClick={handleElementClick}
                                 onNodeClick={handleControlNodeClick}
                                 isCollapsed={isMetadataCollapsed}
                                 onToggleCollapse={() => setIsMetadataCollapsed(!isMetadataCollapsed)}

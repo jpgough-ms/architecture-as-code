@@ -25,6 +25,12 @@ export interface DecoratorOverlay {
     key?: string;
     /** An ISO date-time. With it, only the newest decorator (per `key`) counts for an element. */
     time?: string;
+    /**
+     * An array in `data`. Each of its elements is one entry: `status` and `label` point into the element, and
+     * `applies-to` points to its list of element ids. With `time`, only the newest decorator of each `key` is expanded.
+     */
+    items?: string;
+    'applies-to'?: string;
 }
 
 /** The extension that contributes a view. The UI adds it; it is not part of the manifest entry. */

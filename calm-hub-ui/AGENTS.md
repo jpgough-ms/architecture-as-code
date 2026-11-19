@@ -209,11 +209,15 @@ a `PUT`.
 
 One engine (`visualizer/overlay/`) draws decorators on the diagram from `decorator-views` entries that have an
 `overlay` (types in `visualizer/contracts/decorator-view-contracts.ts`). Status values map to the fixed scale
-`ok`, `warn`, `error`, `info`. The built-in views for `control-evaluation` and `deployment` come from classpath manifests through
+`ok`, `warn`, `error`, `info`. A view with `overlay.items` draws one entry for each element of that array, on the ids of its
+`applies-to` that the decorator `applies-to` also names, so a threat model gives each element its own worst threat. With `time`, `newestPerKey()` picks the newest decorator of each
+`key` across all decorators before the items expand, never per element, so a stale threat cannot come back on an element that the
+newer model drops. The Threats panel uses the same choice (`splitAssessments()`) and lists the rest under Earlier assessments. The built-in
+views for `control-evaluation`, `deployment` and `threat-model` come from classpath manifests through
 `GET /api/calm/extensions`. If the registry is unavailable, `useDecoratorViews()` returns the bundled copy in
 `builtinDecoratorViews.ts`; its test keeps it the same as the manifests. It reads the views again when `useExtensionsStatus()`
 becomes `loaded`, so a retry that succeeds brings back the extension views. Only the registry says that an operator turned a
-built-in off (`calm.extensions."<id>".enabled=false`), so the fallback draws both built-ins. `DiagramSection` polls all decorators of
+built-in off (`calm.extensions."<id>".enabled=false`), so the fallback draws all the built-ins. `DiagramSection` polls all decorators of
 the version every 5 s while the diagram, the Decorators tab or the details drawer shows (`useArchitectureDecorators`, one request;
 after three failures in a row it backs off to 30 s, also when the view shows again) and gives the one list to the Decorators tab, the
 details drawer and `Drawer`. Do not add a second request. `Drawer` gives the overlays to the diagram through
@@ -221,7 +225,9 @@ details drawer and `Drawer`. Do not add a second request. `Drawer` gives the ove
 edges read `useElementOverlays(id)`; do not add a type-specific badge. The badge details are a portal, but React still sends their events up to the node, so the details root
 stops a click, a double click and a key (it handles Escape itself). The decision callouts, the hover list and the
 Evaluations panel read control-evaluation fields, so they use `isControlEvaluationView()`: the id and
-`source.builtIn`: when the built-in extension is disabled, an operator view can take its id.
+`source.builtIn`: when the built-in extension is disabled, an operator view can take its id. The Threats tab of
+`MetadataPanel` (`reactflow/threat-model/`) reads threat-model fields in the same way, gated by `isThreatModelView()`.
+`visualizer/threat-model/threatModel.ts` finds the control of each mitigation in the order of the standard's README.
 
 `ExtensionService` uses its own axios instance, not `apiClient`, so a registry or extension call failure does not
 open the global auth or outage page. The exception is a registry `401`: the registry is a Hub call, so it opens

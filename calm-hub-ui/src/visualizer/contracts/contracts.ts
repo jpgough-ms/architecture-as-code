@@ -59,6 +59,13 @@ export type {
     ControlEvaluationDecoratorData,
     ControlEvaluationDecorator,
     ElementEvaluation,
+    ThreatStatus,
+    ThreatRating,
+    TrustBoundary,
+    ThreatMitigation,
+    Threat,
+    ThreatModelDecoratorData,
+    ThreatModelDecorator,
 } from './decorator-contracts.js';
 
 export type HubParams = {

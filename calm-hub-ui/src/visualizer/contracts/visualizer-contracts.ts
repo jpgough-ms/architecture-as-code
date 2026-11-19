@@ -4,7 +4,7 @@ import {
     CalmRelationshipSchema,
 } from '@finos/calm-models/types';
 import type { Control } from './control-contracts.js';
-import type { ControlEvaluationDecorator, Decorator } from './decorator-contracts.js';
+import type { ControlEvaluationDecorator, Decorator, ThreatModelDecorator } from './decorator-contracts.js';
 import type { DecoratorOverlay, DecoratorView } from './decorator-view-contracts.js';
 import type { ReactNode } from 'react';
 import { Data } from '../../model/calm.js';
@@ -145,6 +145,14 @@ export interface MetadataPanelProps {
     evaluations?: ControlEvaluationDecorator[];
     /** The built-in control-evaluation view's overlay, which colours the evaluation chips. */
     evaluationOverlay?: DecoratorOverlay;
+    /** Threat-model decorators for the architecture version; listed in their own tab. */
+    threatModels?: ThreatModelDecorator[];
+    /** The built-in threat-model view's overlay, which colours the threat chips. */
+    threatModelOverlay?: DecoratorOverlay;
+    /** The architecture, to name the elements of each threat and find the controls of each mitigation. */
+    architecture?: unknown;
+    /** Selects a node or a relationship. */
+    onElementClick?: (id: string) => void;
     onNodeClick?: (nodeId: string) => void;
     onControlClick?: (controlId: string) => void;
     isCollapsed: boolean;
@@ -156,7 +164,7 @@ export interface MetadataPanelProps {
 /**
  * Tab type for MetadataPanel
  */
-export type MetadataPanelTabType = 'evaluations' | 'controls' | 'adrs';
+export type MetadataPanelTabType = 'evaluations' | 'threats' | 'controls' | 'adrs';
 
 /**
  * Props for AdrsPanel component

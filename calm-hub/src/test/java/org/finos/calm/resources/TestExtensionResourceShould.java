@@ -28,11 +28,13 @@ class TestExtensionResourceShould {
                 .get("/api/calm/extensions")
                 .then()
                 .statusCode(200)
-                .body("values.id", contains("control-evaluation", "deployment"))
+                .body("values.id", contains("control-evaluation", "deployment", "threat-model"))
                 .body("values[0].routes.size()", equalTo(0))
                 .body("values[0].contributes.decorator-views[0].overlay.hide", contains("not-applicable"))
                 .body("values[0].contributes.decorator-views[0].overlay.key", equalTo("/control/unique-id"))
-                .body("values[1].contributes.decorator-views[0].overlay.time", equalTo("/start-time"));
+                .body("values[1].contributes.decorator-views[0].overlay.time", equalTo("/start-time"))
+                .body("values[2].contributes.decorator-views[0].overlay.items", equalTo("/threats"))
+                .body("values[2].contributes.decorator-views[0].overlay.applies-to", equalTo("/applies-to"));
     }
     @Test
     @TestSecurity(user = "alice")

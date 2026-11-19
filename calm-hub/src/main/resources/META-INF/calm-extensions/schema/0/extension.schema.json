@@ -471,12 +471,28 @@
         "time": {
           "type": "string",
           "pattern": "^(?:/(?:[^~/]|~[01])*)*$"
+        },
+        "items": {
+          "type": "string",
+          "pattern": "^(?:/(?:[^~/]|~[01])*)*$"
+        },
+        "applies-to": {
+          "type": "string",
+          "pattern": "^(?:/(?:[^~/]|~[01])*)*$"
         }
       },
       "required": [
         "status",
         "map"
       ],
+      "dependentRequired": {
+        "items": [
+          "applies-to"
+        ],
+        "applies-to": [
+          "items"
+        ]
+      },
       "additionalProperties": false
     },
     "decoratorView": {

@@ -1,7 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MetadataPanel } from './MetadataPanel';
-import type { ControlEvaluationDecorator } from '../../contracts/contracts.js';
+import type { ControlEvaluationDecorator, ThreatModelDecorator } from '../../contracts/contracts.js';
+import { BUILTIN_DECORATOR_VIEWS } from '../../../test-support/decorator-views.js';
 
 // Mock child components
 
@@ -242,6 +243,61 @@ describe('MetadataPanel', () => {
 
             expect(screen.getByTestId('controls-panel')).toBeInTheDocument();
             expect(screen.queryByTestId('control-evaluation-row')).not.toBeInTheDocument();
+        });
+    });
+
+    describe('threat models', () => {
+        const overlay = BUILTIN_DECORATOR_VIEWS.find((v) => v.id === 'threat-model')!.overlay;
+        const architecture = {
+            nodes: [{ 'unique-id': 'gw', name: 'API Gateway', controls: { oauth: { description: 'o', requirements: [] } } }],
+            relationships: [],
+            flows: [{ 'unique-id': 'flow-1', name: 'Submit Payment', transitions: [] }],
+        };
+        const model = {
+            uniqueId: 'tm', type: 'threat-model', target: [], appliesTo: ['flow-1', 'gw'],
+            data: {
+                flow: 'flow-1', methodology: 'STRIDE', 'assessed-on': '2026-10-13', assessor: 'sec',
+                'trust-boundaries': [{ 'unique-id': 'tb', name: 'Internet to DMZ', elements: ['gw'] }],
+                threats: [
+                    { 'unique-id': 'a', name: 'Token replay', status: 'mitigated', 'applies-to': ['gw'], classification: [{ scheme: 'STRIDE', value: 'spoofing' }],
+                        mitigations: [{ control: 'oauth', state: 'verified' }] },
+                    { 'unique-id': 'b', name: 'Flooding', status: 'identified', 'applies-to': ['gw'], mitigations: [{ control: 'rate-limiting', state: 'planned' }] },
+                ],
+            },
+        } as unknown as ThreatModelDecorator;
+        const onlyThreats = { ...defaultProps, controls: {}, threatModels: [model], threatModelOverlay: overlay, architecture };
+
+        it('opens on the threats tab and shows the flow, boundaries, threats and gaps', () => {
+            render(<MetadataPanel {...onlyThreats} />);
+            expect(screen.getByRole('button', { name: 'Threats (2)' })).toBeInTheDocument();
+            expect(screen.getByText('Submit Payment')).toBeInTheDocument();
+            expect(screen.getAllByTestId('trust-boundary')).toHaveLength(1);
+            expect(screen.getAllByTestId('threat-status').map((c) => c.textContent)).toEqual(['Mitigated', 'Identified']);
+            expect(screen.getAllByTestId('threat-mitigation').map((m) => m.textContent)).toEqual([
+                expect.stringContaining('on API Gateway'),
+                expect.stringContaining('Gap'),
+            ]);
+        });
+
+        it('selects an element that a threat names', () => {
+            const onElementClick = vi.fn();
+            render(<MetadataPanel {...onlyThreats} onElementClick={onElementClick} />);
+            fireEvent.click(screen.getAllByRole('button', { name: 'API Gateway' })[0]);
+            expect(onElementClick).toHaveBeenCalledWith('gw');
+        });
+
+        it('counts only the threats of the newest assessment of each flow in the tab', () => {
+            const older = { ...model, uniqueId: 'tm-old', data: { ...model.data, 'assessed-on': '2026-01-01', threats: [...model.data.threats, ...model.data.threats] } } as ThreatModelDecorator;
+            render(<MetadataPanel {...onlyThreats} threatModels={[older, model]} />);
+            expect(screen.getByRole('button', { name: 'Threats (2)' })).toBeInTheDocument();
+        });
+
+        it('keeps evaluations as the default tab when both exist', () => {
+            const evaluation = { uniqueId: 'e', type: 'control-evaluation', target: [], appliesTo: ['gw'],
+                data: { control: { 'unique-id': 'c', 'requirement-url': 'r' }, status: 'met', 'evaluated-at': '2026-11-04T15:00:00Z' } } as unknown as ControlEvaluationDecorator;
+            render(<MetadataPanel {...onlyThreats} evaluations={[evaluation]} />);
+            expect(screen.getByTestId('control-evaluation-row')).toBeInTheDocument();
+            expect(screen.queryByTestId('threat-row')).not.toBeInTheDocument();
         });
     });
 });

@@ -142,6 +142,18 @@ class TestExtensionManifestLoaderShould {
     }
 
     @Test
+    void read_overlay_items_and_their_applies_to() {
+        JsonObject m = valid();
+        view(m).getJsonObject("overlay").put("items", "/threats").put("applies-to", "/applies-to").put("key", "/flow").put("time", "/assessed-on");
+
+        ExtensionManifest.Overlay overlay = loader.parse(m.encode(), ID, "test").contributes().decoratorViews().getFirst().overlay();
+
+        assertThat(overlay.items(), equalTo("/threats"));
+        assertThat(overlay.appliesTo(), equalTo("/applies-to"));
+        assertThat(overlay.key(), equalTo("/flow"));
+    }
+
+    @Test
     void accept_a_manifest_with_only_decorator_views() {
         JsonObject m = valid();
         m.remove("routes");
@@ -492,6 +504,9 @@ class TestExtensionManifestLoaderShould {
                 invalid("an overlay time that is not a JSON Pointer", m -> view(m).getJsonObject("overlay").put("time", "time"), "/contributes/decorator-views/0/overlay/time"),
                 invalid("an overlay key that is not a JSON Pointer", m -> view(m).getJsonObject("overlay").put("key", "key"), "/contributes/decorator-views/0/overlay/key"),
                 invalid("a hide list with a non-string status", m -> view(m).getJsonObject("overlay").put("hide", new JsonArray().add(1)), "/contributes/decorator-views/0/overlay/hide/0"),
+                invalid("overlay items that are not a JSON Pointer", m -> view(m).getJsonObject("overlay").put("items", "threats").put("applies-to", "/applies-to"), "/contributes/decorator-views/0/overlay/items"),
+                invalid("overlay items with no applies-to", m -> view(m).getJsonObject("overlay").put("items", "/threats"), "/contributes/decorator-views/0/overlay"),
+                invalid("overlay applies-to with no items", m -> view(m).getJsonObject("overlay").put("applies-to", "/applies-to"), "/contributes/decorator-views/0/overlay"),
                 invalid("a command input that is not an object schema", m -> command(m).getJsonObject("input").put("type", "string"), "/commands/list-services/input/type"),
                 invalid("a command name with an underscore", m -> m.getJsonObject("commands").put("list_all", command(m).copy()), "/commands/list_all: "),
                 // Java checks
@@ -735,7 +750,7 @@ class TestExtensionManifestLoaderShould {
     @Test
     void ship_the_standard_decorator_views() {
         var manifests = loader.loadClasspath(getClass().getClassLoader(), ExtensionManifestLoader.BUILTIN_BASE);
-        assertThat(manifests.stream().map(ExtensionManifest::id).toList(), contains("control-evaluation", "deployment"));
+        assertThat(manifests.stream().map(ExtensionManifest::id).toList(), contains("control-evaluation", "deployment", "threat-model"));
         assertThat(manifests.getFirst().contributes().decoratorViews().getFirst().overlay().hide(), contains("not-applicable"));
     }
 

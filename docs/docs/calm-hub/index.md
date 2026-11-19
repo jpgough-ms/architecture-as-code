@@ -403,7 +403,7 @@ views-only manifest. Hub draws the results; the service supplies no browser code
 }
 ```
 
-No routes or backend URL are needed. See [Decorator views](decorator-views.md) for the fields, how Hub draws a view, the legend, and the built-in `control-evaluation` and `deployment` views.
+No routes or backend URL are needed. See [Decorator views](decorator-views.md) for the fields, how Hub draws a view, the legend, and the built-in `control-evaluation`, `deployment` and `threat-model` views.
 
 ## Further Reading
 

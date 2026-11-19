@@ -11,6 +11,8 @@ import { DETAILS_WIDTH, detailsPosition } from './detailsPosition.js';
 export const DETAILS_MAX_ENTRIES = 5;
 
 function formatTime(value: string): string {
+    // Date.parse reads a date with no time as UTC midnight, which is the day before west of UTC.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
     const time = Date.parse(value);
     return Number.isNaN(time) ? value : new Date(time).toLocaleString();
 }

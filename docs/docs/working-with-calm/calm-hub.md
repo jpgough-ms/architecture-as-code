@@ -166,12 +166,13 @@ The lens, the level and the scope are in the URL, for example `?lens=c4&level=co
 
 ### Decorator Overlays
 
-Some decorator types are drawn on the diagram as an overlay. Each node or relationship gets a badge with its status, and a status that needs attention also colours the element: red for an error, amber for a warning. CALM Hub has two built-in overlays, and an extension can add more (see [decorator views](../calm-hub/decorator-views.md)):
+Some decorator types are drawn on the diagram as an overlay. Each node or relationship gets a badge with its status, and a status that needs attention also colours the element: red for an error, amber for a warning. CALM Hub has three built-in overlays, and an extension can add more (see [decorator views](../calm-hub/decorator-views.md)):
 
 | Overlay | Decorator type | Shows |
 |---|---|---|
 | Control evaluations | `control-evaluation` | The latest result of each control: see [Control Evaluations](#control-evaluations) |
 | Deployments | `deployment` | The status of the latest deployment, by `start-time`: completed (OK), pending or in progress (Info), rolled back (Warning), failed (Error) |
+| Threat models | `threat-model` | The worst status of the threats to each element: see [Threat Models](#threat-models) |
 
 The legend at the bottom of the diagram lists each overlay that has decorators on screen, with how many elements show each status. Clear an overlay's checkbox to hide it. On a screen narrower than 1024 pixels, the legend starts closed: tap **Overlays** to open it. **View all** opens the Decorators tab filtered to the type and the `$schema` of that overlay. While the diagram, the Decorators tab or the details drawer is open, they refresh every 5 seconds.
 
@@ -202,6 +203,30 @@ The **Show decisions** control (the gavel icon in the bottom-left diagram contro
 The overlay turns on and off with **presentation mode** (the presentation icon beside it), which makes the diagram text larger for a projector. You can also switch the overlay on or off by itself. The choice is kept for the browser session.
 
 ![CALM Hub Decision Overlay in Presentation Mode](/img/hub-ui/decision-overlay.png)
+
+### Threat Models
+
+A **threat model decorator** records one threat model on one flow of the architecture: its trust boundaries,
+its threats and the controls that mitigate each threat. The format is the `threat-model` decorator standard
+(proposed in [finos/calm-schema#62](https://github.com/finos/calm-schema/pull/62)), with a STRIDE standard that extends it.
+The flow is in the `flows` of the architecture, the decorator's `target` is the architecture version, and its
+`applies-to` lists the flow and each node and relationship that a boundary or a threat names.
+
+* **Badges:** Each node and relationship that a threat names gets a badge with the worst status of its threats:
+  identified (Error), partially mitigated (Warning), mitigated (OK), accepted or transferred (Info). Not applicable
+  threats are not drawn. Click a badge to see each threat. Only the newest assessment of each flow counts, by
+  `assessed-on`.
+* **Threats panel:** The metadata panel below the diagram has a **Threats** tab. For each threat model it shows the
+  flow, the method, the date and the assessor, a count of threats by status, the trust boundaries, and each threat
+  with its classification, rating, elements, mitigations and residual risk. Click an element to select it.
+  Older assessments of the same flow are under **Earlier assessments**, collapsed and marked as superseded. Their
+  threats do not count in the tab. The **Decorators** tab lists every assessment.
+* **Gaps:** For each mitigation, Hub looks for the control on the element in `attached-to`, the elements of the
+  threat, the source and destination nodes of its relationships, the flow, then the architecture. A control that it does not find shows
+  as **Gap**.
+
+The `workshop` namespace has an example: the **Payments API** architecture with a STRIDE threat model on its
+Submit Payment flow.
 
 ---
 

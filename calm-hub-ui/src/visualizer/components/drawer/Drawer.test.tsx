@@ -25,9 +25,10 @@ function fakeFile(text: string): File {
 }
 
 vi.mock('../reactflow/MetadataPanel.js', () => ({
-    MetadataPanel: ({ evaluations, evaluationOverlay }: { evaluations?: unknown[]; evaluationOverlay?: { map?: Record<string, string> } }) => (
+    MetadataPanel: ({ evaluations, evaluationOverlay, threatModels, onElementClick }: { evaluations?: unknown[]; evaluationOverlay?: { map?: Record<string, string> }; threatModels?: unknown[]; onElementClick?: (id: string) => void }) => (
         <div data-testid="metadata-panel">
-            evaluations:{evaluations?.length ?? 0}
+            evaluations:{evaluations?.length ?? 0} threat-models:{threatModels?.length ?? 0}
+            <button onClick={() => onElementClick?.('n1-to-n2')}>select-relationship</button>
             <span data-testid="evaluation-overlay-map">{JSON.stringify(evaluationOverlay?.map ?? null)}</span>
         </div>
     ),
@@ -458,6 +459,34 @@ describe('Drawer — decorator overlays', () => {
         });
 
         expect(screen.getByTestId('evaluation-n1')).toHaveTextContent('(none)');
+    });
+
+    it('draws each threat on its own elements, lists the model under the diagram, and selects a relationship from it', async () => {
+        const onItemSelect = vi.fn();
+        const data: Data = {
+            ...architectureData,
+            data: {
+                nodes: [
+                    { 'unique-id': 'n1', name: 'Node 1', description: 'd', 'node-type': 'service' },
+                    { 'unique-id': 'n2', name: 'Node 2', description: 'd', 'node-type': 'service' },
+                ],
+                relationships: [{ 'unique-id': 'n1-to-n2', description: 'calls', 'relationship-type': { connects: { source: { node: 'n1' }, destination: { node: 'n2' } } } }],
+            },
+        };
+        const model = {
+            uniqueId: 'tm', type: 'threat-model', target: [], appliesTo: ['n1', 'n2', 'n1-to-n2'],
+            data: { flow: 'f', methodology: 'STRIDE', 'assessed-on': '2026-10-13', threats: [
+                { 'unique-id': 'a', name: 'A', status: 'mitigated', 'applies-to': ['n1'] },
+                { 'unique-id': 'b', name: 'B', status: 'identified', 'applies-to': ['n2'] },
+            ] },
+        } as unknown as Decorator;
+        render(<Drawer data={data} decorators={[model]} onItemSelect={onItemSelect} />);
+
+        expect(screen.getByTestId('overlays-n1')).toHaveTextContent(/^threat-model:ok$/);
+        expect(screen.getByTestId('metadata-panel')).toHaveTextContent('threat-models:1');
+
+        await act(async () => { screen.getByText('select-relationship').click(); });
+        expect(onItemSelect).toHaveBeenCalledWith({ data: expect.objectContaining({ 'unique-id': 'n1-to-n2' }) });
     });
 
     it('draws every view with decorators on an element, and leaves views with none off the legend', () => {

@@ -1,5 +1,5 @@
 /** The extensions that CALM Hub ships on its classpath (`META-INF/calm-extensions/builtin/index.txt`). */
-export const BUILTIN_EXTENSION_IDS: ReadonlySet<string> = new Set(['control-evaluation', 'deployment']);
+export const BUILTIN_EXTENSION_IDS: ReadonlySet<string> = new Set(['control-evaluation', 'deployment', 'threat-model']);
 
 export const isBuiltInExtension = (id: string) => BUILTIN_EXTENSION_IDS.has(id);
 

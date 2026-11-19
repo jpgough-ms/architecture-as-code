@@ -16,6 +16,12 @@ export const CONTROL_EVALUATION_VIEW_ID = 'control-evaluation';
 export const isControlEvaluationView = (view: DecoratorView): boolean =>
     view.id === CONTROL_EVALUATION_VIEW_ID && view.source?.builtIn === true;
 
+/** The id of the built-in view whose Threats panel reads threat-model fields. */
+export const THREAT_MODEL_VIEW_ID = 'threat-model';
+
+export const isThreatModelView = (view: DecoratorView): boolean =>
+    view.id === THREAT_MODEL_VIEW_ID && view.source?.builtIn === true;
+
 /** The decorator views drawn on the diagram. Empty unless an architecture from CALM Hub has matching decorators. */
 export interface DecoratorOverlayState {
     /** Each view with at least one element on the diagram, in view order. */

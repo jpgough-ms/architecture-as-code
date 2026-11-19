@@ -139,6 +139,19 @@ describe('OverlayBadge details', () => {
         expect(screen.getByTestId('overlay-badge')).toHaveAttribute('aria-expanded', 'true');
     });
 
+    it('shows a time with only a date as written, so the time zone cannot move it to another day', () => {
+        const dated = { view, overlay: { status: 'error' as const, value: 'high', entries: [{ ...entry('d1', 'high', 'error'), time: '2026-10-13' }] } };
+        render(
+            <Flow>
+                <DecoratorOverlayContext.Provider value={{ overlays: [], hiddenViews: new Set(), toggleView: vi.fn(), onOpenView: vi.fn() }}>
+                    <OverlayBadge shown={dated} presenting={false} scale={1} />
+                </DecoratorOverlayContext.Provider>
+            </Flow>
+        );
+        fireEvent.click(screen.getByTestId('overlay-badge'));
+        expect(screen.getByTestId('overlay-badge-entry')).toHaveTextContent('2026-10-13');
+    });
+
     it('links to the view list', () => {
         const { onOpenView } = renderBadge();
         fireEvent.click(screen.getByTestId('overlay-badge'));

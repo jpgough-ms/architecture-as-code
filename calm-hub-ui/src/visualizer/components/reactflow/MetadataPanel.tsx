@@ -3,6 +3,8 @@ import { THEME } from './theme.js';
 import { ControlsPanel } from './ControlsPanel.js';
 import { AdrsPanel } from './AdrsPanel.js';
 import { ControlEvaluationsPanel } from './ControlEvaluationsPanel.js';
+import { ThreatModelPanel } from './threat-model/ThreatModelPanel.js';
+import { splitAssessments, threatTotal } from '../../threat-model/threatModel.js';
 import { TabButton } from './TabButton.js';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import type { MetadataPanelProps, MetadataPanelTabType } from '../../contracts/contracts.js';
@@ -12,6 +14,10 @@ export function MetadataPanel({
     adrs,
     evaluations = [],
     evaluationOverlay,
+    threatModels = [],
+    threatModelOverlay,
+    architecture,
+    onElementClick,
     onNodeClick,
     onControlClick,
     isCollapsed,
@@ -22,9 +28,12 @@ export function MetadataPanel({
     const hasControls = Object.keys(controls).length > 0;
     const hasAdrs = adrs.length > 0;
     const hasEvaluations = evaluations.length > 0;
+    const hasThreats = threatModels.length > 0;
     const defaultTab: MetadataPanelTabType = hasEvaluations
         ? 'evaluations'
-        : hasControls
+        : hasThreats
+          ? 'threats'
+          : hasControls
           ? 'controls'
           : 'adrs';
     // Only a tab the user clicked is remembered; otherwise the default follows the data, so evaluations that
@@ -32,6 +41,7 @@ export function MetadataPanel({
     const [userTab, setUserTab] = useState<MetadataPanelTabType | null>(null);
     const tabAvailable: Record<MetadataPanelTabType, boolean> = {
         evaluations: hasEvaluations,
+        threats: hasThreats,
         controls: hasControls,
         adrs: hasAdrs,
     };
@@ -66,7 +76,7 @@ export function MetadataPanel({
         [height, onHeightChange]
     );
 
-    if (!hasEvaluations && !hasControls && !hasAdrs) {
+    if (!hasEvaluations && !hasThreats && !hasControls && !hasAdrs) {
         return null;
     }
 
@@ -218,6 +228,11 @@ export function MetadataPanel({
                         Evaluations ({evaluations.length})
                     </TabButton>
                 )}
+                {hasThreats && (
+                    <TabButton isActive={activeTab === 'threats'} onClick={() => setUserTab('threats')}>
+                        Threats ({threatTotal(splitAssessments(threatModels, threatModelOverlay).current)})
+                    </TabButton>
+                )}
                 {hasControls && (
                     <TabButton isActive={activeTab === 'controls'} onClick={() => setUserTab('controls')}>
                         Controls ({Object.keys(controls).length})
@@ -233,6 +248,9 @@ export function MetadataPanel({
             {/* Tab Content */}
             <div style={{ flex: 1, overflow: 'hidden', padding: '12px' }}>
                 {activeTab === 'evaluations' && hasEvaluations && <ControlEvaluationsPanel evaluations={evaluations} overlay={evaluationOverlay} />}
+                {activeTab === 'threats' && hasThreats && (
+                    <ThreatModelPanel models={threatModels} architecture={architecture} overlay={threatModelOverlay} onElementClick={onElementClick} />
+                )}
                 {activeTab === 'controls' && hasControls && (
                     <ControlsPanel controls={controls} onNodeClick={onNodeClick} onControlClick={onControlClick} />
                 )}
