@@ -1190,6 +1190,58 @@ Example:
 
     program.addCommand(hubCmd);
 
+    const experimentalCmd = new Command('experimental').description('Commands that can change or go away in any release');
+    const threatModelCmd = experimentalCmd.command('threat-model').description('Build and check STRIDE threat model decorators (threat model standard 1.0)');
+
+    threatModelCmd
+        .command('model')
+        .description('Walk the STRIDE questions for a flow and write a threat model decorator.')
+        .addHelpText('after', `
+
+Without --session, the command proposes trust boundaries for the flow, asks you to confirm them, and asks
+the STRIDE questions for each relationship that crosses one. --save-session keeps your answers, and
+--session replays them with no questions, so the same answers always give the same decorator.
+
+Example:
+  calm experimental threat-model model -a payments-api.architecture.json --flow flow-submit-payment \\
+    --save-session submit-payment.session.json -o submit-payment.stride.threat-model.decorator.json`)
+        .requiredOption(ARCHITECTURE_OPTION, 'Path to the architecture that holds the flow.')
+        .option('--flow <unique-id>', 'unique-id of the flow to assess. Asks when omitted.')
+        .option('--session <file>', 'Replay the answers in this session file, with no questions.')
+        .option('--save-session <file>', 'Write the answers to this session file.')
+        .option(OUTPUT_OPTION, 'Path at which to write the decorator. If omitted, prints to stdout.')
+        .option('--target <target>', 'The decorator target. Default: the architecture path, relative to the output file.')
+        .option('--assessor <name>', 'Person or team that does the assessment.')
+        .option(CALMHUB_URL_OPTION, 'URL to CALMHub instance, for control suggestions')
+        .option('--control-domain <domain>', 'CALM Hub control domain to suggest controls from, for example security.')
+        .action(async (options) => {
+            const { runThreatModel } = await import('./command-helpers/threat-model/command');
+            const valid = await runThreatModel({
+                architecturePath: options.architecture,
+                flow: options.flow,
+                sessionPath: options.session,
+                saveSessionPath: options.saveSession,
+                outputPath: options.output,
+                target: options.target,
+                assessor: options.assessor,
+                calmHubUrl: options.calmHubUrl,
+                controlDomain: options.controlDomain
+            });
+            if (!valid) process.exit(1);
+        });
+
+    threatModelCmd
+        .command('validate')
+        .description('Check a threat model decorator against the STRIDE standard and, with -a, against its architecture.')
+        .requiredOption('-d, --decorator <file>', 'Path to the threat model decorator.')
+        .option(ARCHITECTURE_OPTION, 'Path to the target architecture, to check the rules that JSON Schema cannot check.')
+        .action(async (options) => {
+            const { runValidateThreatModel } = await import('./command-helpers/threat-model/command');
+            if (!await runValidateThreatModel(options.decorator, options.architecture)) process.exit(1);
+        });
+
+    program.addCommand(experimentalCmd);
+
     // Dev commands
     setupWorkspaceCommands(program);
 }

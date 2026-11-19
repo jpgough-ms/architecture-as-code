@@ -1,0 +1,115 @@
+{
+    "question-bank": "0.1.0",
+    "flow": "flow-submit-payment",
+    "assessed-on": "2026-10-13",
+    "assessor": "payments-security-architecture",
+    "trust-boundaries": [
+        {
+            "unique-id": "tb-internet-dmz",
+            "name": "Internet to DMZ",
+            "description": "An untrusted customer device crosses into the bank-controlled API perimeter.",
+            "elements": ["mobile-app-to-api-gateway"]
+        },
+        {
+            "unique-id": "tb-dmz-core",
+            "name": "DMZ to core services",
+            "description": "The gateway hands a request to services that hold payment logic.",
+            "elements": ["api-gateway-to-payments-api"]
+        },
+        {
+            "unique-id": "tb-core-data",
+            "name": "Core services to data tier",
+            "description": "The payments service reaches the store that holds card and payment data.",
+            "elements": ["payments-api-to-payments-db"]
+        }
+    ],
+    "threats": [
+        {
+            "question": "spoofing-caller-identity",
+            "relationship": "mobile-app-to-api-gateway",
+            "unique-id": "t-token-replay",
+            "name": "Access token replay",
+            "description": "An attacker replays a stolen access token to submit payments as the customer.",
+            "sequence-numbers": [1],
+            "likelihood": "medium",
+            "impact": "high",
+            "status": "mitigated",
+            "mitigations": [
+                { "control": "oauth2-authentication", "state": "verified", "note": "Short-lived tokens bound to the device." }
+            ]
+        },
+        {
+            "question": "tampering-in-transit",
+            "relationship": "mobile-app-to-api-gateway",
+            "unique-id": "t-amount-tamper",
+            "name": "Payment tampering in transit",
+            "description": "An attacker changes the amount or the payee on the wire between the app and the gateway.",
+            "sequence-numbers": [1],
+            "likelihood": "medium",
+            "impact": "high",
+            "status": "mitigated",
+            "mitigations": [
+                { "control": "transport-security", "state": "verified", "evidence": ["https://security.example.com/reports/payments-tls-scan-2026-10"] }
+            ]
+        },
+        {
+            "question": "denial-of-service-exhaustion",
+            "relationship": "mobile-app-to-api-gateway",
+            "unique-id": "t-submit-flood",
+            "name": "Payment endpoint flooding",
+            "description": "Automated clients flood the payment endpoint and exhaust its capacity.",
+            "likelihood": "high",
+            "impact": "medium",
+            "status": "identified",
+            "mitigations": [
+                { "control": "rate-limiting", "attached-to": "api-gateway", "state": "planned", "note": "Gateway rate limits are not configured yet. The architecture does not declare this control." }
+            ]
+        },
+        {
+            "question": "elevation-of-privilege-authorization",
+            "relationship": "api-gateway-to-payments-api",
+            "unique-id": "t-bola",
+            "name": "Payment from an account the caller does not own",
+            "description": "A caller changes the payer account identifier and pays from an account they do not own.",
+            "classification": [
+                { "scheme": "CWE", "value": "CWE-639", "reference": "https://cwe.mitre.org/data/definitions/639.html" }
+            ],
+            "likelihood": "medium",
+            "impact": "critical",
+            "status": "partially-mitigated",
+            "mitigations": [
+                { "control": "authorization-checks", "state": "implemented", "note": "The ownership check covers the payer account only." },
+                { "control": "mutual-tls", "state": "implemented", "note": "Authenticates the gateway, not the end user." }
+            ]
+        },
+        {
+            "question": "information-disclosure-at-rest",
+            "relationship": "payments-api-to-payments-db",
+            "unique-id": "t-pan-at-rest",
+            "name": "Card data exposed from storage",
+            "description": "Card data can be read if database storage or its backups are exposed.",
+            "sequence-numbers": [3],
+            "likelihood": "low",
+            "impact": "critical",
+            "status": "partially-mitigated",
+            "mitigations": [
+                { "control": "encryption-at-rest", "state": "implemented", "note": "The database is encrypted. Card numbers still appear in application logs." }
+            ]
+        },
+        {
+            "question": "repudiation-untraced-action",
+            "relationship": "payments-api-to-payments-db",
+            "unique-id": "t-no-audit",
+            "name": "Payment cannot be traced to a user",
+            "description": "A payment record cannot be linked to the user who made it.",
+            "likelihood": "low",
+            "impact": "medium",
+            "status": "accepted",
+            "justification": "Audit logging is planned for the next release. Gateway access logs give partial traceability until then.",
+            "mitigations": [
+                { "control": "audit-logging", "state": "planned" }
+            ],
+            "residual-risk": { "rating": "medium", "accepted-by": "payments-security-lead", "review-by": "2027-03-31" }
+        }
+    ]
+}

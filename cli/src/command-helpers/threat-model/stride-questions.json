@@ -1,0 +1,95 @@
+{
+    "version": "0.1.0",
+    "questions": [
+        {
+            "id": "spoofing-caller-identity",
+            "category": "spoofing",
+            "text": "Can a caller on {relationship} pretend to be another user or service when it reaches {destination}?",
+            "default-elements": ["relationship", "destination"],
+            "threat": {
+                "name": "Spoofed caller at {destination}",
+                "description": "A caller on {relationship} uses a stolen or forged identity to act as another user or service at {destination}."
+            },
+            "control-keywords": ["auth", "token", "identity", "mutual-tls", "mtls", "certificate"]
+        },
+        {
+            "id": "tampering-in-transit",
+            "category": "tampering",
+            "text": "Can someone change the data on {relationship} between {source} and {destination}?",
+            "default-elements": ["relationship"],
+            "threat": {
+                "name": "Data changed in transit to {destination}",
+                "description": "An attacker changes the data on {relationship} between {source} and {destination}."
+            },
+            "control-keywords": ["transport", "tls", "signing", "integrity", "validation"]
+        },
+        {
+            "id": "tampering-at-rest",
+            "category": "tampering",
+            "when": { "destination-node-types": ["database", "data-asset"] },
+            "text": "Can someone change the data that {destination} stores?",
+            "default-elements": ["destination"],
+            "threat": {
+                "name": "Stored data changed in {destination}",
+                "description": "An attacker with access to {destination} changes the data that it stores."
+            },
+            "control-keywords": ["integrity", "access", "audit", "immutable"]
+        },
+        {
+            "id": "repudiation-untraced-action",
+            "category": "repudiation",
+            "text": "Can an action on {relationship} be denied later because nothing traces it to the user who made it?",
+            "default-elements": ["relationship"],
+            "threat": {
+                "name": "Action on {relationship} cannot be traced to a user",
+                "description": "An action on {relationship} cannot be linked to the user who made it."
+            },
+            "control-keywords": ["audit", "log", "trace", "signing"]
+        },
+        {
+            "id": "information-disclosure-in-transit",
+            "category": "information-disclosure",
+            "text": "Can someone read the data on {relationship} who should not see it?",
+            "default-elements": ["relationship"],
+            "threat": {
+                "name": "Data read in transit to {destination}",
+                "description": "Someone who should not see it reads the data on {relationship}."
+            },
+            "control-keywords": ["transport", "tls", "encryption", "pinning"]
+        },
+        {
+            "id": "information-disclosure-at-rest",
+            "category": "information-disclosure",
+            "when": { "destination-node-types": ["database", "data-asset"] },
+            "text": "Can someone read the data that {destination} stores, or its backups?",
+            "default-elements": ["destination", "relationship"],
+            "threat": {
+                "name": "Stored data exposed from {destination}",
+                "description": "Data can be read if the storage of {destination} or its backups are exposed."
+            },
+            "control-keywords": ["encryption", "rest", "masking", "access"]
+        },
+        {
+            "id": "denial-of-service-exhaustion",
+            "category": "denial-of-service",
+            "text": "Can callers on {relationship} exhaust the capacity of {destination}?",
+            "default-elements": ["relationship", "destination"],
+            "threat": {
+                "name": "{destination} flooded through {relationship}",
+                "description": "Callers on {relationship} send more requests than {destination} can handle."
+            },
+            "control-keywords": ["rate", "limit", "throttl", "quota", "capacity"]
+        },
+        {
+            "id": "elevation-of-privilege-authorization",
+            "category": "elevation-of-privilege",
+            "text": "Can a caller on {relationship} do more at {destination} than it is allowed to?",
+            "default-elements": ["relationship", "destination"],
+            "threat": {
+                "name": "Unauthorised action at {destination}",
+                "description": "A caller on {relationship} does an action at {destination} that it is not allowed to do."
+            },
+            "control-keywords": ["authori", "permission", "entitlement", "access", "privilege"]
+        }
+    ]
+}

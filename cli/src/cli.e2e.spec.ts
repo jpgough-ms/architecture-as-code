@@ -1104,6 +1104,22 @@ describe('CLI Integration Tests', () => {
             .rejects.toHaveProperty('exitCode', 1);
     });
 
+    test('experimental threat-model model replays a session into the STRIDE standard example, and validate rejects a broken copy', async () => {
+        const fixtures = path.join(__dirname, '../test_fixtures/threat-model');
+        const architecturePath = path.join(tempDir, 'payments-api.architecture.json');
+        const outputPath = path.join(tempDir, 'submit-payment.stride.threat-model.decorator.json');
+        fs.copyFileSync(path.join(fixtures, 'payments-api.architecture.json'), architecturePath);
+        const { stderr } = await cli.run(['experimental', 'threat-model', 'model', '-a', architecturePath,
+            '--session', path.join(fixtures, 'submit-payment.session.json'), '-o', outputPath]);
+        expect(fs.readFileSync(outputPath, 'utf-8')).toEqual(fs.readFileSync(path.join(fixtures, 'submit-payment.stride.threat-model.decorator.json'), 'utf-8'));
+        expect(stderr).toContain('Gap: t-submit-flood needs rate-limiting (planned)');
+
+        const brokenPath = path.join(tempDir, 'broken.threat-model.decorator.json');
+        fs.writeFileSync(brokenPath, fs.readFileSync(outputPath, 'utf-8').replace('"payments-db"\n    ]', '"payments-api"\n    ]'));
+        await expect(cli.run(['experimental', 'threat-model', 'validate', '-d', brokenPath, '-a', architecturePath]))
+            .rejects.toMatchObject({ exitCode: 1, stderr: expect.stringContaining('\'payments-db\' is missing from applies-to') });
+    });
+
     test('diff --exit-code preserves pattern diffs without flow fields', async () => {
         const patternPath = path.join(tempDir, 'flow-regression.pattern.json');
         fs.writeFileSync(patternPath, JSON.stringify(testPatterns.basePattern));
